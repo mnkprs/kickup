@@ -5,7 +5,7 @@ import { ArrowLeft, Camera, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 const POSITIONS = ['GK', 'DEF', 'MID', 'FWD'];
-const AREAS = ['Kolonaki', 'Exarcheia', 'Pangrati', 'Glyfada', 'Kifisia', 'Piraeus', 'Nea Smyrni', 'Chalandri', 'Other'];
+const AREAS = ['Kolonaki', 'Exarcheia', 'Pangrati', 'Glyfada', 'Kifisia', 'Piraeus', 'Nea Smyrni', 'Chalandri', 'Koupi', 'Markopoulo', 'Other'];
 const AVATAR_COLORS = ['#2E7D32', '#1565C0', '#6A1B9A', '#E65100', '#00695C', '#BF360C', '#37474F', '#F9A825'];
 
 export function Register() {
