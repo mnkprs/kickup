@@ -184,7 +184,7 @@ export function PreMatch() {
               <span style={{ fontSize: '16px', fontWeight: 500 }}>Propose Time / Venue</span>
             </button>
           )}
-          {(match.status === 'pre_match' || match.status === 'upcoming' as string) && (
+          {match.status === 'pre_match' && (
             <button onClick={() => navigate(`/app/matches/${id}/result`)}
               className="w-full h-[52px] rounded-2xl flex items-center justify-center gap-2"
               style={{ background: 'linear-gradient(135deg, #2E7D32 0%, #43A047 100%)', boxShadow: '0 4px 12px rgba(46,125,50,0.35)' }}>

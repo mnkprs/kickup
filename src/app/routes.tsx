@@ -24,7 +24,7 @@ export const router = createBrowserRouter([
   { path: '/register', element: <Register /> },
   {
     path: '/app',
-    
+    element: <RequireAuth><Layout /></RequireAuth>,
     children: [
       { index: true, element: <HomeFeed /> },
       { path: 'teams', element: <TeamsList /> },

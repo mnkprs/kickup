@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('role', 'captain')
       .maybeSingle()
     setProfile(p ?? null)
-    setCaptainTeam((tm?.teams as Team) ?? null)
+    setCaptainTeam((tm?.teams as unknown as Team) ?? null)
   }
 
   useEffect(() => {
