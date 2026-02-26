@@ -1,0 +1,21 @@
+# Supabase
+supabase/.env
+supabase/.branches
+supabase/.temp
+
+# Node
+node_modules/
+dist/
+.angular/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md

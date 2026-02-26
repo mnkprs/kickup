@@ -1,0 +1,180 @@
+import { useNavigate } from 'react-router';
+import { motion } from 'motion/react';
+import { LogOut, MapPin } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useMatches } from '../../hooks/useMatches';
+import { formatMatchDate } from '../../lib/formatDate';
+import type { MatchWithTeams } from '../../types/database';
+
+function Avatar({ initials, color, size = 80 }: { initials: string; color: string; size?: number }) {
+  return (
+    <div className="flex items-center justify-center rounded-full text-white"
+      style={{ width: size, height: size, background: color, fontSize: size * 0.33, fontWeight: 700, fontFamily: 'Roboto, sans-serif' }}>
+      {initials}
+    </div>
+  );
+}
+
+function matchResult(match: MatchWithTeams, teamId: string): 'win' | 'loss' | 'draw' | null {
+  if (match.home_score === null || match.away_score === null) return null;
+  const isHome = match.home_team_id === teamId;
+  const my = isHome ? match.home_score : match.away_score;
+  const their = isHome ? match.away_score : match.home_score;
+  if (my > their) return 'win';
+  if (my < their) return 'loss';
+  return 'draw';
+}
+
+export function PlayerProfile() {
+  const { isDark, toggleTheme } = useTheme();
+  const { signOut, profile, captainTeam } = useAuth();
+  const navigate = useNavigate();
+  const { matches } = useMatches();
+
+  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
+  const cardBg = isDark ? '#2D2C31' : 'white';
+  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
+  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
+  const borderColor = isDark ? '#49454F' : '#E7E0EC';
+
+  const playerMatches = captainTeam
+    ? matches.filter(m => (m.home_team_id === captainTeam.id || m.away_team_id === captainTeam.id) && m.status === 'completed').slice(0, 4)
+    : matches.filter(m => m.status === 'completed').slice(0, 4);
+
+  const statMatches = profile?.stat_matches ?? 0;
+  const statWins = profile?.stat_wins ?? 0;
+  const winRate = statMatches > 0 ? Math.round((statWins / statMatches) * 100) : 0;
+
+  const statItems = [
+    { label: 'Played', value: statMatches },
+    { label: 'Wins', value: statWins, color: '#2E7D32' },
+    { label: 'MVPs', value: profile?.stat_mvp ?? 0, color: '#1565C0' },
+    { label: 'Goals', value: profile?.stat_goals ?? 0, color: '#B3261E' },
+    { label: 'Assists', value: profile?.stat_assists ?? 0, color: '#E65100' },
+    { label: 'Matches', value: statMatches },
+  ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
+  return (
+    <div style={{ background: bg, minHeight: '100vh', fontFamily: 'Roboto, sans-serif' }}>
+      <div className="relative" style={{ background: 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 60%, #388E3C 100%)', paddingTop: '48px', paddingBottom: '32px' }}>
+        <div className="flex flex-col items-center gap-3 px-4">
+          <div className="relative">
+            <Avatar initials={profile?.avatar_initials ?? '?'} color={profile?.avatar_color ?? '#2E7D32'} size={88} />
+            <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: '#E8F5E9', border: '2px solid white' }}>
+              <span style={{ fontSize: '16px' }}>📷</span>
+            </div>
+          </div>
+          <div className="text-center">
+            <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'white' }}>{profile?.full_name ?? 'Player'}</h1>
+            <div className="flex items-center justify-center gap-2 mt-1">
+              {profile?.position && (
+                <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '12px', fontWeight: 600 }}>
+                  {profile.position}
+                </span>
+              )}
+              {profile?.area && (
+                <div className="flex items-center gap-1">
+                  <MapPin size={12} color="rgba(255,255,255,0.8)" />
+                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>{profile.area}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 pt-4 pb-24 flex flex-col gap-4">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-3 gap-2">
+          {statItems.map(s => (
+            <div key={s.label} className="p-3 rounded-2xl border text-center" style={{ background: cardBg, borderColor }}>
+              <p style={{ fontSize: '22px', fontWeight: 700, color: s.color || textPrimary }}>{s.value}</p>
+              <p style={{ fontSize: '11px', color: textSecondary, marginTop: '2px' }}>{s.label}</p>
+            </div>
+          ))}
+        </motion.div>
+
+        <div className="p-4 rounded-2xl border" style={{ background: cardBg, borderColor }}>
+          <div className="flex items-center justify-between mb-2">
+            <span style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>Win Rate</span>
+            <span style={{ fontSize: '14px', fontWeight: 700, color: '#2E7D32' }}>{winRate}%</span>
+          </div>
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: isDark ? '#49454F' : '#E7E0EC' }}>
+            <motion.div initial={{ width: 0 }} animate={{ width: `${winRate}%` }} transition={{ duration: 0.8, delay: 0.2 }}
+              className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #2E7D32, #66BB6A)' }} />
+          </div>
+        </div>
+
+        <div className="p-4 rounded-2xl border flex items-center justify-between" style={{ background: cardBg, borderColor }}>
+          <div>
+            <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>Available as Freelancer</p>
+            <p style={{ fontSize: '12px', color: textSecondary }}>Show up in "Open Spots" for pickup games</p>
+          </div>
+          <button onClick={() => {}}
+            className="w-12 h-6 rounded-full relative transition-colors"
+            style={{ background: profile?.is_freelancer ? '#2E7D32' : (isDark ? '#49454F' : '#E7E0EC') }}>
+            <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
+              style={{ left: profile?.is_freelancer ? 'calc(100% - 22px)' : '2px' }} />
+          </button>
+        </div>
+
+        {playerMatches.length > 0 && (
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: 500, color: textPrimary, marginBottom: '12px' }}>Recent Matches</h3>
+            <div className="flex flex-col gap-2">
+              {playerMatches.map(match => {
+                const homeTeam = match.home_team;
+                const awayTeam = match.away_team;
+                if (!homeTeam || !awayTeam || match.home_score === null) return null;
+                const teamId = captainTeam?.id ?? match.home_team_id;
+                const result = matchResult(match, teamId);
+                const resultColor = result === 'win' ? '#2E7D32' : result === 'loss' ? '#B3261E' : '#1565C0';
+                return (
+                  <button key={match.id} onClick={() => navigate(`/app/matches/${match.id}/pre`)}
+                    className="flex items-center gap-3 p-3 rounded-2xl border text-left"
+                    style={{ background: cardBg, borderColor }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                      style={{ background: resultColor + '20', color: resultColor, fontSize: '11px', fontWeight: 700 }}>
+                      {result?.toUpperCase().slice(0, 1) || '?'}
+                    </div>
+                    <div className="flex-1">
+                      <span style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>
+                        {homeTeam.short_name} vs {awayTeam.short_name}
+                      </span>
+                      <p style={{ fontSize: '12px', color: textSecondary }}>{formatMatchDate(match.match_date, null)} · {match.format}</p>
+                    </div>
+                    <span style={{ fontSize: '16px', fontWeight: 700, color: resultColor }}>
+                      {match.home_score}–{match.away_score}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-2 mt-2">
+          <button onClick={toggleTheme}
+            className="flex items-center justify-between p-4 rounded-2xl border"
+            style={{ background: cardBg, borderColor }}>
+            <span style={{ fontSize: '15px', color: textPrimary }}>Theme</span>
+            <span style={{ fontSize: '14px', color: textSecondary }}>{isDark ? '🌙 Dark' : '☀️ Light'}</span>
+          </button>
+          <button onClick={handleSignOut}
+            className="flex items-center gap-2 p-4 rounded-2xl border"
+            style={{ background: cardBg, borderColor }}>
+            <LogOut size={18} color="#B3261E" />
+            <span style={{ fontSize: '15px', color: '#B3261E' }}>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
