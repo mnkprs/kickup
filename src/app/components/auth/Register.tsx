@@ -17,6 +17,8 @@ export function Register() {
   const [password, setPassword] = useState('');
   const [position, setPosition] = useState('');
   const [area, setArea] = useState('');
+  const [nationality, setNationality] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [avatarColor, setAvatarColor] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -49,7 +51,7 @@ export function Register() {
       email,
       password,
       options: {
-        data: { full_name: name, position, area, avatar_color: activeColor },
+        data: { full_name: name, position, area, avatar_color: activeColor, nationality, date_of_birth: dateOfBirth || null },
       },
     });
     if (signUpError) { setError(signUpError.message); setLoading(false); return; }
@@ -143,6 +145,16 @@ export function Register() {
                     {areas.map(a => <option key={a} value={a}>{a}, Athens</option>)}
                   </select>
                   <ChevronDown size={18} color="#79747E" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex flex-col gap-1 flex-1">
+                  <span style={labelStyle}>Nationality</span>
+                  <input className={fieldStyle} style={fontStyle} value={nationality} onChange={e => setNationality(e.target.value)} placeholder="e.g. Greek" />
+                </div>
+                <div className="flex flex-col gap-1 flex-1">
+                  <span style={labelStyle}>Date of Birth</span>
+                  <input className={fieldStyle} style={fontStyle} type="date" value={dateOfBirth} onChange={e => setDateOfBirth(e.target.value)} max={new Date().toISOString().split('T')[0]} />
                 </div>
               </div>
               {error && <p style={{ fontFamily: 'Roboto, sans-serif', fontSize: '13px', color: '#B3261E' }}>{error}</p>}

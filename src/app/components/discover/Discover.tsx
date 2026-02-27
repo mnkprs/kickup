@@ -100,36 +100,44 @@ export function Discover() {
         )}
 
         {!isLoading && tab === 'Freelancers' && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-2">
             {filteredFreelancers.map((player, i) => (
-              <motion.div key={player.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
-                className="p-4 rounded-2xl border flex flex-col items-center gap-2"
+              <motion.div key={player.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                className="flex items-center gap-3 p-3 rounded-2xl border"
                 style={{ background: cardBg, borderColor }}>
-                <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={52} />
-                <div className="text-center">
-                  <p style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{player.full_name.split(' ')[0]}</p>
-                  <p style={{ fontSize: '12px', color: textSecondary }}>{player.full_name.split(' ').slice(1).join(' ')}</p>
-                  {player.position && (
-                    <span className="px-2 py-0.5 rounded-full mt-1 inline-block" style={{ background: '#FFF3E0', color: '#E65100', fontSize: '11px', fontWeight: 700 }}>
-                      {player.position}
-                    </span>
-                  )}
-                </div>
-                {player.area && (
-                  <div className="flex items-center gap-1">
-                    <MapPin size={11} color={textSecondary} />
-                    <span style={{ fontSize: '11px', color: textSecondary }}>{player.area}</span>
+                <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={48} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{player.full_name}</p>
+                    {player.position && (
+                      <span className="px-2 py-0.5 rounded-full shrink-0" style={{ background: '#FFF3E0', color: '#E65100', fontSize: '11px', fontWeight: 700 }}>
+                        {player.position}
+                      </span>
+                    )}
                   </div>
-                )}
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    {player.area && (
+                      <div className="flex items-center gap-1">
+                        <MapPin size={10} color={textSecondary} />
+                        <span style={{ fontSize: '11px', color: textSecondary }}>{player.area}</span>
+                      </div>
+                    )}
+                    {(player.stat_goals > 0 || player.stat_assists > 0) && (
+                      <span style={{ fontSize: '11px', color: textSecondary }}>
+                        ⚽ {player.stat_goals} · 🎯 {player.stat_assists}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <button onClick={() => navigate(`/app/discover/player/${player.id}`)}
-                  className="w-full py-1.5 rounded-xl mt-1"
+                  className="px-3 py-1.5 rounded-xl shrink-0"
                   style={{ background: '#E8F5E9', color: '#2E7D32', fontSize: '13px', fontWeight: 500 }}>
-                  View Profile
+                  Invite
                 </button>
               </motion.div>
             ))}
             {filteredFreelancers.length === 0 && (
-              <div className="col-span-2 flex flex-col items-center gap-2 pt-16">
+              <div className="flex flex-col items-center gap-2 pt-16">
                 <span style={{ fontSize: '40px' }}>🔍</span>
                 <p style={{ fontSize: '15px', color: textSecondary }}>No freelancers found</p>
               </div>

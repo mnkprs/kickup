@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { Camera, LogOut, MapPin } from 'lucide-react';
+import { Camera, LogOut, MapPin, Shield } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../hooks/useMatches';
@@ -10,6 +10,15 @@ import { uploadAvatar } from '../../lib/uploadAvatar';
 import { supabase } from '../../lib/supabase';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
 import type { MatchWithTeams } from '../../types/database';
+
+function calcAge(dob: string | null): number | null {
+  if (!dob) return null;
+  const birth = new Date(dob);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  if (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate())) age--;
+  return age;
+}
 
 function matchResult(match: MatchWithTeams, teamId: string): 'win' | 'loss' | 'draw' | null {
   if (match.home_score === null || match.away_score === null) return null;
@@ -23,7 +32,9 @@ function matchResult(match: MatchWithTeams, teamId: string): 'win' | 'loss' | 'd
 
 export function PlayerProfile() {
   const { isDark, toggleTheme } = useTheme();
-  const { signOut, profile, user, captainTeam, refreshProfile } = useAuth();
+  const { signOut, profile, user, captainTeam, playerTeam, refreshProfile } = useAuth();
+  const myTeam = captainTeam ?? playerTeam;
+  const isCaptain = !!captainTeam;
   const navigate = useNavigate();
   const { matches } = useMatches();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,21 +45,22 @@ export function PlayerProfile() {
   const textSecondary = isDark ? '#CAC4D0' : '#49454F';
   const borderColor = isDark ? '#49454F' : '#E7E0EC';
 
-  const playerMatches = captainTeam
-    ? matches.filter(m => (m.home_team_id === captainTeam.id || m.away_team_id === captainTeam.id) && m.status === 'completed').slice(0, 4)
+  const playerMatches = myTeam
+    ? matches.filter(m => (m.home_team_id === myTeam.id || m.away_team_id === myTeam.id) && m.status === 'completed').slice(0, 4)
     : matches.filter(m => m.status === 'completed').slice(0, 4);
+
+  const age = calcAge(profile?.date_of_birth ?? null);
 
   const statMatches = profile?.stat_matches ?? 0;
   const statWins = profile?.stat_wins ?? 0;
   const winRate = statMatches > 0 ? Math.round((statWins / statMatches) * 100) : 0;
 
   const statItems = [
-    { label: 'Played', value: statMatches },
-    { label: 'Wins', value: statWins, color: '#2E7D32' },
-    { label: 'MVPs', value: profile?.stat_mvp ?? 0, color: '#1565C0' },
-    { label: 'Goals', value: profile?.stat_goals ?? 0, color: '#B3261E' },
-    { label: 'Assists', value: profile?.stat_assists ?? 0, color: '#E65100' },
-    { label: 'Matches', value: statMatches },
+    { label: 'Played', value: statMatches, emoji: '🎮' },
+    { label: 'Wins', value: statWins, color: '#2E7D32', emoji: '🏆' },
+    { label: 'Goals', value: profile?.stat_goals ?? 0, color: '#B3261E', emoji: '⚽' },
+    { label: 'Assists', value: profile?.stat_assists ?? 0, color: '#E65100', emoji: '🎯' },
+    { label: 'MVPs', value: profile?.stat_mvp ?? 0, color: '#1565C0', emoji: '⭐' },
   ];
 
   const handleSignOut = async () => {
@@ -93,10 +105,20 @@ export function PlayerProfile() {
           </div>
           <div className="text-center">
             <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'white' }}>{profile?.full_name ?? 'Player'}</h1>
-            <div className="flex items-center justify-center gap-2 mt-1">
+            <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
               {profile?.position && (
                 <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '12px', fontWeight: 600 }}>
                   {profile.position}
+                </span>
+              )}
+              {age !== null && (
+                <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '12px' }}>
+                  {age} yrs
+                </span>
+              )}
+              {profile?.nationality && (
+                <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '12px' }}>
+                  {profile.nationality}
                 </span>
               )}
               {profile?.area && (
@@ -106,17 +128,28 @@ export function PlayerProfile() {
                 </div>
               )}
             </div>
+            {myTeam && (
+              <button onClick={() => navigate(`/app/teams/${myTeam.id}`)}
+                className="mt-2 flex items-center gap-1.5 mx-auto px-3 py-1 rounded-full"
+                style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
+                <Shield size={12} color="rgba(255,255,255,0.9)" />
+                <span style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>
+                  {myTeam.name}{isCaptain ? ' · Captain' : ''}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       <div className="px-4 pt-4 pb-24 flex flex-col gap-4">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-3 gap-2">
+          className="grid grid-cols-5 gap-2">
           {statItems.map(s => (
-            <div key={s.label} className="p-3 rounded-2xl border text-center" style={{ background: cardBg, borderColor }}>
-              <p style={{ fontSize: '22px', fontWeight: 700, color: s.color || textPrimary }}>{s.value}</p>
-              <p style={{ fontSize: '11px', color: textSecondary, marginTop: '2px' }}>{s.label}</p>
+            <div key={s.label} className="p-2 rounded-2xl border text-center" style={{ background: cardBg, borderColor }}>
+              <p style={{ fontSize: '16px', marginBottom: '2px' }}>{s.emoji}</p>
+              <p style={{ fontSize: '18px', fontWeight: 700, color: s.color || textPrimary, lineHeight: 1 }}>{s.value}</p>
+              <p style={{ fontSize: '10px', color: textSecondary, marginTop: '2px' }}>{s.label}</p>
             </div>
           ))}
         </motion.div>
@@ -153,7 +186,7 @@ export function PlayerProfile() {
                 const homeTeam = match.home_team;
                 const awayTeam = match.away_team;
                 if (!homeTeam || !awayTeam || match.home_score === null) return null;
-                const teamId = captainTeam?.id ?? match.home_team_id;
+                const teamId = myTeam?.id ?? match.home_team_id;
                 const result = matchResult(match, teamId);
                 const resultColor = result === 'win' ? '#2E7D32' : result === 'loss' ? '#B3261E' : '#1565C0';
                 return (

@@ -7,7 +7,8 @@ interface AuthContextType {
   session: Session | null
   user: User | null
   profile: Profile | null
-  captainTeam: Team | null
+  captainTeam: Team | null  // team where user is active captain
+  playerTeam: Team | null   // any team user is an active member of
   loading: boolean
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   captainTeam: null,
+  playerTeam: null,
   loading: true,
   signOut: async () => {},
   refreshProfile: async () => {},
@@ -27,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [captainTeam, setCaptainTeam] = useState<Team | null>(null)
+  const [playerTeam, setPlayerTeam] = useState<Team | null>(null)
   const [loading, setLoading] = useState(true)
 
   const fetchProfileData = async (user: User) => {
@@ -35,14 +38,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select('*')
       .eq('id', user.id)
       .single()
-    const { data: tm } = await supabase
+
+    const { data: captainTm } = await supabase
       .from('team_members')
       .select('teams(*)')
       .eq('player_id', user.id)
       .eq('role', 'captain')
+      .eq('status', 'active')
       .maybeSingle()
+
+    const { data: memberTm } = await supabase
+      .from('team_members')
+      .select('teams(*)')
+      .eq('player_id', user.id)
+      .eq('status', 'active')
+      .maybeSingle()
+
     setProfile(p ?? null)
-    setCaptainTeam((tm?.teams as unknown as Team) ?? null)
+    setCaptainTeam((captainTm?.teams as unknown as Team) ?? null)
+    setPlayerTeam((memberTm?.teams as unknown as Team) ?? null)
   }
 
   useEffect(() => {
@@ -62,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setProfile(null)
         setCaptainTeam(null)
+        setPlayerTeam(null)
       }
       setLoading(false)
     })
@@ -79,10 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
     setProfile(null)
     setCaptainTeam(null)
+    setPlayerTeam(null)
   }
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, captainTeam, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, captainTeam, playerTeam, loading, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

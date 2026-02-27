@@ -164,7 +164,7 @@ export function HomeFeed() {
         ))}
       </Section>
 
-      <Section title="🏃 Open Spots Near You" subtitle="Players looking for a team" onMore={() => navigate('/app/discover')} dark={isDark}>
+      <Section title="🏃 Players Near You" subtitle="Players looking for a team" onMore={() => navigate('/app/discover')} dark={isDark}>
         <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {freelancePlayers.slice(0, 3).map((player, i) => (
             <motion.div key={player.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.06 }}

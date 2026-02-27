@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { ArrowLeft, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { useAreas, useAvatarColors, useTeamEmojis } from '../../hooks/useConfig';
 import type { MatchFormat } from '../../types/database';
 
@@ -12,6 +13,7 @@ const FORMATS: MatchFormat[] = ['5v5', '6v6', '7v7', '8v8', '11v11'];
 export function CreateTeam() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addToast } = useToast();
   const { areas, loading: areasLoading } = useAreas();
   const { colors, loading: colorsLoading } = useAvatarColors();
   const { emojis, loading: emojisLoading } = useTeamEmojis();
@@ -39,19 +41,18 @@ export function CreateTeam() {
     if (!user) return;
     setLoading(true);
     setError('');
-    const { error: insertError } = await supabase.from('teams').insert({
-      name,
-      short_name: name.slice(0, 3).toUpperCase(),
-      format,
-      area,
-      emoji: activeEmoji,
-      color: activeColor,
-      description,
-      created_by: user.id,
+    const { data: teamId, error: rpcError } = await supabase.rpc('create_team_with_captain', {
+      p_name: name,
+      p_short_name: name.slice(0, 3).toUpperCase(),
+      p_format: format,
+      p_area: area,
+      p_emoji: activeEmoji,
+      p_color: activeColor,
+      p_description: description,
     });
     setLoading(false);
-    if (insertError) { setError(insertError.message); return; }
-    navigate('/app/teams');
+    if (rpcError) { addToast(rpcError.message, 'error'); setError(rpcError.message); return; }
+    navigate(`/app/teams/${teamId}`);
   };
 
   return (
@@ -129,8 +130,11 @@ export function CreateTeam() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <span style={labelStyle}>Description (optional)</span>
-            <textarea value={description} onChange={e => setDescription(e.target.value)}
+            <div className="flex items-center justify-between">
+              <span style={labelStyle}>Description (optional)</span>
+              <span style={{ fontFamily: 'Roboto, sans-serif', fontSize: '11px', color: description.length > 180 ? '#B3261E' : '#79747E' }}>{description.length}/200</span>
+            </div>
+            <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 200))}
               placeholder="Tell opponents what your team is about..."
               rows={3}
               className="w-full px-4 py-3 rounded-2xl border-2 border-[#CAC4D0] bg-white outline-none focus:border-[#2E7D32] transition-colors resize-none"

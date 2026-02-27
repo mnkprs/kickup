@@ -3,6 +3,7 @@ export type MatchFormat = '5v5' | '6v6' | '7v7' | '8v8' | '11v11';
 export type MatchStatus = 'pending_challenge' | 'scheduling' | 'pre_match' | 'disputed' | 'completed';
 export type NotifType = 'challenge' | 'scheduling' | 'spot_applied' | 'result_confirmed' | 'bet_reminder' | 'match_reminder';
 export type TeamMemberRole = 'captain' | 'player';
+export type TeamMemberStatus = 'active' | 'pending';
 
 export interface Profile {
   id: string;
@@ -12,6 +13,8 @@ export interface Profile {
   position: PlayerPosition | null;
   area: string | null;
   bio: string;
+  nationality: string | null;
+  date_of_birth: string | null; // ISO date string e.g. "1995-03-15"
   is_freelancer: boolean;
   freelancer_until: string | null;
   avatar_url: string | null;
@@ -32,6 +35,7 @@ export interface Team {
   format: MatchFormat;
   emoji: string;
   color: string;
+  avatar_url: string | null;
   banner_url: string | null;
   description: string;
   open_spots: number;
@@ -51,6 +55,7 @@ export interface TeamMember {
   team_id: string;
   player_id: string;
   role: TeamMemberRole;
+  status: TeamMemberStatus;
   joined_at: string;
   profiles?: Profile;
 }
