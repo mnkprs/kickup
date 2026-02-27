@@ -56,8 +56,7 @@ export function CreateTeam() {
   };
 
   return (
-    <div className="fixed inset-0 flex justify-center" style={{ background: 'linear-gradient(180deg, #E8F5E9 0%, #FFFBFE 40%)' }}>
-      <div className="w-full max-w-[430px] flex flex-col overflow-y-auto">
+    <div style={{ background: 'linear-gradient(180deg, #E8F5E9 0%, #FFFBFE 40%)', minHeight: '100vh' }}>
         <div className="flex items-center justify-between px-4 pt-12 pb-4">
           <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#E8F5E9] transition-colors">
             <ArrowLeft size={22} color="#49454F" />
@@ -151,7 +150,6 @@ export function CreateTeam() {
             </span>
           </button>
         </div>
-      </div>
     </div>
   );
 }
