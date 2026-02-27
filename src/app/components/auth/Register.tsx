@@ -87,15 +87,17 @@ export function Register() {
                 <p style={{ fontFamily: 'Roboto, sans-serif', fontSize: '14px', color: '#49454F', marginTop: '4px' }}>Join the community. First match is always free.</p>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <button onClick={() => fileInputRef.current?.click()} className="w-20 h-20 rounded-full flex items-center justify-center text-white shadow-lg cursor-pointer relative overflow-hidden"
-                  style={{ background: avatarPreview ? 'transparent' : activeColor, fontSize: '28px', fontWeight: 700, fontFamily: 'Roboto, sans-serif' }}>
-                  {avatarPreview
-                    ? <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
-                    : initials}
-                  <div className="absolute bottom-0 right-0 w-6 h-6 bg-[#2E7D32] rounded-full flex items-center justify-center shadow">
+                <div className="relative w-20 h-20">
+                  <button onClick={() => fileInputRef.current?.click()} className="w-20 h-20 rounded-full flex items-center justify-center text-white shadow-lg cursor-pointer overflow-hidden"
+                    style={{ background: avatarPreview ? 'transparent' : activeColor, fontSize: '28px', fontWeight: 700, fontFamily: 'Roboto, sans-serif' }}>
+                    {avatarPreview
+                      ? <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
+                      : initials}
+                  </button>
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#2E7D32] rounded-full flex items-center justify-center shadow pointer-events-none">
                     <Camera size={12} color="white" />
                   </div>
-                </button>
+                </div>
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                 <div className="flex gap-2">
                   {colorsLoading
