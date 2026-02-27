@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Search, MapPin } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useFreelancers } from '../../hooks/useFreelancers';
 import { useTeams } from '../../hooks/useTeams';
 import { useMatches } from '../../hooks/useMatches';
@@ -16,12 +17,14 @@ const FORMATS = ['All', '5v5', '6v6', '7v7', '11v11'];
 export function Discover() {
   const { isDark } = useTheme();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [tab, setTab] = useState('Freelancers');
   const [query, setQuery] = useState('');
   const [position, setPosition] = useState('All');
   const [format, setFormat] = useState('All');
 
-  const { freelancers, loading: freelancersLoading } = useFreelancers();
+  const { freelancers: allFreelancers, loading: freelancersLoading } = useFreelancers();
+  const freelancers = allFreelancers.filter(p => p.id !== user?.id);
   const { teams, loading: teamsLoading } = useTeams();
   const { matches, loading: matchesLoading } = useMatches();
 

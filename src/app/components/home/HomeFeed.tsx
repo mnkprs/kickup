@@ -36,7 +36,8 @@ export function HomeFeed() {
   const { user, profile, captainTeam } = useAuth();
   const { teams: teamsLooking, loading: teamsLoading } = useTeams({ searching_for_opponent: true });
   const { matches, loading: matchesLoading } = useMatches();
-  const { freelancers: freelancePlayers, loading: freelancersLoading } = useFreelancers();
+  const { freelancers: allFreelancers, loading: freelancersLoading } = useFreelancers();
+  const freelancePlayers = allFreelancers.filter(p => p.id !== user?.id);
   const { notifs } = useNotifications(user?.id);
 
   const bg = isDark ? '#1C1B1F' : '#FFFBFE';
