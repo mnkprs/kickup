@@ -19,6 +19,7 @@ export interface Profile {
   preferred_foot: 'left' | 'right' | 'both' | null;
   is_freelancer: boolean;
   freelancer_until: string | null;
+  is_field_owner: boolean;
   avatar_url: string | null;
   stat_matches: number;
   stat_goals: number;
@@ -125,6 +126,77 @@ export interface MatchFull extends MatchWithTeams {
   match_lineups: MatchLineup[];
   match_proposals: MatchProposal[];
   match_events: MatchEvent[];
+}
+
+export type TournamentStatus = 'registration' | 'group_stage' | 'knockout_stage' | 'completed';
+
+export interface Tournament {
+  id: string;
+  name: string;
+  description: string;
+  organizer_id: string;
+  venue: string;
+  area: string;
+  match_format: MatchFormat;
+  max_teams: number;
+  teams_per_group: number;
+  prize: string;
+  start_date: string | null;
+  end_date: string | null;
+  status: TournamentStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TournamentRegistration {
+  id: string;
+  tournament_id: string;
+  team_id: string;
+  status: 'pending' | 'approved' | 'rejected';
+  applied_at: string;
+  teams?: Team;
+}
+
+export interface TournamentGroup {
+  id: string;
+  tournament_id: string;
+  team_id: string;
+  group_label: string;
+}
+
+export interface TournamentMatch {
+  id: string;
+  tournament_id: string;
+  match_id: string;
+  stage: 'group' | 'semi_final' | 'final';
+  group_label: string | null;
+  match_order: number;
+  matches?: MatchWithTeams;
+}
+
+export interface TournamentStandingsRow {
+  rank: number;
+  team_id: string;
+  name: string;
+  emoji: string;
+  played: number;
+  w: number;
+  d: number;
+  l: number;
+  gf: number;
+  ga: number;
+  gd: number;
+  pts: number;
+}
+
+export type OwnerApplicationStatus = 'pending' | 'approved' | 'rejected';
+
+export interface OwnerApplication {
+  id: string;
+  user_id: string;
+  message: string;
+  status: OwnerApplicationStatus;
+  created_at: string;
 }
 
 export interface Notification {

@@ -19,6 +19,10 @@ import { EditProfile } from './components/profile/EditProfile';
 import { PlayerPublicProfile } from './components/profile/PlayerPublicProfile';
 import { Notifications } from './components/notifications/Notifications';
 import { Discover } from './components/discover/Discover';
+import { TournamentsList } from './components/tournaments/TournamentsList';
+import { CreateTournament } from './components/tournaments/CreateTournament';
+import { TournamentDetail } from './components/tournaments/TournamentDetail';
+import { ManageTournament } from './components/tournaments/ManageTournament';
 
 export const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/app" replace /> },
@@ -44,6 +48,10 @@ export const router = createBrowserRouter([
       { path: 'players/:id', element: <PlayerPublicProfile /> },
       { path: 'notifications', element: <Notifications /> },
       { path: 'discover', element: <Discover /> },
+      { path: 'tournaments', element: <TournamentsList /> },
+      { path: 'tournaments/create', element: <CreateTournament /> },
+      { path: 'tournaments/:id', element: <TournamentDetail /> },
+      { path: 'tournaments/:id/manage', element: <ManageTournament /> },
     ],
   },
   { path: '*', element: <Navigate to="/splash" replace /> },

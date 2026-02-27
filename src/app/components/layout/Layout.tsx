@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router';
-import { Home, Trophy, Users, User, Bell, Plus, Search, Target } from 'lucide-react';
+import { Home, Trophy, Users, User, Bell, Plus, Search, Target, Calendar } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,8 +7,8 @@ import { useNotifications } from '../../hooks/useNotifications';
 
 const NAV_ITEMS = [
   { to: '/app', icon: Home, label: 'Home' },
-  { to: '/app/matches', icon: Trophy, label: 'Matches' },
-  { to: '/app/teams', icon: Users, label: 'Teams' },
+  { to: '/app/matches', icon: Calendar, label: 'Matches' },
+  { to: '/app/tournaments', icon: Trophy, label: 'Tourneys' },
   { to: '/app/notifications', icon: Bell, label: 'Alerts', isBell: true },
   { to: '/app/profile', icon: User, label: 'Profile' },
 ];
@@ -18,7 +18,7 @@ export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [fabOpen, setFabOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { notifs } = useNotifications(user?.id);
   const unread = user ? notifs.filter(n => !n.read).length : 0;
 
@@ -51,7 +51,11 @@ export function Layout() {
             {[
               { label: 'Challenge a Team', icon: Target, color: '#2E7D32', path: '/app/matches/challenge' },
               { label: 'Find Open Spot', icon: Search, color: '#E65100', path: '/app/discover' },
-              { label: 'Create a Team', icon: Users, color: '#1565C0', path: '/app/teams/create' },
+              { label: 'Browse Teams', icon: Users, color: '#1565C0', path: '/app/teams' },
+              { label: 'Create a Team', icon: Users, color: '#0D47A1', path: '/app/teams/create' },
+              ...(profile?.is_field_owner
+                ? [{ label: 'Create Tournament', icon: Trophy, color: '#6A1B9A', path: '/app/tournaments/create' }]
+                : []),
             ].map(({ label, icon: Icon, color, path }) => (
               <button
                 key={path}
