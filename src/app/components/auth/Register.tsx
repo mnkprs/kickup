@@ -1,24 +1,33 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { ArrowLeft, Camera, ChevronDown } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { uploadAvatar } from '../../lib/uploadAvatar';
+import { useAreas, useAvatarColors } from '../../hooks/useConfig';
 
 const POSITIONS = ['GK', 'DEF', 'MID', 'FWD'];
-const AREAS = ['Kolonaki', 'Exarcheia', 'Pangrati', 'Glyfada', 'Kifisia', 'Piraeus', 'Nea Smyrni', 'Chalandri', 'Koupi', 'Markopoulo', 'Other'];
-const AVATAR_COLORS = ['#2E7D32', '#1565C0', '#6A1B9A', '#E65100', '#00695C', '#BF360C', '#37474F', '#F9A825'];
 
 export function Register() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [position, setPosition] = useState('');
   const [area, setArea] = useState('');
-  const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
+  const [avatarColor, setAvatarColor] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const { areas, loading: areasLoading } = useAreas();
+  const { colors, loading: colorsLoading } = useAvatarColors();
+
+  // Default to first color once loaded
+  const activeColor = avatarColor || colors[0] || '#2E7D32';
 
   const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
 
@@ -26,17 +35,32 @@ export function Register() {
   const fontStyle = { fontFamily: 'Roboto, sans-serif', fontSize: '16px', color: '#1C1B1F' };
   const labelStyle = { fontFamily: 'Roboto, sans-serif', fontSize: '12px', fontWeight: 500, color: '#49454F', textTransform: 'uppercase' as const, letterSpacing: '0.5px' };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     setError('');
-    const { error } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: name, position, area, avatar_color: avatarColor },
+        data: { full_name: name, position, area, avatar_color: activeColor },
       },
     });
-    if (error) { setError(error.message); setLoading(false); return; }
+    if (signUpError) { setError(signUpError.message); setLoading(false); return; }
+
+    if (avatarFile && data.user) {
+      const { url } = await uploadAvatar(data.user.id, avatarFile);
+      if (url) {
+        await supabase.from('profiles').update({ avatar_url: url }).eq('id', data.user.id);
+      }
+    }
+
     navigate('/app');
   };
 
@@ -60,17 +84,23 @@ export function Register() {
                 <p style={{ fontFamily: 'Roboto, sans-serif', fontSize: '14px', color: '#49454F', marginTop: '4px' }}>Join the community. First match is always free.</p>
               </div>
               <div className="flex flex-col items-center gap-3">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center text-white shadow-lg cursor-pointer relative" style={{ background: avatarColor, fontSize: '28px', fontWeight: 700, fontFamily: 'Roboto, sans-serif' }}>
-                  {initials}
+                <button onClick={() => fileInputRef.current?.click()} className="w-20 h-20 rounded-full flex items-center justify-center text-white shadow-lg cursor-pointer relative overflow-hidden"
+                  style={{ background: avatarPreview ? 'transparent' : activeColor, fontSize: '28px', fontWeight: 700, fontFamily: 'Roboto, sans-serif' }}>
+                  {avatarPreview
+                    ? <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
+                    : initials}
                   <div className="absolute bottom-0 right-0 w-6 h-6 bg-[#2E7D32] rounded-full flex items-center justify-center shadow">
                     <Camera size={12} color="white" />
                   </div>
-                </div>
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                 <div className="flex gap-2">
-                  {AVATAR_COLORS.map(c => (
-                    <button key={c} onClick={() => setAvatarColor(c)} className="w-6 h-6 rounded-full transition-transform hover:scale-110"
-                      style={{ background: c, border: avatarColor === c ? '2px solid white' : '2px solid transparent', boxShadow: avatarColor === c ? `0 0 0 2px ${c}` : 'none' }} />
-                  ))}
+                  {colorsLoading
+                    ? <div className="h-6 w-40 rounded-full bg-[#E8F5E9] animate-pulse" />
+                    : colors.map(c => (
+                      <button key={c} onClick={() => setAvatarColor(c)} className="w-6 h-6 rounded-full transition-transform hover:scale-110"
+                        style={{ background: c, border: activeColor === c ? '2px solid white' : '2px solid transparent', boxShadow: activeColor === c ? `0 0 0 2px ${c}` : 'none' }} />
+                    ))}
                 </div>
               </div>
               <div className="flex flex-col gap-1">
@@ -106,10 +136,11 @@ export function Register() {
               <div className="flex flex-col gap-1">
                 <span style={labelStyle}>Area / Neighbourhood</span>
                 <div className="relative">
-                  <select value={area} onChange={e => setArea(e.target.value)} className="w-full h-[56px] px-4 pr-10 rounded-2xl border-2 border-[#CAC4D0] bg-white outline-none focus:border-[#2E7D32] transition-colors appearance-none"
+                  <select value={area} onChange={e => setArea(e.target.value)} disabled={areasLoading}
+                    className="w-full h-[56px] px-4 pr-10 rounded-2xl border-2 border-[#CAC4D0] bg-white outline-none focus:border-[#2E7D32] transition-colors appearance-none"
                     style={{ fontFamily: 'Roboto, sans-serif', fontSize: '16px', color: area ? '#1C1B1F' : '#79747E' }}>
-                    <option value="" disabled>Select your area...</option>
-                    {AREAS.map(a => <option key={a} value={a}>{a}, Athens</option>)}
+                    <option value="" disabled>{areasLoading ? 'Loading...' : 'Select your area...'}</option>
+                    {areas.map(a => <option key={a} value={a}>{a}, Athens</option>)}
                   </select>
                   <ChevronDown size={18} color="#79747E" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
@@ -119,7 +150,7 @@ export function Register() {
           )}
           <button
             onClick={() => { if (step === 1) setStep(2); else handleSubmit(); }}
-            disabled={loading || (step === 1 && (!name || !email || !password))}
+            disabled={loading || (step === 1 && (!name || !email || !password)) || (step === 2 && (areasLoading || colorsLoading))}
             className="w-full h-[52px] rounded-2xl flex items-center justify-center transition-all active:scale-95 mb-8"
             style={{ background: 'linear-gradient(135deg, #2E7D32 0%, #43A047 100%)', boxShadow: '0 4px 12px rgba(46,125,50,0.35)', opacity: loading ? 0.7 : 1 }}
           >

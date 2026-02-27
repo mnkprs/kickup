@@ -5,6 +5,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useTeam } from '../../hooks/useTeam';
 import { useMatches } from '../../hooks/useMatches';
 import { formatMatchDate } from '../../lib/formatDate';
+import { PlayerAvatar } from '../ui/PlayerAvatar';
 import type { MatchWithTeams } from '../../types/database';
 
 function matchResult(match: MatchWithTeams, teamId: string): 'win' | 'loss' | 'draw' | null {
@@ -120,10 +121,7 @@ export function TeamProfile() {
                 return (
                   <div key={tm.id} className="flex items-center gap-3 p-3 rounded-2xl border"
                     style={{ background: cardBg, borderColor }}>
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0"
-                      style={{ background: p.avatar_color, fontSize: '14px', fontWeight: 700 }}>
-                      {p.avatar_initials}
-                    </div>
+                    <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={40} />
                     <div>
                       <p style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{p.full_name}</p>
                       <div className="flex items-center gap-2">

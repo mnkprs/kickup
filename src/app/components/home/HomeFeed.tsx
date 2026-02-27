@@ -9,15 +9,7 @@ import { useMatches } from '../../hooks/useMatches';
 import { useFreelancers } from '../../hooks/useFreelancers';
 import { useNotifications } from '../../hooks/useNotifications';
 import { formatMatchDate } from '../../lib/formatDate';
-
-function Avatar({ initials, color, size = 36 }: { initials: string; color: string; size?: number }) {
-  return (
-    <div className="flex items-center justify-center rounded-full text-white shrink-0"
-      style={{ width: size, height: size, background: color, fontFamily: 'Roboto, sans-serif', fontSize: size * 0.35, fontWeight: 700, letterSpacing: '-0.5px' }}>
-      {initials}
-    </div>
-  );
-}
+import { PlayerAvatar } from '../ui/PlayerAvatar';
 
 function StatusChip({ status }: { status: 'win' | 'draw' | 'loss' | 'upcoming' | 'pending' | 'disputed' | 'freelancer' }) {
   const configs = {
@@ -99,7 +91,7 @@ export function HomeFeed() {
             {unread > 0 && (<span className="absolute top-1 right-1 w-4 h-4 bg-[#B3261E] rounded-full flex items-center justify-center"><span className="text-white" style={{ fontSize: '9px' }}>{unread}</span></span>)}
           </button>
           <button onClick={() => navigate('/app/profile')}>
-            <Avatar initials={avatarInitials} color={avatarColor} size={36} />
+            <PlayerAvatar initials={avatarInitials} color={avatarColor} avatarUrl={profile?.avatar_url} size={36} />
           </button>
         </div>
       </div>
@@ -178,7 +170,7 @@ export function HomeFeed() {
             <motion.div key={player.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.06 }}
               className="flex flex-col items-center gap-2 p-3 rounded-2xl border shrink-0 w-[100px]"
               style={{ background: cardBg, borderColor, boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <Avatar initials={player.avatar_initials} color={player.avatar_color} size={44} />
+              <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={44} />
               <div className="text-center">
                 <p style={{ fontSize: '12px', fontWeight: 500, color: textPrimary, lineHeight: 1.2 }}>{player.full_name.split(' ')[0]}</p>
                 {player.position && <span className="px-2 py-0.5 rounded-full mt-1 inline-block" style={{ background: '#FFF3E0', color: '#E65100', fontSize: '10px', fontWeight: 700 }}>{player.position}</span>}

@@ -10,6 +10,7 @@ interface AuthContextType {
   captainTeam: Team | null
   loading: boolean
   signOut: () => Promise<void>
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   captainTeam: null,
   loading: true,
   signOut: async () => {},
+  refreshProfile: async () => {},
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -67,6 +69,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  const refreshProfile = async () => {
+    if (session?.user) {
+      await fetchProfileData(session.user)
+    }
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
     setProfile(null)
@@ -74,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, captainTeam, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, captainTeam, loading, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

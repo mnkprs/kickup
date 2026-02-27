@@ -14,6 +14,7 @@ export interface Profile {
   bio: string;
   is_freelancer: boolean;
   freelancer_until: string | null;
+  avatar_url: string | null;
   stat_matches: number;
   stat_goals: number;
   stat_assists: number;

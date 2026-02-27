@@ -6,6 +6,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useMatch } from '../../hooks/useMatch';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { PlayerAvatar } from '../ui/PlayerAvatar';
 import type { Profile } from '../../types/database';
 
 function ScoreStepper({ value, onChange, color }: { value: number; onChange: (v: number) => void; color: string }) {
@@ -146,10 +147,7 @@ export function SubmitResult() {
                 <button key={p.id} onClick={() => toggleScorer(p.id)}
                   className="flex items-center gap-3 p-3 rounded-2xl border transition-all text-left"
                   style={{ background: scorers.includes(p.id) ? (isDark ? '#1E2B1E' : '#E8F5E9') : cardBg, borderColor: scorers.includes(p.id) ? '#2E7D32' : borderColor }}>
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0"
-                    style={{ background: p.avatar_color, fontSize: '12px', fontWeight: 700 }}>
-                    {p.avatar_initials}
-                  </div>
+                  <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={32} />
                   <span style={{ fontSize: '14px', fontWeight: 500, color: textPrimary, flex: 1 }}>{p.full_name}</span>
                   {scorers.includes(p.id) && <Check size={16} color="#2E7D32" />}
                 </button>

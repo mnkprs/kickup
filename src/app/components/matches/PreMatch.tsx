@@ -4,16 +4,8 @@ import { ArrowLeft, Clock, MapPin, ChevronRight } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useMatch } from '../../hooks/useMatch';
 import { formatMatchDate } from '../../lib/formatDate';
+import { PlayerAvatar } from '../ui/PlayerAvatar';
 import type { Profile } from '../../types/database';
-
-function Avatar({ initials, color, size = 36 }: { initials: string; color: string; size?: number }) {
-  return (
-    <div className="flex items-center justify-center rounded-full text-white shrink-0"
-      style={{ width: size, height: size, background: color, fontSize: size * 0.35, fontWeight: 700, fontFamily: 'Roboto, sans-serif' }}>
-      {initials}
-    </div>
-  );
-}
 
 export function PreMatch() {
   const { id } = useParams();
@@ -157,7 +149,7 @@ export function PreMatch() {
                 <span style={{ fontSize: '12px', fontWeight: 600, color: '#2E7D32', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{homeTeam.short_name}</span>
                 {homeLineup.map(p => (
                   <div key={p.id} className="flex items-center gap-2">
-                    <Avatar initials={p.avatar_initials} color={p.avatar_color} size={28} />
+                    <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={28} />
                     <span style={{ fontSize: '12px', color: textPrimary }}>{p.full_name.split(' ')[0]}</span>
                   </div>
                 ))}
@@ -166,7 +158,7 @@ export function PreMatch() {
                 <span style={{ fontSize: '12px', fontWeight: 600, color: '#1565C0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{awayTeam.short_name}</span>
                 {awayLineup.map(p => (
                   <div key={p.id} className="flex items-center gap-2">
-                    <Avatar initials={p.avatar_initials} color={p.avatar_color} size={28} />
+                    <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={28} />
                     <span style={{ fontSize: '12px', color: textPrimary }}>{p.full_name.split(' ')[0]}</span>
                   </div>
                 ))}

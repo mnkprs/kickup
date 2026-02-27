@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, ChevronDown, Check } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTeams } from '../../hooks/useTeams';
+import { useAreas } from '../../hooks/useConfig';
 import { supabase } from '../../lib/supabase';
 import type { MatchFormat } from '../../types/database';
 
 const FORMATS: MatchFormat[] = ['5v5', '6v6', '7v7', '8v8', '11v11'];
-const AREAS = ['Kolonaki', 'Exarcheia', 'Pangrati', 'Glyfada', 'Kifisia', 'Piraeus', 'Nea Smyrni', 'Chalandri'];
 const STEPS = ['Your Team', 'Opponent', 'Details', 'Send'];
 
 export function ChallengeScreen() {
@@ -16,6 +16,7 @@ export function ChallengeScreen() {
   const { captainTeam } = useAuth();
   const { teams } = useTeams({ searching_for_opponent: true });
 
+  const { areas } = useAreas();
   const [step, setStep] = useState(0);
   const [opponentId, setOpponentId] = useState('');
   const [format, setFormat] = useState<MatchFormat | ''>('');
@@ -158,7 +159,7 @@ export function ChallengeScreen() {
                       className={fieldBase + " appearance-none pr-10"}
                       style={{ ...fontBase, color: area ? '#1C1B1F' : '#79747E' }}>
                       <option value="" disabled>Select area...</option>
-                      {AREAS.map(a => <option key={a} value={a}>{a}, Athens</option>)}
+                      {areas.map(a => <option key={a} value={a}>{a}, Athens</option>)}
                     </select>
                     <ChevronDown size={18} color="#79747E" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>

@@ -7,19 +7,11 @@ import { useFreelancers } from '../../hooks/useFreelancers';
 import { useTeams } from '../../hooks/useTeams';
 import { useMatches } from '../../hooks/useMatches';
 import { formatMatchDate } from '../../lib/formatDate';
+import { PlayerAvatar } from '../ui/PlayerAvatar';
 
 const TABS = ['Freelancers', 'Teams', 'Open Matches'];
 const POSITIONS = ['All', 'GK', 'DEF', 'MID', 'FWD'];
 const FORMATS = ['All', '5v5', '6v6', '7v7', '11v11'];
-
-function Avatar({ initials, color, size = 44 }: { initials: string; color: string; size?: number }) {
-  return (
-    <div className="flex items-center justify-center rounded-full text-white shrink-0"
-      style={{ width: size, height: size, background: color, fontSize: size * 0.33, fontWeight: 700, fontFamily: 'Roboto, sans-serif' }}>
-      {initials}
-    </div>
-  );
-}
 
 export function Discover() {
   const { isDark } = useTheme();
@@ -113,7 +105,7 @@ export function Discover() {
               <motion.div key={player.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
                 className="p-4 rounded-2xl border flex flex-col items-center gap-2"
                 style={{ background: cardBg, borderColor }}>
-                <Avatar initials={player.avatar_initials} color={player.avatar_color} size={52} />
+                <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={52} />
                 <div className="text-center">
                   <p style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{player.full_name.split(' ')[0]}</p>
                   <p style={{ fontSize: '12px', color: textSecondary }}>{player.full_name.split(' ').slice(1).join(' ')}</p>

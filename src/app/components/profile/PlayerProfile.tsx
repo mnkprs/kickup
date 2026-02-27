@@ -1,20 +1,15 @@
+import { useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { LogOut, MapPin } from 'lucide-react';
+import { Camera, LogOut, MapPin } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../hooks/useMatches';
 import { formatMatchDate } from '../../lib/formatDate';
+import { uploadAvatar } from '../../lib/uploadAvatar';
+import { supabase } from '../../lib/supabase';
+import { PlayerAvatar } from '../ui/PlayerAvatar';
 import type { MatchWithTeams } from '../../types/database';
-
-function Avatar({ initials, color, size = 80 }: { initials: string; color: string; size?: number }) {
-  return (
-    <div className="flex items-center justify-center rounded-full text-white"
-      style={{ width: size, height: size, background: color, fontSize: size * 0.33, fontWeight: 700, fontFamily: 'Roboto, sans-serif' }}>
-      {initials}
-    </div>
-  );
-}
 
 function matchResult(match: MatchWithTeams, teamId: string): 'win' | 'loss' | 'draw' | null {
   if (match.home_score === null || match.away_score === null) return null;
@@ -28,9 +23,10 @@ function matchResult(match: MatchWithTeams, teamId: string): 'win' | 'loss' | 'd
 
 export function PlayerProfile() {
   const { isDark, toggleTheme } = useTheme();
-  const { signOut, profile, captainTeam } = useAuth();
+  const { signOut, profile, user, captainTeam, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { matches } = useMatches();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const bg = isDark ? '#1C1B1F' : '#FFFBFE';
   const cardBg = isDark ? '#2D2C31' : 'white';
@@ -60,16 +56,40 @@ export function PlayerProfile() {
     navigate('/login');
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    const { url } = await uploadAvatar(user.id, file);
+    if (url) {
+      await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id);
+      await refreshProfile();
+    }
+  };
+
+  const handleFreelancerToggle = async () => {
+    if (!user || !profile) return;
+    await supabase.from('profiles').update({ is_freelancer: !profile.is_freelancer }).eq('id', user.id);
+    await refreshProfile();
+  };
+
   return (
     <div style={{ background: bg, minHeight: '100vh', fontFamily: 'Roboto, sans-serif' }}>
       <div className="relative" style={{ background: 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 60%, #388E3C 100%)', paddingTop: '48px', paddingBottom: '32px' }}>
         <div className="flex flex-col items-center gap-3 px-4">
           <div className="relative">
-            <Avatar initials={profile?.avatar_initials ?? '?'} color={profile?.avatar_color ?? '#2E7D32'} size={88} />
-            <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center"
+            <PlayerAvatar
+              initials={profile?.avatar_initials ?? '?'}
+              color={profile?.avatar_color ?? '#2E7D32'}
+              avatarUrl={profile?.avatar_url}
+              size={88}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center"
               style={{ background: '#E8F5E9', border: '2px solid white' }}>
-              <span style={{ fontSize: '16px' }}>📷</span>
-            </div>
+              <Camera size={14} color="#2E7D32" />
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </div>
           <div className="text-center">
             <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'white' }}>{profile?.full_name ?? 'Player'}</h1>
@@ -117,7 +137,7 @@ export function PlayerProfile() {
             <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>Available as Freelancer</p>
             <p style={{ fontSize: '12px', color: textSecondary }}>Show up in "Open Spots" for pickup games</p>
           </div>
-          <button onClick={() => {}}
+          <button onClick={handleFreelancerToggle}
             className="w-12 h-6 rounded-full relative transition-colors"
             style={{ background: profile?.is_freelancer ? '#2E7D32' : (isDark ? '#49454F' : '#E7E0EC') }}>
             <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
