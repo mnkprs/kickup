@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { ArrowLeft, Clock, MapPin, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, ChevronRight, Check } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useMatch } from '../../hooks/useMatch';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import { formatMatchDate } from '../../lib/formatDate';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
 import type { Profile } from '../../types/database';
@@ -12,6 +15,13 @@ export function PreMatch() {
   const navigate = useNavigate();
   const { isDark } = useTheme();
   const { match, loading } = useMatch(id);
+  const { captainTeam } = useAuth();
+
+  const [editDate, setEditDate] = useState('');
+  const [editTime, setEditTime] = useState('');
+  const [editLocation, setEditLocation] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [accepting, setAccepting] = useState(false);
 
   const bg = isDark ? '#1C1B1F' : '#FFFBFE';
   const cardBg = isDark ? '#2D2C31' : 'white';
@@ -38,7 +48,30 @@ export function PreMatch() {
   const homeTeam = match.home_team;
   const awayTeam = match.away_team;
   const isCompleted = match.status === 'completed';
-  const isPending = match.status === 'pending_challenge';
+  const isPendingChallenge = match.status === 'pending_challenge';
+
+  const isCaptainOfMatch = captainTeam &&
+    (captainTeam.id === match.home_team_id || captainTeam.id === match.away_team_id);
+  const isAwayCapt = captainTeam?.id === match.away_team_id;
+
+  const handleSaveDetails = async () => {
+    if (!id) return;
+    setSaving(true);
+    await supabase.from('matches').update({
+      match_date:  editDate     || null,
+      match_time:  editTime     || null,
+      location:    editLocation || null,
+    }).eq('id', id);
+    setSaving(false);
+  };
+
+  const handleAccept = async () => {
+    if (!captainTeam || !id) return;
+    setAccepting(true);
+    await supabase.rpc('accept_challenge', { p_match_id: id, p_team_id: captainTeam.id });
+    setAccepting(false);
+    navigate(`/app/matches/${id}/schedule`);
+  };
 
   const homeLineup = (match.match_lineups ?? []).filter(l => l.team_id === match.home_team_id).map(l => l.profiles).filter(Boolean) as Profile[];
   const awayLineup = (match.match_lineups ?? []).filter(l => l.team_id === match.away_team_id).map(l => l.profiles).filter(Boolean) as Profile[];
@@ -66,10 +99,10 @@ export function PreMatch() {
         <span style={{ fontSize: '18px', fontWeight: 500, color: textPrimary }}>Match</span>
         <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-bold"
           style={{
-            background: isCompleted ? '#E8F5E9' : isPending ? '#FFF3E0' : '#E3F2FD',
-            color: isCompleted ? '#2E7D32' : isPending ? '#E65100' : '#1565C0',
+            background: isCompleted ? '#E8F5E9' : isPendingChallenge ? '#FFF3E0' : '#E3F2FD',
+            color: isCompleted ? '#2E7D32' : isPendingChallenge ? '#E65100' : '#1565C0',
           }}>
-          {isCompleted ? 'Completed' : isPending ? 'Pending Result' : 'Upcoming'}
+          {isCompleted ? 'Completed' : isPendingChallenge ? 'Pending Challenge' : 'Upcoming'}
         </span>
       </div>
 
@@ -100,7 +133,44 @@ export function PreMatch() {
           </div>
         </motion.div>
 
-        {(match.match_date || match.location) && (
+        {isPendingChallenge && isCaptainOfMatch ? (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-2xl border flex flex-col gap-3"
+            style={{ background: cardBg, borderColor }}>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: textPrimary }}>Match Details</p>
+            <p style={{ fontSize: '12px', color: textSecondary }}>Both captains can set the date, time and field.</p>
+            <div className="flex flex-col gap-2">
+              <input type="date"
+                defaultValue={match.match_date ?? ''}
+                onChange={e => setEditDate(e.target.value)}
+                className="w-full h-[48px] px-4 rounded-xl border-2 outline-none"
+                style={{ borderColor, background: isDark ? '#1C1B1F' : '#F9F9F9', color: textPrimary, fontSize: '15px', fontFamily: 'Roboto, sans-serif' }} />
+              <input type="time"
+                defaultValue={match.match_time ?? ''}
+                onChange={e => setEditTime(e.target.value)}
+                className="w-full h-[48px] px-4 rounded-xl border-2 outline-none"
+                style={{ borderColor, background: isDark ? '#1C1B1F' : '#F9F9F9', color: textPrimary, fontSize: '15px', fontFamily: 'Roboto, sans-serif' }} />
+              <input placeholder="Field / Venue"
+                defaultValue={match.location ?? ''}
+                onChange={e => setEditLocation(e.target.value)}
+                className="w-full h-[48px] px-4 rounded-xl border-2 outline-none"
+                style={{ borderColor, background: isDark ? '#1C1B1F' : '#F9F9F9', color: textPrimary, fontSize: '15px', fontFamily: 'Roboto, sans-serif' }} />
+            </div>
+            <button onClick={handleSaveDetails} disabled={saving}
+              className="w-full h-[44px] rounded-xl"
+              style={{ background: '#2E7D32', color: 'white', fontSize: '14px', fontWeight: 500, opacity: saving ? 0.7 : 1 }}>
+              {saving ? 'Saving…' : 'Save Details'}
+            </button>
+            {isAwayCapt && (
+              <button onClick={handleAccept} disabled={accepting}
+                className="w-full h-[44px] rounded-xl flex items-center justify-center gap-2 border-2"
+                style={{ borderColor: '#2E7D32', color: '#2E7D32', fontSize: '14px', fontWeight: 500, opacity: accepting ? 0.7 : 1 }}>
+                <Check size={16} color="#2E7D32" />
+                {accepting ? 'Accepting…' : 'Accept Challenge'}
+              </button>
+            )}
+          </motion.div>
+        ) : (match.match_date || match.location) && (
           <div className="p-4 rounded-2xl border flex flex-col gap-2" style={{ background: cardBg, borderColor }}>
             {match.match_date && (
               <div className="flex items-center gap-2">

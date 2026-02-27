@@ -31,7 +31,7 @@ function matchResult(match: MatchWithTeams, teamId: string): 'win' | 'loss' | 'd
 }
 
 export function PlayerProfile() {
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark } = useTheme();
   const { signOut, profile, user, captainTeam, playerTeam, refreshProfile } = useAuth();
   const myTeam = captainTeam ?? playerTeam;
   const isCaptain = !!captainTeam;
@@ -241,12 +241,6 @@ export function PlayerProfile() {
         )}
 
         <div className="flex flex-col gap-2 mt-2">
-          <button onClick={toggleTheme}
-            className="flex items-center justify-between p-4 rounded-2xl border"
-            style={{ background: cardBg, borderColor }}>
-            <span style={{ fontSize: '15px', color: textPrimary }}>Theme</span>
-            <span style={{ fontSize: '14px', color: textSecondary }}>{isDark ? '🌙 Dark' : '☀️ Light'}</span>
-          </button>
           <button onClick={handleSignOut}
             className="flex items-center gap-2 p-4 rounded-2xl border"
             style={{ background: cardBg, borderColor }}>
