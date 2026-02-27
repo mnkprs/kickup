@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { Camera, LogOut, MapPin, Shield } from 'lucide-react';
+import { Camera, LogOut, MapPin, Pencil, Shield } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../hooks/useMatches';
@@ -87,6 +87,12 @@ export function PlayerProfile() {
   return (
     <div style={{ background: bg, minHeight: '100vh', fontFamily: 'Roboto, sans-serif' }}>
       <div className="relative" style={{ background: 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 60%, #388E3C 100%)', paddingTop: '48px', paddingBottom: '32px' }}>
+        <button onClick={() => navigate('/app/profile/edit')}
+          className="absolute top-12 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+          style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
+          <Pencil size={12} color="white" />
+          <span style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>Edit</span>
+        </button>
         <div className="flex flex-col items-center gap-3 px-4">
           <div className="relative">
             <PlayerAvatar
@@ -126,6 +132,16 @@ export function PlayerProfile() {
                   <MapPin size={12} color="rgba(255,255,255,0.8)" />
                   <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>{profile.area}</span>
                 </div>
+              )}
+              {profile?.height && (
+                <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '12px' }}>
+                  {profile.height} cm
+                </span>
+              )}
+              {profile?.preferred_foot && (
+                <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '12px' }}>
+                  {profile.preferred_foot.charAt(0).toUpperCase() + profile.preferred_foot.slice(1)} foot
+                </span>
               )}
             </div>
             {myTeam && (

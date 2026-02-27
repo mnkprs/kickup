@@ -15,6 +15,8 @@ export interface Profile {
   bio: string;
   nationality: string | null;
   date_of_birth: string | null; // ISO date string e.g. "1995-03-15"
+  height: number | null;
+  preferred_foot: 'left' | 'right' | 'both' | null;
   is_freelancer: boolean;
   freelancer_until: string | null;
   avatar_url: string | null;

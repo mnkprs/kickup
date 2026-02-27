@@ -14,6 +14,7 @@ import { MatchScheduling } from './components/matches/MatchScheduling';
 import { PreMatch } from './components/matches/PreMatch';
 import { SubmitResult } from './components/matches/SubmitResult';
 import { PlayerProfile } from './components/profile/PlayerProfile';
+import { EditProfile } from './components/profile/EditProfile';
 import { Notifications } from './components/notifications/Notifications';
 import { Discover } from './components/discover/Discover';
 
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
       { path: 'matches/:id/schedule', element: <MatchScheduling /> },
       { path: 'matches/:id/result', element: <SubmitResult /> },
       { path: 'profile', element: <PlayerProfile /> },
+      { path: 'profile/edit', element: <EditProfile /> },
       { path: 'notifications', element: <Notifications /> },
       { path: 'discover', element: <Discover /> },
     ],
