@@ -15,7 +15,7 @@ export function ChallengeScreen() {
   const navigate = useNavigate();
   const { isDark } = useTheme();
   const { captainTeam } = useAuth();
-  const { teams } = useTeams({ searching_for_opponent: true });
+  const { teams } = useTeams();
 
   const [step, setStep] = useState(0);
   const [opponentId, setOpponentId] = useState('');
@@ -149,7 +149,7 @@ export function ChallengeScreen() {
               </p>
               {opponentTeams.length === 0 && (
                 <p style={{ fontSize: '14px', color: textSecondary, textAlign: 'center', paddingTop: '16px' }}>
-                  No teams are currently searching for opponents.
+                  No other teams found.
                 </p>
               )}
               {opponentTeams.map(t => (

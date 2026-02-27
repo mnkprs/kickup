@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router';
 import { Splash } from './components/auth/Splash';
 import { Login } from './components/auth/Login';
 import { Register } from './components/auth/Register';
+import { Onboarding } from './components/auth/Onboarding';
 import { RequireAuth } from './components/auth/RequireAuth';
 import { Layout } from './components/layout/Layout';
 import { HomeFeed } from './components/home/HomeFeed';
@@ -15,6 +16,7 @@ import { PreMatch } from './components/matches/PreMatch';
 import { SubmitResult } from './components/matches/SubmitResult';
 import { PlayerProfile } from './components/profile/PlayerProfile';
 import { EditProfile } from './components/profile/EditProfile';
+import { PlayerPublicProfile } from './components/profile/PlayerPublicProfile';
 import { Notifications } from './components/notifications/Notifications';
 import { Discover } from './components/discover/Discover';
 
@@ -23,6 +25,7 @@ export const router = createBrowserRouter([
   { path: '/splash', element: <Splash /> },
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
+  { path: '/onboarding', element: <Onboarding /> },
   {
     path: '/app',
     element: <RequireAuth><Layout /></RequireAuth>,
@@ -38,6 +41,7 @@ export const router = createBrowserRouter([
       { path: 'matches/:id/result', element: <SubmitResult /> },
       { path: 'profile', element: <PlayerProfile /> },
       { path: 'profile/edit', element: <EditProfile /> },
+      { path: 'players/:id', element: <PlayerPublicProfile /> },
       { path: 'notifications', element: <Notifications /> },
       { path: 'discover', element: <Discover /> },
     ],

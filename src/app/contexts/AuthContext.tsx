@@ -10,6 +10,7 @@ interface AuthContextType {
   captainTeam: Team | null  // team where user is active captain
   playerTeam: Team | null   // any team user is an active member of
   loading: boolean
+  needsOnboarding: boolean  // true for OAuth users who haven't filled profile yet
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   captainTeam: null,
   playerTeam: null,
   loading: true,
+  needsOnboarding: false,
   signOut: async () => {},
   refreshProfile: async () => {},
 })
@@ -38,6 +40,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select('*')
       .eq('id', user.id)
       .single()
+
+    // Auto-sync Google profile photo for OAuth users
+    if (p && !p.avatar_url && user.user_metadata?.avatar_url) {
+      await supabase.from('profiles').update({ avatar_url: user.user_metadata.avatar_url }).eq('id', user.id)
+      p.avatar_url = user.user_metadata.avatar_url
+    }
 
     const { data: captainTm } = await supabase
       .from('team_members')
@@ -97,8 +105,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPlayerTeam(null)
   }
 
+  const needsOnboarding = !loading && !!session && !!profile && !profile.area
+
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, captainTeam, playerTeam, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, captainTeam, playerTeam, loading, needsOnboarding, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

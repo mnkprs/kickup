@@ -4,10 +4,12 @@ import { motion } from 'motion/react';
 import { Search, MapPin } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { useFreelancers } from '../../hooks/useFreelancers';
 import { useTeams } from '../../hooks/useTeams';
 import { useMatches } from '../../hooks/useMatches';
 import { formatMatchDate } from '../../lib/formatDate';
+import { supabase } from '../../lib/supabase';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
 
 const TABS = ['Freelancers', 'Teams', 'Open Matches'];
@@ -17,8 +19,10 @@ const FORMATS = ['All', '5v5', '6v6', '7v7', '11v11'];
 export function Discover() {
   const { isDark } = useTheme();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, captainTeam } = useAuth();
+  const { addToast } = useToast();
   const [tab, setTab] = useState('Freelancers');
+  const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
   const [position, setPosition] = useState('All');
   const [format, setFormat] = useState('All');
@@ -108,7 +112,9 @@ export function Discover() {
               <motion.div key={player.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
                 className="flex items-center gap-3 p-3 rounded-2xl border"
                 style={{ background: cardBg, borderColor }}>
-                <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={48} />
+                <button onClick={() => navigate(`/app/players/${player.id}`)} className="shrink-0">
+                  <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={48} />
+                </button>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{player.full_name}</p>
@@ -132,11 +138,24 @@ export function Discover() {
                     )}
                   </div>
                 </div>
-                <button onClick={() => navigate(`/app/discover/player/${player.id}`)}
-                  className="px-3 py-1.5 rounded-xl shrink-0"
-                  style={{ background: '#E8F5E9', color: '#2E7D32', fontSize: '13px', fontWeight: 500 }}>
-                  Invite
-                </button>
+                {captainTeam && (
+                  <button
+                    disabled={invitedIds.has(player.id)}
+                    onClick={async () => {
+                      const { error } = await supabase.rpc('invite_player_to_team', { p_player_id: player.id });
+                      if (error) { addToast(error.message, 'error'); return; }
+                      setInvitedIds(prev => new Set([...prev, player.id]));
+                      addToast('Invitation sent!', 'success');
+                    }}
+                    className="px-3 py-1.5 rounded-xl shrink-0 transition-all"
+                    style={{
+                      background: invitedIds.has(player.id) ? (isDark ? '#49454F' : '#E7E0EC') : '#E8F5E9',
+                      color: invitedIds.has(player.id) ? (isDark ? '#CAC4D0' : '#79747E') : '#2E7D32',
+                      fontSize: '13px', fontWeight: 500,
+                    }}>
+                    {invitedIds.has(player.id) ? 'Invited ✓' : 'Invite'}
+                  </button>
+                )}
               </motion.div>
             ))}
             {filteredFreelancers.length === 0 && (

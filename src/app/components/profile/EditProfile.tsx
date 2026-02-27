@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Mail } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { uploadAvatar } from '../../lib/uploadAvatar';
 import { useAuth } from '../../contexts/AuthContext';
@@ -34,6 +34,7 @@ export function EditProfile() {
   const [avatarColor,   setAvatarColor]   = useState(profile?.avatar_color    ?? '#2E7D32');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile?.avatar_url ?? null);
   const [avatarFile,    setAvatarFile]    = useState<File | null>(null);
+  const [email,         setEmail]         = useState(user?.email ?? '');
   const [saving,        setSaving]        = useState(false);
 
   const activeColor = avatarColor || profile?.avatar_color || '#2E7D32';
@@ -78,6 +79,13 @@ export function EditProfile() {
       }).eq('id', user.id);
 
       if (error) { addToast(error.message, 'error'); return; }
+
+      if (email.trim() && email.trim() !== user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({ email: email.trim() });
+        if (emailError) { addToast(emailError.message, 'error'); }
+        else { addToast(`Confirmation sent to ${email.trim()}`, 'info'); }
+      }
+
       await refreshProfile();
       addToast('Profile saved', 'success');
       navigate('/app/profile');
@@ -212,6 +220,22 @@ export function EditProfile() {
             rows={3}
             className="w-full px-4 py-3 rounded-2xl border-2 border-[#CAC4D0] bg-white outline-none focus:border-[#2E7D32] transition-colors resize-none"
             style={{ fontFamily: 'Roboto, sans-serif', fontSize: '16px', color: '#1C1B1F' }} />
+        </div>
+
+        {/* Email */}
+        <div className="flex flex-col gap-1">
+          <span style={labelStyle}>Email</span>
+          <div className="relative">
+            <Mail size={18} color="#79747E" className="absolute left-4 top-1/2 -translate-y-1/2" />
+            <input
+              className="w-full h-[56px] pl-12 pr-4 rounded-2xl border-2 border-[#CAC4D0] bg-white outline-none focus:border-[#2E7D32] transition-colors"
+              style={fontStyle} type="email" value={email} onChange={e => setEmail(e.target.value)} />
+          </div>
+          {email.trim() !== (user?.email ?? '') && (
+            <p style={{ fontFamily: 'Roboto, sans-serif', fontSize: '12px', color: '#1565C0', marginTop: '2px' }}>
+              ✉️ A confirmation will be sent to this address
+            </p>
+          )}
         </div>
       </div>
     </div>

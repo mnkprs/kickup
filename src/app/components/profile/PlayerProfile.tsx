@@ -109,50 +109,61 @@ export function PlayerProfile() {
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </div>
-          <div className="text-center">
-            <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'white' }}>{profile?.full_name ?? 'Player'}</h1>
-            <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
+          <div className="text-center w-full">
+            <h1 style={{ fontSize: '23px', fontWeight: 700, color: 'white', letterSpacing: '-0.3px' }}>{profile?.full_name ?? 'Player'}</h1>
+
+            {/* Position + Nationality */}
+            <div className="flex items-center justify-center gap-2 mt-1.5">
               {profile?.position && (
-                <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '12px', fontWeight: 600 }}>
+                <span className="px-2.5 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.25)', color: 'white', fontSize: '12px', fontWeight: 700 }}>
                   {profile.position}
                 </span>
               )}
-              {age !== null && (
-                <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '12px' }}>
-                  {age} yrs
-                </span>
-              )}
               {profile?.nationality && (
-                <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '12px' }}>
-                  {profile.nationality}
-                </span>
-              )}
-              {profile?.area && (
-                <div className="flex items-center gap-1">
-                  <MapPin size={12} color="rgba(255,255,255,0.8)" />
-                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>{profile.area}</span>
-                </div>
-              )}
-              {profile?.height && (
-                <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '12px' }}>
-                  {profile.height} cm
-                </span>
-              )}
-              {profile?.preferred_foot && (
-                <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '12px' }}>
-                  {profile.preferred_foot.charAt(0).toUpperCase() + profile.preferred_foot.slice(1)} foot
-                </span>
+                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>{profile.nationality}</span>
               )}
             </div>
-            {myTeam && (
-              <button onClick={() => navigate(`/app/teams/${myTeam.id}`)}
-                className="mt-2 flex items-center gap-1.5 mx-auto px-3 py-1 rounded-full"
-                style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
-                <Shield size={12} color="rgba(255,255,255,0.9)" />
-                <span style={{ fontSize: '12px', color: 'white', fontWeight: 500 }}>
-                  {myTeam.name}{isCaptain ? ' · Captain' : ''}
-                </span>
-              </button>
+
+            {/* Biometrics */}
+            {(() => {
+              const bio = [
+                age !== null ? { value: String(age), label: 'Age' } : null,
+                profile?.height ? { value: String(profile.height), label: 'cm' } : null,
+                profile?.preferred_foot ? { value: profile.preferred_foot.charAt(0).toUpperCase() + profile.preferred_foot.slice(1), label: 'Foot' } : null,
+              ].filter((x): x is { value: string; label: string } => x !== null);
+              return bio.length > 0 ? (
+                <div className="flex mt-3 rounded-2xl overflow-hidden mx-10" style={{ background: 'rgba(0,0,0,0.18)' }}>
+                  {bio.map((item, i) => (
+                    <div key={item.label} className="flex-1 py-2.5 text-center relative">
+                      {i > 0 && <div className="absolute left-0 top-2 bottom-2" style={{ width: '1px', background: 'rgba(255,255,255,0.15)' }} />}
+                      <p style={{ fontSize: '17px', fontWeight: 700, color: 'white', lineHeight: 1.2 }}>{item.value}</p>
+                      <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.55)', marginTop: '1px' }}>{item.label}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null;
+            })()}
+
+            {/* Location + Team */}
+            {(profile?.area || myTeam) && (
+              <div className="flex items-center justify-center gap-3 mt-2.5 flex-wrap">
+                {profile?.area && (
+                  <div className="flex items-center gap-1">
+                    <MapPin size={11} color="rgba(255,255,255,0.65)" />
+                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>{profile.area}</span>
+                  </div>
+                )}
+                {profile?.area && myTeam && <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>·</span>}
+                {myTeam && (
+                  <button onClick={() => navigate(`/app/teams/${myTeam.id}`)}
+                    className="flex items-center gap-1">
+                    <Shield size={11} color="rgba(255,255,255,0.65)" />
+                    <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+                      {myTeam.name}{isCaptain ? ' · Captain' : ''}
+                    </span>
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>

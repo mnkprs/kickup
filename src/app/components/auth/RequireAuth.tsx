@@ -2,7 +2,7 @@ import { Navigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, loading, needsOnboarding } = useAuth();
 
   if (loading) {
     return (
@@ -21,9 +21,8 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!session) return <Navigate to="/login" replace />;
+  if (needsOnboarding) return <Navigate to="/onboarding" replace />;
 
   return <>{children}</>;
 }

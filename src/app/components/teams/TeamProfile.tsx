@@ -83,6 +83,12 @@ export function TeamProfile() {
 
   const teamMatches = matches.filter(m => m.home_team_id === team.id || m.away_team_id === team.id);
   const completedMatches = teamMatches.filter(m => m.status === 'completed').slice(0, 5);
+
+  const hasActiveChallenge = captainTeam ? matches.some(m =>
+    (m.status === 'pending_challenge' || m.status === 'scheduling' || m.status === 'pre_match') &&
+    ((m.home_team_id === captainTeam.id && m.away_team_id === team.id) ||
+     (m.away_team_id === captainTeam.id && m.home_team_id === team.id))
+  ) : false;
   const total = team.record_w + team.record_d + team.record_l;
   const winRate = total > 0 ? Math.round((team.record_w / total) * 100) : 0;
 
@@ -232,7 +238,9 @@ export function TeamProfile() {
                 const busy = actionLoading === `accept-${tm.player_id}` || actionLoading === `reject-${tm.player_id}`;
                 return (
                   <div key={tm.id} className="flex items-center gap-3">
-                    <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={36} />
+                    <button onClick={() => navigate(`/app/players/${tm.player_id}`)} className="shrink-0">
+                      <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={36} />
+                    </button>
                     <div className="flex-1 min-w-0">
                       <p style={{ fontSize: '13px', fontWeight: 500, color: textPrimary }}>{p.full_name}</p>
                       {p.position && <p style={{ fontSize: '11px', color: textSecondary }}>{p.position}</p>}
@@ -281,7 +289,9 @@ export function TeamProfile() {
                       return (
                         <div key={tm.id} className="flex items-center gap-3 p-3 rounded-2xl border"
                           style={{ background: cardBg, borderColor }}>
-                          <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={40} />
+                          <button onClick={() => navigate(`/app/players/${tm.player_id}`)} className="shrink-0">
+                            <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={40} />
+                          </button>
                           <div className="flex-1 min-w-0">
                             <p style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{p.full_name}</p>
                             <div className="flex items-center gap-2">
@@ -366,6 +376,27 @@ export function TeamProfile() {
 
         {/* Action buttons */}
         <div className="flex flex-col gap-3">
+          {/* Searching for opponent toggle (captain only) */}
+          {isCaptain && (
+            <div className="p-4 rounded-2xl border flex items-center justify-between" style={{ background: cardBg, borderColor }}>
+              <div>
+                <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>Searching for Opponent</p>
+                <p style={{ fontSize: '12px', color: textSecondary }}>Show team as open for challenges</p>
+              </div>
+              <button
+                onClick={async () => {
+                  const { error } = await supabase.from('teams').update({ searching_for_opponent: !team.searching_for_opponent }).eq('id', team.id);
+                  if (error) { addToast(error.message, 'error'); return; }
+                  refresh();
+                }}
+                className="w-12 h-6 rounded-full relative transition-colors"
+                style={{ background: team.searching_for_opponent ? '#2E7D32' : (isDark ? '#49454F' : '#E7E0EC') }}>
+                <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
+                  style={{ left: team.searching_for_opponent ? 'calc(100% - 22px)' : '2px' }} />
+              </button>
+            </div>
+          )}
+
           {/* Apply for a spot (non-members, not own team) */}
           {!isMember && !isCaptain && user && (
             hasPendingApplication ? (
@@ -385,14 +416,22 @@ export function TeamProfile() {
             )
           )}
 
-          {/* Challenge button — only if not own team and user has a captain team */}
+          {/* Challenge button — only if not own team, user has captain team, and no active match */}
           {!isMyTeam && captainTeam && (
-            <button onClick={() => navigate('/app/matches/challenge')}
-              className="w-full h-[52px] rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #2E7D32 0%, #43A047 100%)', boxShadow: '0 4px 12px rgba(46,125,50,0.35)' }}>
-              <Swords size={20} color="white" />
-              <span style={{ fontSize: '16px', fontWeight: 500, color: 'white' }}>Challenge This Team</span>
-            </button>
+            hasActiveChallenge ? (
+              <div className="w-full h-[52px] rounded-2xl flex items-center justify-center gap-2"
+                style={{ background: isDark ? '#2D2C31' : '#F3EDF7', border: '1px solid #CAC4D0' }}>
+                <Swords size={16} color={textSecondary} />
+                <span style={{ fontSize: '15px', color: textSecondary }}>Match already in progress</span>
+              </div>
+            ) : (
+              <button onClick={() => navigate('/app/matches/challenge')}
+                className="w-full h-[52px] rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #2E7D32 0%, #43A047 100%)', boxShadow: '0 4px 12px rgba(46,125,50,0.35)' }}>
+                <Swords size={20} color="white" />
+                <span style={{ fontSize: '16px', fontWeight: 500, color: 'white' }}>Challenge This Team</span>
+              </button>
+            )
           )}
         </div>
       </div>

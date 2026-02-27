@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, MapPin, Plus, SlidersHorizontal, X } from 'lucide-react';
+import { Search, MapPin, Plus, SlidersHorizontal, X, Crown, Users } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { useTeams } from '../../hooks/useTeams';
 import { useAreas } from '../../hooks/useConfig';
 import type { Team } from '../../types/database';
@@ -18,7 +19,7 @@ function StatPill({ label, value, color }: { label: string; value: number; color
   );
 }
 
-function TeamCard({ team, isDark, onNavigate }: { team: Team; isDark: boolean; onNavigate: (p: string) => void }) {
+function TeamCard({ team, isDark, onNavigate, isMyTeam, isCaptain }: { team: Team; isDark: boolean; onNavigate: (p: string) => void; isMyTeam?: boolean; isCaptain?: boolean }) {
   const cardBg = isDark ? '#2D2C31' : 'white';
   const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
   const textSecondary = isDark ? '#CAC4D0' : '#49454F';
@@ -43,6 +44,12 @@ function TeamCard({ team, isDark, onNavigate }: { team: Team; isDark: boolean; o
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span style={{ fontSize: '16px', fontWeight: 500, color: textPrimary }}>{team.name}</span>
+                {isMyTeam && (
+                  <span className="px-2 py-0.5 rounded-full flex items-center gap-1" style={{ background: isCaptain ? '#FFF3E0' : '#E3F2FD', color: isCaptain ? '#E65100' : '#1565C0', fontSize: '10px', fontWeight: 700 }}>
+                    {isCaptain ? <Crown size={9} color="#E65100" /> : <Users size={9} color="#1565C0" />}
+                    {isCaptain ? 'Captain' : 'Member'}
+                  </span>
+                )}
                 {team.searching_for_opponent && (
                   <span className="px-2 py-0.5 rounded-full" style={{ background: '#E8F5E9', color: '#2E7D32', fontSize: '10px', fontWeight: 700 }}>
                     ⚔️ Open
@@ -87,11 +94,13 @@ function TeamCard({ team, isDark, onNavigate }: { team: Team; isDark: boolean; o
           style={{ borderColor: '#2E7D32', color: '#2E7D32', fontSize: '14px', fontWeight: 500 }}>
           View Profile
         </button>
-        <button onClick={() => onNavigate('/app/matches/challenge')}
-          className="flex-1 h-[40px] rounded-xl flex items-center justify-center gap-1"
-          style={{ background: '#2E7D32', color: 'white', fontSize: '14px', fontWeight: 500 }}>
-          ⚔️ Challenge
-        </button>
+        {!isMyTeam && (
+          <button onClick={() => onNavigate('/app/matches/challenge')}
+            className="flex-1 h-[40px] rounded-xl flex items-center justify-center gap-1"
+            style={{ background: '#2E7D32', color: 'white', fontSize: '14px', fontWeight: 500 }}>
+            ⚔️ Challenge
+          </button>
+        )}
       </div>
     </div>
   );
@@ -100,14 +109,20 @@ function TeamCard({ team, isDark, onNavigate }: { team: Team; isDark: boolean; o
 export function TeamsList() {
   const { isDark } = useTheme();
   const navigate = useNavigate();
+  const { captainTeam, playerTeam } = useAuth();
   const [query, setQuery] = useState('');
   const [formatFilter, setFormatFilter] = useState('All');
-  const [areaFilter, setAreaFilter] = useState('All Areas');
+  const [cityFilter, setCityFilter] = useState('All');
   const [opponentOnly, setOpponentOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
   const { teams, loading } = useTeams();
-  const { areas } = useAreas();
+  const { groups } = useAreas();
+
+  const myTeamIds = new Set([captainTeam?.id, playerTeam?.id].filter(Boolean) as string[]);
+  const myTeams: Array<{ team: Team; isCaptain: boolean }> = [];
+  if (captainTeam) myTeams.push({ team: captainTeam, isCaptain: true });
+  if (playerTeam && playerTeam.id !== captainTeam?.id) myTeams.push({ team: playerTeam, isCaptain: false });
 
   const bg = isDark ? '#1C1B1F' : '#FFFBFE';
   const cardBg = isDark ? '#2D2C31' : 'white';
@@ -116,9 +131,10 @@ export function TeamsList() {
   const borderColor = isDark ? '#49454F' : '#E7E0EC';
 
   const filtered = teams.filter(t => {
+    if (myTeamIds.has(t.id)) return false;
     const matchQuery = t.name.toLowerCase().includes(query.toLowerCase()) || t.area.toLowerCase().includes(query.toLowerCase());
     const matchFormat = formatFilter === 'All' || t.format === formatFilter;
-    const matchArea = areaFilter === 'All Areas' || t.area === areaFilter;
+    const matchArea = cityFilter === 'All' || (groups.find(g => g.city === cityFilter)?.areas.includes(t.area) ?? false);
     const matchOpponent = !opponentOnly || t.searching_for_opponent;
     return matchQuery && matchFormat && matchArea && matchOpponent;
   });
@@ -174,18 +190,18 @@ export function TeamsList() {
           </button>
         </div>
 
-        {/* Expandable area filter */}
+        {/* Expandable city filter */}
         <AnimatePresence>
           {showFilters && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
               <div className="pt-3">
-                <p style={{ fontSize: '12px', fontWeight: 500, color: textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Area</p>
+                <p style={{ fontSize: '12px', fontWeight: 500, color: textSecondary, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>City</p>
                 <div className="flex gap-2 flex-wrap">
-                  {['All Areas', ...areas].map(a => (
-                    <button key={a} onClick={() => setAreaFilter(a)}
+                  {['All', ...groups.map(g => g.city)].map(c => (
+                    <button key={c} onClick={() => setCityFilter(c)}
                       className="px-3 py-1.5 rounded-full border"
-                      style={{ borderColor: areaFilter === a ? '#2E7D32' : borderColor, background: areaFilter === a ? '#E8F5E9' : cardBg, color: areaFilter === a ? '#2E7D32' : textSecondary, fontSize: '12px', fontWeight: areaFilter === a ? 700 : 400 }}>
-                      {a}
+                      style={{ borderColor: cityFilter === c ? '#2E7D32' : borderColor, background: cityFilter === c ? '#E8F5E9' : cardBg, color: cityFilter === c ? '#2E7D32' : textSecondary, fontSize: '12px', fontWeight: cityFilter === c ? 700 : 400 }}>
+                      {c}
                     </button>
                   ))}
                 </div>
@@ -194,6 +210,25 @@ export function TeamsList() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* My Teams */}
+      {myTeams.length > 0 && (
+        <div className="px-4 mb-2">
+          <p style={{ fontSize: '12px', fontWeight: 500, color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>My Teams</p>
+          <div className="flex flex-col gap-3">
+            {myTeams.map(({ team, isCaptain: cap }, i) => (
+              <motion.div key={team.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                <TeamCard team={team} isDark={isDark} onNavigate={navigate} isMyTeam isCaptain={cap} />
+              </motion.div>
+            ))}
+          </div>
+          {filtered.length > 0 && (
+            <div className="mt-4 mb-1">
+              <p style={{ fontSize: '12px', fontWeight: 500, color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Other Teams</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Count */}
       <div className="px-4 pb-2">

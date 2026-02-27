@@ -33,8 +33,10 @@ export function HomeFeed() {
   const [refreshing, setRefreshing] = useState(false);
   const [locationFilter] = useState('Athens · 10km');
 
-  const { user, profile, captainTeam } = useAuth();
-  const { teams: teamsLooking, loading: teamsLoading } = useTeams({ searching_for_opponent: true });
+  const { user, profile, captainTeam, playerTeam } = useAuth();
+  const { teams: teamsLookingRaw, loading: teamsLoading } = useTeams({ searching_for_opponent: true });
+  const myTeamIds = new Set([captainTeam?.id, playerTeam?.id].filter(Boolean) as string[]);
+  const teamsLooking = teamsLookingRaw.filter(t => !myTeamIds.has(t.id));
   const { matches, loading: matchesLoading } = useMatches();
   const { freelancers: allFreelancers, loading: freelancersLoading } = useFreelancers();
   const freelancePlayers = allFreelancers.filter(p => p.id !== user?.id);
@@ -168,7 +170,8 @@ export function HomeFeed() {
       <Section title="🏃 Players Near You" subtitle="Players looking for a team" onMore={() => navigate('/app/discover')} dark={isDark}>
         <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {freelancePlayers.slice(0, 3).map((player, i) => (
-            <motion.div key={player.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.06 }}
+            <motion.button key={player.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.06 }}
+              onClick={() => navigate(`/app/players/${player.id}`)}
               className="flex flex-col items-center gap-2 p-3 rounded-2xl border shrink-0 w-[100px]"
               style={{ background: cardBg, borderColor, boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)' }}>
               <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={44} />
@@ -177,7 +180,7 @@ export function HomeFeed() {
                 {player.position && <span className="px-2 py-0.5 rounded-full mt-1 inline-block" style={{ background: '#FFF3E0', color: '#E65100', fontSize: '10px', fontWeight: 700 }}>{player.position}</span>}
               </div>
               {player.area && <div className="flex items-center gap-1"><MapPin size={10} color={textSecondary} /><span style={{ fontSize: '10px', color: textSecondary }}>{player.area}</span></div>}
-            </motion.div>
+            </motion.button>
           ))}
         </div>
       </Section>
