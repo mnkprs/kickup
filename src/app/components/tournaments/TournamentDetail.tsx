@@ -68,7 +68,7 @@ export function TournamentDetail() {
   const { id } = useParams<{ id: string }>();
   const { isDark } = useTheme();
   const navigate = useNavigate();
-  const { user, profile, captainTeam } = useAuth();
+  const { user, captainTeam } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>('standings');
   const [registering, setRegistering] = useState(false);
   const [regError, setRegError] = useState('');
@@ -274,13 +274,13 @@ export function TournamentDetail() {
               <div className="flex flex-col gap-4">
                 <p style={{ fontSize: '13px', fontWeight: 700, color: '#6A1B9A', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Semi-Finals</p>
                 {semiFinals.map(tm => (
-                  <KnockoutMatchCard key={tm.id} tm={tm} isDark={isDark} cardBg={cardBg} textPrimary={textPrimary} textSecondary={textSecondary} borderColor={borderColor} navigate={navigate} />
+                  <KnockoutMatchCard key={tm.id} tm={tm} cardBg={cardBg} textPrimary={textPrimary} textSecondary={textSecondary} borderColor={borderColor} navigate={navigate} />
                 ))}
                 {finals.length > 0 && (
                   <>
                     <p className="mt-2" style={{ fontSize: '13px', fontWeight: 700, color: '#6A1B9A', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Final</p>
                     {finals.map(tm => (
-                      <KnockoutMatchCard key={tm.id} tm={tm} isDark={isDark} cardBg={cardBg} textPrimary={textPrimary} textSecondary={textSecondary} borderColor={borderColor} navigate={navigate} />
+                      <KnockoutMatchCard key={tm.id} tm={tm} cardBg={cardBg} textPrimary={textPrimary} textSecondary={textSecondary} borderColor={borderColor} navigate={navigate} />
                     ))}
                   </>
                 )}
@@ -328,9 +328,8 @@ export function TournamentDetail() {
   );
 }
 
-function KnockoutMatchCard({ tm, isDark, cardBg, textPrimary, textSecondary, borderColor, navigate }: {
+function KnockoutMatchCard({ tm, cardBg, textPrimary, textSecondary, borderColor, navigate }: {
   tm: import('../../types/database').TournamentMatch;
-  isDark: boolean;
   cardBg: string;
   textPrimary: string;
   textSecondary: string;
