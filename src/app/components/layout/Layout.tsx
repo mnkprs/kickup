@@ -47,7 +47,7 @@ export function Layout() {
         )}
 
         {fabOpen && (
-          <div className="absolute bottom-[100px] right-4 z-40 flex flex-col gap-3 items-end">
+          <div className="absolute bottom-[160px] right-4 z-40 flex flex-col gap-3 items-end">
             {[
               { label: 'Challenge a Team', icon: Target, color: '#2E7D32', path: '/app/matches/challenge' },
               { label: 'Find Open Spot', icon: Search, color: '#E65100', path: '/app/discover' },

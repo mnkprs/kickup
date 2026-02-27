@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, MapPin, Users, Swords, ChevronDown, ChevronUp, Camera, Check, X, Crown } from 'lucide-react';
@@ -40,7 +40,6 @@ export function TeamProfile() {
   const { addToast } = useToast();
   const { team, loading: teamLoading, refresh } = useTeam(id);
   const { matches, loading: matchesLoading } = useMatches();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [rosterOpen, setRosterOpen] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -172,13 +171,13 @@ export function TeamProfile() {
               </div>
             )}
             {isCaptain && (
-              <button onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center shadow"
+              <label
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center shadow cursor-pointer"
                 style={{ background: '#E8F5E9', border: '2px solid white' }}>
                 <Camera size={12} color="#2E7D32" />
-              </button>
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+              </label>
             )}
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
           </div>
           <div className="pb-1 flex-1">
             <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'white' }}>{team.name}</h1>

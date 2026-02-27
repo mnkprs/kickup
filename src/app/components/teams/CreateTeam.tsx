@@ -14,7 +14,7 @@ export function CreateTeam() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addToast } = useToast();
-  const { areas, loading: areasLoading } = useAreas();
+  const { groups, loading: areasLoading } = useAreas();
   const { colors, loading: colorsLoading } = useAvatarColors();
   const { emojis, loading: emojisLoading } = useTeamEmojis();
 
@@ -122,7 +122,11 @@ export function CreateTeam() {
                 className="w-full h-[56px] px-4 pr-10 rounded-2xl border-2 border-[#CAC4D0] bg-white outline-none focus:border-[#2E7D32] transition-colors appearance-none"
                 style={{ fontFamily: 'Roboto, sans-serif', fontSize: '16px', color: area ? '#1C1B1F' : '#79747E' }}>
                 <option value="" disabled>{areasLoading ? 'Loading...' : 'Select area...'}</option>
-                {areas.map(a => <option key={a} value={a}>{a}, Athens</option>)}
+                {groups.map(({ city, areas: cityAreas }) => (
+                  <optgroup key={city} label={city}>
+                    {cityAreas.map(a => <option key={a} value={a}>{a}</option>)}
+                  </optgroup>
+                ))}
               </select>
               <ChevronDown size={18} color="#79747E" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>

@@ -1,20 +1,42 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
+export interface AreaGroup {
+  city: string;
+  areas: string[];
+}
+
+const CITY_ORDER = ['Athens', 'Thessaloniki'];
+
 export function useAreas() {
-  const [areas, setAreas] = useState<string[]>([]);
+  const [groups, setGroups] = useState<AreaGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await supabase.from('areas').select('name').order('sort');
-      setAreas((data ?? []).map((r: { name: string }) => r.name));
+      const { data } = await supabase.from('areas').select('name, city').order('name');
+      const raw = (data ?? []) as { name: string; city: string }[];
+      const map = new Map<string, string[]>();
+      for (const { name, city } of raw) {
+        if (!map.has(city)) map.set(city, []);
+        map.get(city)!.push(name);
+      }
+      const ordered: AreaGroup[] = CITY_ORDER
+        .filter(c => map.has(c))
+        .map(c => ({ city: c, areas: map.get(c)! }));
+      for (const [city, areas] of map.entries()) {
+        if (!CITY_ORDER.includes(city)) ordered.push({ city, areas });
+      }
+      setGroups(ordered);
       setLoading(false);
     };
     fetch();
   }, []);
 
-  return { areas, loading };
+  // flat list for components that just need all area names
+  const areas = groups.flatMap(g => g.areas);
+
+  return { groups, areas, loading };
 }
 
 export function useAvatarColors() {

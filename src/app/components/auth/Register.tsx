@@ -15,6 +15,7 @@ export function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [position, setPosition] = useState('');
   const [area, setArea] = useState('');
   const [nationality, setNationality] = useState('');
@@ -25,7 +26,7 @@ export function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { areas, loading: areasLoading } = useAreas();
+  const { groups, loading: areasLoading } = useAreas();
   const { colors, loading: colorsLoading } = useAvatarColors();
 
   // Default to first color once loaded
@@ -117,6 +118,20 @@ export function Register() {
                 <span style={labelStyle}>Password</span>
                 <input className={fieldStyle} style={fontStyle} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" />
               </div>
+              <div className="flex flex-col gap-1">
+                <span style={labelStyle}>Confirm Password</span>
+                <input
+                  className={fieldStyle}
+                  style={{ ...fontStyle, borderColor: confirmPassword && confirmPassword !== password ? '#B3261E' : undefined }}
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="Repeat your password"
+                />
+                {confirmPassword && confirmPassword !== password && (
+                  <span style={{ fontFamily: 'Roboto, sans-serif', fontSize: '12px', color: '#B3261E' }}>Passwords do not match</span>
+                )}
+              </div>
             </motion.div>
           ) : (
             <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col gap-6">
@@ -142,7 +157,11 @@ export function Register() {
                     className="w-full h-[56px] px-4 pr-10 rounded-2xl border-2 border-[#CAC4D0] bg-white outline-none focus:border-[#2E7D32] transition-colors appearance-none"
                     style={{ fontFamily: 'Roboto, sans-serif', fontSize: '16px', color: area ? '#1C1B1F' : '#79747E' }}>
                     <option value="" disabled>{areasLoading ? 'Loading...' : 'Select your area...'}</option>
-                    {areas.map(a => <option key={a} value={a}>{a}, Athens</option>)}
+                    {groups.map(({ city, areas: cityAreas }) => (
+                      <optgroup key={city} label={city}>
+                        {cityAreas.map(a => <option key={a} value={a}>{a}</option>)}
+                      </optgroup>
+                    ))}
                   </select>
                   <ChevronDown size={18} color="#79747E" className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
@@ -162,7 +181,7 @@ export function Register() {
           )}
           <button
             onClick={() => { if (step === 1) setStep(2); else handleSubmit(); }}
-            disabled={loading || (step === 1 && (!name || !email || !password)) || (step === 2 && (areasLoading || colorsLoading))}
+            disabled={loading || (step === 1 && (!name || !email || !password || !confirmPassword || password !== confirmPassword)) || (step === 2 && (areasLoading || colorsLoading))}
             className="w-full h-[52px] rounded-2xl flex items-center justify-center transition-all active:scale-95 mb-8"
             style={{ background: 'linear-gradient(135deg, #2E7D32 0%, #43A047 100%)', boxShadow: '0 4px 12px rgba(46,125,50,0.35)', opacity: loading ? 0.7 : 1 }}
           >
