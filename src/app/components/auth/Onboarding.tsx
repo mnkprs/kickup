@@ -41,7 +41,7 @@ export function Onboarding() {
   }
 
   const activeColor = avatarColor || colors[0] || '#2E7D32';
-  const initials = fullName.trim().split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
+  const initials = fullName.trim().split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || '?';
 
   const fieldStyle = "w-full h-[56px] px-4 rounded-2xl border-2 border-[#CAC4D0] bg-white outline-none focus:border-[#2E7D32] transition-colors";
   const fontStyle  = { fontFamily: 'Roboto, sans-serif', fontSize: '16px', color: '#1C1B1F' };
@@ -54,7 +54,7 @@ export function Onboarding() {
     setSaving(true);
     setError('');
 
-    const profileInitials = fullName.trim().split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?';
+    const profileInitials = fullName.trim().split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || '?';
 
     const { error: updateError } = await supabase.from('profiles').update({
       full_name:       fullName.trim(),
