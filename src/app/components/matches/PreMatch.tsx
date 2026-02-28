@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { ArrowLeft, Clock, MapPin, ChevronRight, Check } from 'lucide-react';
@@ -15,13 +15,27 @@ export function PreMatch() {
   const navigate = useNavigate();
   const { isDark } = useTheme();
   const { match, loading } = useMatch(id);
-  const { captainTeam } = useAuth();
+  const { user, captainTeam } = useAuth();
 
   const [editDate, setEditDate] = useState('');
   const [editTime, setEditTime] = useState('');
   const [editLocation, setEditLocation] = useState('');
   const [saving, setSaving] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const [tournamentOrganizerId, setTournamentOrganizerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    supabase
+      .from('tournament_matches')
+      .select('tournaments(organizer_id)')
+      .eq('match_id', id)
+      .maybeSingle()
+      .then(({ data }) => {
+        const org = (data?.tournaments as any)?.organizer_id ?? null;
+        setTournamentOrganizerId(org);
+      });
+  }, [id]);
 
   const bg = isDark ? '#1C1B1F' : '#FFFBFE';
   const cardBg = isDark ? '#2D2C31' : 'white';
@@ -50,9 +64,11 @@ export function PreMatch() {
   const isCompleted = match.status === 'completed';
   const isPendingChallenge = match.status === 'pending_challenge';
 
-  const isCaptainOfMatch = captainTeam &&
-    (captainTeam.id === match.home_team_id || captainTeam.id === match.away_team_id);
+  const isCaptainOfMatch = !!(captainTeam &&
+    (captainTeam.id === match.home_team_id || captainTeam.id === match.away_team_id));
   const isAwayCapt = captainTeam?.id === match.away_team_id;
+  const isTournamentOrganizer = !!(tournamentOrganizerId && user?.id === tournamentOrganizerId);
+  const canSubmitResult = isCaptainOfMatch || isTournamentOrganizer;
 
   const handleSaveDetails = async () => {
     if (!id) return;
@@ -238,7 +254,7 @@ export function PreMatch() {
         )}
 
         <div className="flex flex-col gap-2 mt-2">
-          {match.status === 'scheduling' && (
+          {match.status === 'scheduling' && isCaptainOfMatch && (
             <button onClick={() => navigate(`/app/matches/${id}/schedule`)}
               className="w-full h-[52px] rounded-2xl flex items-center justify-center gap-2 border-2"
               style={{ borderColor: '#2E7D32', color: '#2E7D32', background: 'transparent' }}>
@@ -246,7 +262,7 @@ export function PreMatch() {
               <span style={{ fontSize: '16px', fontWeight: 500 }}>Propose Time / Venue</span>
             </button>
           )}
-          {match.status === 'pre_match' && (
+          {match.status === 'pre_match' && canSubmitResult && (
             <button onClick={() => navigate(`/app/matches/${id}/result`)}
               className="w-full h-[52px] rounded-2xl flex items-center justify-center gap-2"
               style={{ background: 'linear-gradient(135deg, #2E7D32 0%, #43A047 100%)', boxShadow: '0 4px 12px rgba(46,125,50,0.35)' }}>
