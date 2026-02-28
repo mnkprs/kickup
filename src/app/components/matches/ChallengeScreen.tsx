@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, ChevronRight, MapPin, Swords, Coffee } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTeams } from '../../hooks/useTeams';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { supabase } from '../../lib/supabase';
 import type { MatchFormat, Team } from '../../types/database';
 
@@ -13,7 +13,7 @@ const STEPS = ['Your Team', 'Opponent', 'Details', 'Send!'];
 
 export function ChallengeScreen() {
   const navigate = useNavigate();
-  const { isDark } = useTheme();
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const { captainTeam } = useAuth();
   const { teams } = useTeams();
 
@@ -25,12 +25,6 @@ export function ChallengeScreen() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
 
   const opponentTeams = teams.filter(t => t.id !== captainTeam?.id);
   const opponentTeam: Team | undefined = opponentTeams.find(t => t.id === opponentId);

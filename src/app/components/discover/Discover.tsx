@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Search, MapPin } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useFreelancers } from '../../hooks/useFreelancers';
@@ -17,7 +17,8 @@ const POSITIONS = ['All', 'GK', 'DEF', 'MID', 'FWD'];
 const FORMATS = ['All', '5v5', '6v6', '7v7', '11v11'];
 
 export function Discover() {
-  const { isDark } = useTheme();
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
+  const inputBg = isDark ? '#2D2C31' : 'white';
   const navigate = useNavigate();
   const { user, captainTeam } = useAuth();
   const { addToast } = useToast();
@@ -31,13 +32,6 @@ export function Discover() {
   const freelancers = allFreelancers.filter(p => p.id !== user?.id);
   const { teams, loading: teamsLoading } = useTeams();
   const { matches, loading: matchesLoading } = useMatches();
-
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
-  const inputBg = isDark ? '#2D2C31' : 'white';
 
   const filteredFreelancers = freelancers.filter(p =>
     (position === 'All' || p.position === position) &&

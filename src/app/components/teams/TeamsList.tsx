@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, MapPin, Plus, SlidersHorizontal, X, Crown, Users } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTeams } from '../../hooks/useTeams';
 import { useAreas } from '../../hooks/useConfig';
@@ -19,11 +19,8 @@ function StatPill({ label, value, color }: { label: string; value: number; color
   );
 }
 
-function TeamCard({ team, isDark, onNavigate, isMyTeam, isCaptain }: { team: Team; isDark: boolean; onNavigate: (p: string) => void; isMyTeam?: boolean; isCaptain?: boolean }) {
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
+function TeamCard({ team, onNavigate, isMyTeam, isCaptain }: { team: Team; onNavigate: (p: string) => void; isMyTeam?: boolean; isCaptain?: boolean }) {
+  const { isDark, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
 
   const total = team.record_w + team.record_d + team.record_l;
   const winRate = total > 0 ? Math.round((team.record_w / total) * 100) : 0;
@@ -44,17 +41,17 @@ function TeamCard({ team, isDark, onNavigate, isMyTeam, isCaptain }: { team: Tea
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span style={{ fontSize: '16px', fontWeight: 500, color: textPrimary }}>{team.name}</span>
-                {isMyTeam && (
+                {isMyTeam ? (
                   <span className="px-2 py-0.5 rounded-full flex items-center gap-1" style={{ background: isCaptain ? '#FFF3E0' : '#E3F2FD', color: isCaptain ? '#E65100' : '#1565C0', fontSize: '10px', fontWeight: 700 }}>
                     {isCaptain ? <Crown size={9} color="#E65100" /> : <Users size={9} color="#1565C0" />}
                     {isCaptain ? 'Captain' : 'Member'}
                   </span>
-                )}
-                {team.searching_for_opponent && (
+                ) : null}
+                {team.searching_for_opponent ? (
                   <span className="px-2 py-0.5 rounded-full" style={{ background: '#E8F5E9', color: '#2E7D32', fontSize: '10px', fontWeight: 700 }}>
                     ⚔️ Open
                   </span>
-                )}
+                ) : null}
               </div>
               <div className="flex items-center gap-3 mt-1 flex-wrap">
                 <div className="flex items-center gap-1">
@@ -62,11 +59,11 @@ function TeamCard({ team, isDark, onNavigate, isMyTeam, isCaptain }: { team: Tea
                   <span style={{ fontSize: '12px', color: textSecondary }}>{team.area}</span>
                 </div>
                 <span className="px-2 py-0.5 rounded-full border" style={{ borderColor: '#CAC4D0', color: textSecondary, fontSize: '11px' }}>{team.format}</span>
-                {team.open_spots > 0 && (
+                {team.open_spots > 0 ? (
                   <span className="px-2 py-0.5 rounded-full" style={{ background: '#FFF3E0', color: '#E65100', fontSize: '10px', fontWeight: 700 }}>
                     {team.open_spots} spot{team.open_spots > 1 ? 's' : ''} open
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
@@ -94,20 +91,20 @@ function TeamCard({ team, isDark, onNavigate, isMyTeam, isCaptain }: { team: Tea
           style={{ borderColor: '#2E7D32', color: '#2E7D32', fontSize: '14px', fontWeight: 500 }}>
           View Profile
         </button>
-        {!isMyTeam && (
+        {!isMyTeam ? (
           <button onClick={() => onNavigate('/app/matches/challenge')}
             className="flex-1 h-[40px] rounded-xl flex items-center justify-center gap-1"
             style={{ background: '#2E7D32', color: 'white', fontSize: '14px', fontWeight: 500 }}>
             ⚔️ Challenge
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );
 }
 
 export function TeamsList() {
-  const { isDark } = useTheme();
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const navigate = useNavigate();
   const { captainTeam, playerTeams } = useAuth();
   const [query, setQuery] = useState('');
@@ -123,12 +120,6 @@ export function TeamsList() {
     ? [{ team: captainTeam, isCaptain: true }, ...playerTeams.filter(t => t.id !== captainTeam.id).map(t => ({ team: t, isCaptain: false }))]
     : playerTeams.map(t => ({ team: t, isCaptain: false }));
   const myTeamIds = new Set(myTeams.map(mt => mt.team.id));
-
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
 
   const filtered = teams.filter(t => {
     if (myTeamIds.has(t.id)) return false;
@@ -162,11 +153,11 @@ export function TeamsList() {
             className="w-full h-[52px] pl-12 pr-10 rounded-2xl outline-none border-2"
             style={{ background: isDark ? '#2D2C31' : '#F1F8F2', borderColor: query ? '#2E7D32' : 'transparent', fontSize: '15px', color: textPrimary, fontFamily: 'Roboto, sans-serif' }}
           />
-          {query && (
+          {query ? (
             <button onClick={() => setQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2">
               <X size={16} color={textSecondary} />
             </button>
-          )}
+          ) : null}
         </div>
 
         {/* Filter chips */}
@@ -212,23 +203,23 @@ export function TeamsList() {
       </div>
 
       {/* My Teams */}
-      {myTeams.length > 0 && (
+      {myTeams.length > 0 ? (
         <div className="px-4 mb-2">
           <p style={{ fontSize: '12px', fontWeight: 500, color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>My Teams</p>
           <div className="flex flex-col gap-3">
             {myTeams.map(({ team, isCaptain: cap }, i) => (
               <motion.div key={team.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                <TeamCard team={team} isDark={isDark} onNavigate={navigate} isMyTeam isCaptain={cap} />
+                <TeamCard team={team} onNavigate={navigate} isMyTeam isCaptain={cap} />
               </motion.div>
             ))}
           </div>
-          {filtered.length > 0 && (
+          {filtered.length > 0 ? (
             <div className="mt-4 mb-1">
               <p style={{ fontSize: '12px', fontWeight: 500, color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Other Teams</p>
             </div>
-          )}
+          ) : null}
         </div>
-      )}
+      ) : null}
 
       {/* Count */}
       <div className="px-4 pb-2">
@@ -258,7 +249,7 @@ export function TeamsList() {
         <div className="px-4 flex flex-col gap-3 pb-24">
           {filtered.map((team, i) => (
             <motion.div key={team.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-              <TeamCard team={team} isDark={isDark} onNavigate={navigate} />
+              <TeamCard team={team} onNavigate={navigate} />
             </motion.div>
           ))}
         </div>

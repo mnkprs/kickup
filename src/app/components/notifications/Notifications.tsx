@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { ArrowLeft, Bell, Swords, Calendar, Trophy, AlertTriangle, CheckCheck, User, ChevronRight } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
 import { timeAgo } from '../../lib/timeAgo';
@@ -47,16 +47,10 @@ function getNotifPath(notif: Notification): string | null {
 }
 
 export function Notifications() {
-  const { isDark } = useTheme();
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { notifs, loading, markRead, markAllRead } = useNotifications(user?.id);
-
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
 
   const unreadCount = notifs.filter(n => !n.read).length;
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Trophy, MapPin, Plus, Calendar, Users } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTournaments } from '../../hooks/useTournaments';
 import type { Tournament, TournamentStatus } from '../../types/database';
@@ -23,11 +23,8 @@ const STATUSES: Array<{ key: TournamentStatus | 'all'; label: string }> = [
   { key: 'completed',      label: 'Completed' },
 ];
 
-function TournamentCard({ t, isDark, onNavigate }: { t: Tournament; isDark: boolean; onNavigate: (p: string) => void }) {
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
+function TournamentCard({ t, onNavigate }: { t: Tournament; onNavigate: (p: string) => void }) {
+  const { isDark, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const s = STATUS_LABELS[t.status];
 
   return (
@@ -53,12 +50,12 @@ function TournamentCard({ t, isDark, onNavigate }: { t: Tournament; isDark: bool
               </span>
             </div>
             <div className="flex items-center gap-3 mt-1 flex-wrap">
-              {t.area && (
+              {t.area ? (
                 <div className="flex items-center gap-1">
                   <MapPin size={11} color={textSecondary} />
                   <span style={{ fontSize: '12px', color: textSecondary }}>{t.area}</span>
                 </div>
-              )}
+              ) : null}
               <span className="px-2 py-0.5 rounded-full border"
                 style={{ borderColor: '#CAC4D0', color: textSecondary, fontSize: '11px' }}>
                 {t.match_format}
@@ -70,40 +67,34 @@ function TournamentCard({ t, isDark, onNavigate }: { t: Tournament; isDark: bool
             </div>
           </div>
         </div>
-        {(t.start_date || t.prize) && (
+        {(t.start_date || t.prize) ? (
           <div className="flex items-center gap-3 mt-3 pt-3 border-t flex-wrap" style={{ borderColor }}>
-            {t.start_date && (
+            {t.start_date ? (
               <div className="flex items-center gap-1">
                 <Calendar size={12} color={textSecondary} />
                 <span style={{ fontSize: '12px', color: textSecondary }}>
                   {new Date(t.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
               </div>
-            )}
-            {t.prize && (
+            ) : null}
+            {t.prize ? (
               <span style={{ fontSize: '12px', color: '#6A1B9A', fontWeight: 500 }}>🏆 {t.prize}</span>
-            )}
+            ) : null}
           </div>
-        )}
+        ) : null}
       </div>
     </button>
   );
 }
 
 export function TournamentsList() {
-  const { isDark } = useTheme();
+  const { bg, textPrimary, textSecondary, borderColor, cardBg } = useThemeColors();
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [statusFilter, setStatusFilter] = useState<TournamentStatus | 'all'>('all');
   const [formatFilter, setFormatFilter] = useState('All');
 
   const { tournaments, loading } = useTournaments();
-
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
-  const cardBg = isDark ? '#2D2C31' : 'white';
 
   const filtered = tournaments.filter(t => {
     const matchStatus = statusFilter === 'all' || t.status === statusFilter;
@@ -117,7 +108,7 @@ export function TournamentsList() {
       <div className="px-4 pt-12 pb-4" style={{ background: bg }}>
         <div className="flex items-center justify-between mb-4">
           <h1 style={{ fontSize: '24px', fontWeight: 500, color: textPrimary }}>Tournaments</h1>
-          {profile?.is_field_owner && (
+          {profile?.is_field_owner ? (
             <button
               onClick={() => navigate('/app/tournaments/create')}
               className="flex items-center gap-2 px-4 py-2 rounded-2xl"
@@ -126,7 +117,7 @@ export function TournamentsList() {
               <Plus size={16} color="white" />
               Create
             </button>
-          )}
+          ) : null}
         </div>
 
         {/* Status filter chips */}
@@ -192,7 +183,7 @@ export function TournamentsList() {
                 : 'Check back soon for upcoming tournaments.'}
             </p>
           </div>
-          {profile?.is_field_owner && (
+          {profile?.is_field_owner ? (
             <button
               onClick={() => navigate('/app/tournaments/create')}
               className="px-6 py-3 rounded-2xl"
@@ -200,13 +191,13 @@ export function TournamentsList() {
             >
               Create Tournament
             </button>
-          )}
+          ) : null}
         </div>
       ) : (
         <div className="px-4 flex flex-col gap-3 pb-24">
           {filtered.map((t, i) => (
             <motion.div key={t.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-              <TournamentCard t={t} isDark={isDark} onNavigate={navigate} />
+              <TournamentCard t={t} onNavigate={navigate} />
             </motion.div>
           ))}
         </div>

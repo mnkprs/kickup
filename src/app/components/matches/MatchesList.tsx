@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Clock, MapPin } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { useMatches } from '../../hooks/useMatches';
 import { formatMatchDate } from '../../lib/formatDate';
 
@@ -25,16 +25,10 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function MatchesList() {
-  const { isDark } = useTheme();
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const navigate = useNavigate();
   const [tab, setTab] = useState('Upcoming');
   const { matches, loading } = useMatches();
-
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
 
   const filtered = matches.filter(m => {
     if (tab === 'Upcoming') return m.status === 'pre_match' || m.status === 'scheduling';

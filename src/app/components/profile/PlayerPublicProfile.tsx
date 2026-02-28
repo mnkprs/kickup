@@ -3,23 +3,15 @@ import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, MapPin, Shield } from 'lucide-react';
 import { motion } from 'motion/react';
 import { supabase } from '../../lib/supabase';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
+import { calcAge } from '../../lib/playerUtils';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
 import type { Profile, Team } from '../../types/database';
-
-function calcAge(dob: string | null): number | null {
-  if (!dob) return null;
-  const birth = new Date(dob);
-  const now = new Date();
-  let age = now.getFullYear() - birth.getFullYear();
-  if (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate())) age--;
-  return age;
-}
 
 export function PlayerPublicProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isDark } = useTheme();
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,12 +29,6 @@ export function PlayerPublicProfile() {
     };
     load();
   }, [id]);
-
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
 
   if (loading) {
     return (

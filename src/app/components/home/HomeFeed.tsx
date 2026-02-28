@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Bell, MapPin, ChevronRight, Clock, RefreshCw } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTeams } from '../../hooks/useTeams';
 import { useMatches } from '../../hooks/useMatches';
@@ -27,7 +28,8 @@ function FormatChip({ format }: { format: string }) {
 }
 
 export function HomeFeed() {
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
+  const { toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,11 +44,6 @@ export function HomeFeed() {
   const freelancePlayers = allFreelancers.filter(p => p.id !== user?.id);
   const { notifs } = useNotifications(user?.id);
 
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
   const sectionBg = isDark ? '#1E2B1E' : '#E8F5E9';
 
   const loading = teamsLoading || matchesLoading || freelancersLoading;
@@ -75,7 +72,7 @@ export function HomeFeed() {
 
   return (
     <div key={refreshKey} style={{ background: bg, minHeight: '100vh', fontFamily: 'Roboto, sans-serif' }}>
-      <div className="px-4 pt-12 pb-3 flex items-center justify-between sticky top-0 z-20" style={{ background: isDark ? '#1C1B1F' : '#FFFBFE', borderBottom: `1px solid ${borderColor}` }}>
+      <div className="px-4 pt-12 pb-3 flex items-center justify-between sticky top-0 z-20" style={{ background: bg, borderBottom: `1px solid ${borderColor}` }}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #2E7D32 0%, #66BB6A 100%)' }}>
             <span style={{ fontSize: '16px' }}>⚽</span>
@@ -91,7 +88,7 @@ export function HomeFeed() {
           </button>
           <button onClick={() => navigate('/app/notifications')} className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#E8F5E9] transition-colors relative">
             <Bell size={20} color={textSecondary} />
-            {unread > 0 && (<span className="absolute top-1 right-1 w-4 h-4 bg-[#B3261E] rounded-full flex items-center justify-center"><span className="text-white" style={{ fontSize: '9px' }}>{unread}</span></span>)}
+            {unread > 0 ? (<span className="absolute top-1 right-1 w-4 h-4 bg-[#B3261E] rounded-full flex items-center justify-center"><span className="text-white" style={{ fontSize: '9px' }}>{unread}</span></span>) : null}
           </button>
           <button onClick={() => navigate('/app/profile')}>
             <PlayerAvatar initials={avatarInitials} color={avatarColor} avatarUrl={profile?.avatar_url} size={36} />
@@ -108,12 +105,12 @@ export function HomeFeed() {
 
       <div className="px-4 pb-1">
         <h2 style={{ fontSize: '22px', fontWeight: 500, color: textPrimary }}>Ready to play, {firstName}? 👊</h2>
-        {captainTeam && (
+        {captainTeam ? (
           <p style={{ fontSize: '14px', color: textSecondary, marginTop: '2px' }}>{captainTeam.name} · {captainTeam.area} · {captainTeam.format}</p>
-        )}
+        ) : null}
       </div>
 
-      {upcomingMatch && (
+      {upcomingMatch ? (
         <div className="px-4 py-3">
           <motion.button initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             onClick={() => navigate(`/app/matches/${upcomingMatch.id}/pre`)}
@@ -129,19 +126,19 @@ export function HomeFeed() {
                 <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>vs</span>
                 <span style={{ fontSize: '16px', fontWeight: 700, color: 'white' }}>{upcomingMatch.away_team?.name}</span>
               </div>
-              {upcomingMatch.match_date && (
+              {upcomingMatch.match_date ? (
                 <div className="flex items-center gap-1 mt-1">
                   <Clock size={12} color="rgba(255,255,255,0.7)" />
                   <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>{formatMatchDate(upcomingMatch.match_date, upcomingMatch.match_time)}</span>
                 </div>
-              )}
+              ) : null}
             </div>
             <ChevronRight size={20} color="rgba(255,255,255,0.8)" />
           </motion.button>
         </div>
-      )}
+      ) : null}
 
-      <Section title="⚔️ Challenge Open" subtitle="Teams searching for opponents" onMore={() => navigate('/app/teams')} dark={isDark}>
+      <Section title="⚔️ Challenge Open" subtitle="Teams searching for opponents" onMore={() => navigate('/app/teams')}>
         {teamsLooking.slice(0, 3).map((team, i) => (
           <motion.div key={team.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
             className="flex items-center gap-3 p-3 rounded-2xl border" style={{ background: cardBg, borderColor, boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)' }}>
@@ -167,7 +164,7 @@ export function HomeFeed() {
         ))}
       </Section>
 
-      <Section title="🏃 Players Near You" subtitle="Players looking for a team" onMore={() => navigate('/app/discover')} dark={isDark}>
+      <Section title="🏃 Players Near You" subtitle="Players looking for a team" onMore={() => navigate('/app/discover')}>
         <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {freelancePlayers.slice(0, 3).map((player, i) => (
             <motion.button key={player.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.06 }}
@@ -177,15 +174,15 @@ export function HomeFeed() {
               <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={44} />
               <div className="text-center">
                 <p style={{ fontSize: '12px', fontWeight: 500, color: textPrimary, lineHeight: 1.2 }}>{player.full_name.split(' ')[0]}</p>
-                {player.position && <span className="px-2 py-0.5 rounded-full mt-1 inline-block" style={{ background: '#FFF3E0', color: '#E65100', fontSize: '10px', fontWeight: 700 }}>{player.position}</span>}
+                {player.position ? <span className="px-2 py-0.5 rounded-full mt-1 inline-block" style={{ background: '#FFF3E0', color: '#E65100', fontSize: '10px', fontWeight: 700 }}>{player.position}</span> : null}
               </div>
-              {player.area && <div className="flex items-center gap-1"><MapPin size={10} color={textSecondary} /><span style={{ fontSize: '10px', color: textSecondary }}>{player.area}</span></div>}
+              {player.area ? <div className="flex items-center gap-1"><MapPin size={10} color={textSecondary} /><span style={{ fontSize: '10px', color: textSecondary }}>{player.area}</span></div> : null}
             </motion.button>
           ))}
         </div>
       </Section>
 
-      <Section title="📊 Recent Results" subtitle="Latest match outcomes around you" onMore={() => navigate('/app/matches')} dark={isDark}>
+      <Section title="📊 Recent Results" subtitle="Latest match outcomes around you" onMore={() => navigate('/app/matches')}>
         {completedMatches.map((match, i) => {
           const homeTeam = match.home_team;
           const awayTeam = match.away_team;
@@ -226,13 +223,13 @@ export function HomeFeed() {
   );
 }
 
-function Section({ title, subtitle, onMore, children, dark }: { title: string; subtitle: string; onMore: () => void; children: React.ReactNode; dark: boolean }) {
-  const textSecondary = dark ? '#CAC4D0' : '#49454F';
+function Section({ title, subtitle, onMore, children }: { title: string; subtitle: string; onMore: () => void; children: React.ReactNode }) {
+  const { textPrimary, textSecondary } = useThemeColors();
   return (
     <div className="px-4 pt-5 pb-2">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h3 style={{ fontSize: '16px', fontWeight: 500, color: dark ? '#E6E1E5' : '#1C1B1F' }}>{title}</h3>
+          <h3 style={{ fontSize: '16px', fontWeight: 500, color: textPrimary }}>{title}</h3>
           <p style={{ fontSize: '12px', color: textSecondary }}>{subtitle}</p>
         </div>
         <button onClick={onMore} className="flex items-center gap-1" style={{ fontSize: '13px', fontWeight: 500, color: '#2E7D32' }}>

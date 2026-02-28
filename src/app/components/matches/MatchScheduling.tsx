@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { ArrowLeft, Clock, MapPin, Check, Plus } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { useMatch } from '../../hooks/useMatch';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -16,7 +16,6 @@ function formatProposalDate(date: string, time: string): string {
 export function MatchScheduling() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isDark } = useTheme();
   const { match, loading } = useMatch(id);
   const { captainTeam } = useAuth();
 
@@ -33,11 +32,7 @@ export function MatchScheduling() {
     }
   }, [match?.id]);
 
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
 
   if (loading) {
     return (

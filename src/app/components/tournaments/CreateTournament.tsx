@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ChevronLeft, Trophy } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAreas } from '../../hooks/useConfig';
 import { supabase } from '../../lib/supabase';
@@ -16,7 +16,7 @@ const LABEL_STYLE: React.CSSProperties = {
 };
 
 export function CreateTournament() {
-  const { isDark } = useTheme();
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { groups } = useAreas();
@@ -34,11 +34,6 @@ export function CreateTournament() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
   const inputBg = isDark ? '#3A3940' : '#F7F2FA';
 
   const inputStyle: React.CSSProperties = {
