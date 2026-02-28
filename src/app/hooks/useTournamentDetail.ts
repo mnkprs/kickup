@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Tournament, TournamentRegistration, TournamentGroup, TournamentMatch, TournamentStandingsRow } from '../types/database';
+import type { Tournament, TournamentRegistration, TournamentGroup, TournamentMatch, TournamentStandingsRow, TournamentPlayerStat } from '../types/database';
 
 export interface TournamentDetail {
   tournament: Tournament;
@@ -70,4 +70,24 @@ export function useTournamentStandings(tournamentId: string, groupLabel: string)
   }, [tournamentId, groupLabel]);
 
   return { standings, loading };
+}
+
+export function useTournamentPlayerStats(tournamentId: string) {
+  const [stats, setStats] = useState<TournamentPlayerStat[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tournamentId) { setLoading(false); return; }
+    const fetch = async () => {
+      setLoading(true);
+      const { data } = await supabase.rpc('get_tournament_player_stats', {
+        p_tournament_id: tournamentId,
+      });
+      setStats((data ?? []) as TournamentPlayerStat[]);
+      setLoading(false);
+    };
+    fetch();
+  }, [tournamentId]);
+
+  return { stats, loading };
 }

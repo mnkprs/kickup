@@ -4,7 +4,7 @@ import { ChevronLeft, Trophy, MapPin, Calendar, Users, Settings } from 'lucide-r
 import { motion } from 'motion/react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { useTournamentDetail, useTournamentStandings } from '../../hooks/useTournamentDetail';
+import { useTournamentDetail, useTournamentStandings, useTournamentPlayerStats } from '../../hooks/useTournamentDetail';
 import { supabase } from '../../lib/supabase';
 import type { TournamentStatus } from '../../types/database';
 
@@ -15,7 +15,7 @@ const STATUS_LABELS: Record<TournamentStatus, { label: string; color: string; bg
   completed:      { label: 'Completed',          color: '#4E4E4E', bg: '#EEEEEE' },
 };
 
-type TabKey = 'standings' | 'bracket' | 'teams';
+type TabKey = 'standings' | 'bracket' | 'teams' | 'scorers';
 
 function StandingsTable({ tournamentId, groupLabel, isDark }: { tournamentId: string; groupLabel: string; isDark: boolean }) {
   const { standings, loading } = useTournamentStandings(tournamentId, groupLabel);
@@ -74,6 +74,7 @@ export function TournamentDetail() {
   const [regError, setRegError] = useState('');
 
   const { detail, loading, refresh } = useTournamentDetail(id);
+  const { stats: playerStats, loading: statsLoading } = useTournamentPlayerStats(id ?? '');
 
   const bg = isDark ? '#1C1B1F' : '#FFFBFE';
   const cardBg = isDark ? '#2D2C31' : 'white';
@@ -128,6 +129,7 @@ export function TournamentDetail() {
 
   const TABS: Array<{ key: TabKey; label: string }> = [
     { key: 'standings', label: 'Standings' },
+    { key: 'scorers',   label: 'Scorers' },
     { key: 'bracket',   label: 'Bracket' },
     { key: 'teams',     label: `Teams (${approvedTeams.length})` },
   ];
@@ -291,6 +293,56 @@ export function TournamentDetail() {
                     ))}
                   </>
                 )}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* SCORERS TAB */}
+        {activeTab === 'scorers' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            {statsLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="w-6 h-6 border-2 border-[#6A1B9A] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : playerStats.length === 0 ? (
+              <div className="text-center py-12">
+                <span style={{ fontSize: '48px' }}>⚽</span>
+                <p className="mt-3" style={{ fontSize: '16px', color: textSecondary }}>No goals recorded yet.</p>
+              </div>
+            ) : (
+              <div className="rounded-2xl overflow-hidden border" style={{ background: cardBg, borderColor }}>
+                {/* Header */}
+                <div className="flex items-center px-4 py-2 border-b" style={{ borderColor }}>
+                  <span style={{ flex: 4, fontSize: '11px', fontWeight: 700, color: textSecondary, textTransform: 'uppercase' }}>Player</span>
+                  <span style={{ flex: 2, fontSize: '11px', fontWeight: 700, color: textSecondary, textTransform: 'uppercase' }}>Team</span>
+                  <span style={{ flex: 1, textAlign: 'center', fontSize: '11px', fontWeight: 700, color: textSecondary, textTransform: 'uppercase' }}>⚽</span>
+                </div>
+                {playerStats.map((row, i) => (
+                  <div
+                    key={row.player_id}
+                    className="flex items-center px-4 py-3 border-b last:border-b-0"
+                    style={{ borderColor, background: i % 2 === 0 ? 'transparent' : (isDark ? '#33313A' : '#FAFAFA') }}
+                  >
+                    <div style={{ flex: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: i === 0 ? '#6A1B9A' : textSecondary, minWidth: '18px' }}>
+                        {i + 1}
+                      </span>
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                        style={{ background: '#F3E5F5', fontSize: '11px', fontWeight: 700, color: '#6A1B9A' }}>
+                        {row.avatar_initials}
+                      </div>
+                      <span style={{ fontSize: '13px', color: textPrimary, fontWeight: i === 0 ? 600 : 400 }} className="truncate">
+                        {row.full_name}
+                      </span>
+                    </div>
+                    <div style={{ flex: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ fontSize: '13px' }}>{row.team_emoji}</span>
+                      <span style={{ fontSize: '12px', color: textSecondary }} className="truncate">{row.team_name}</span>
+                    </div>
+                    <span style={{ flex: 1, textAlign: 'center', fontSize: '15px', fontWeight: 700, color: '#6A1B9A' }}>{row.goals}</span>
+                  </div>
+                ))}
               </div>
             )}
           </motion.div>

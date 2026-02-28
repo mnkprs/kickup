@@ -9,6 +9,11 @@ import { supabase } from '../../lib/supabase';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
 import type { Profile } from '../../types/database';
 
+interface PlayerWithTeam {
+  profile: Profile;
+  teamId: string;
+}
+
 function ScoreStepper({ value, onChange, color }: { value: number; onChange: (v: number) => void; color: string }) {
   return (
     <div className="flex items-center gap-4">
@@ -27,6 +32,28 @@ function ScoreStepper({ value, onChange, color }: { value: number; onChange: (v:
   );
 }
 
+function GoalStepper({ value, onChange, color }: { value: number; onChange: (v: number) => void; color: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => onChange(Math.max(0, value - 1))}
+        className="w-7 h-7 rounded-full flex items-center justify-center border"
+        style={{ borderColor: value > 0 ? color : '#CAC4D0' }}>
+        <Minus size={14} color={value > 0 ? color : '#CAC4D0'} />
+      </button>
+      <span style={{ fontSize: '18px', fontWeight: 700, color: value > 0 ? color : '#CAC4D0', minWidth: '20px', textAlign: 'center' }}>
+        {value}
+      </span>
+      <button
+        onClick={() => onChange(value + 1)}
+        className="w-7 h-7 rounded-full flex items-center justify-center border"
+        style={{ borderColor: color }}>
+        <Plus size={14} color={color} />
+      </button>
+    </div>
+  );
+}
+
 export function SubmitResult() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -36,12 +63,13 @@ export function SubmitResult() {
 
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
-  const [scorers, setScorers] = useState<string[]>([]);
+  // goalCounts: playerId → number of goals
+  const [goalCounts, setGoalCounts] = useState<Record<string, number>>({});
   const [mvp, setMvp] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [allPlayers, setAllPlayers] = useState<Profile[]>([]);
+  const [players, setPlayers] = useState<PlayerWithTeam[]>([]);
 
   const bg = isDark ? '#1C1B1F' : '#FFFBFE';
   const cardBg = isDark ? '#2D2C31' : 'white';
@@ -54,21 +82,36 @@ export function SubmitResult() {
     const fetch = async () => {
       const { data } = await supabase
         .from('team_members')
-        .select('profiles(*)')
-        .in('team_id', [match.home_team_id, match.away_team_id]);
-      const profiles = (data ?? []).map((tm: any) => tm.profiles).filter(Boolean) as Profile[];
-      setAllPlayers(profiles);
+        .select('team_id, profiles(*)')
+        .in('team_id', [match.home_team_id, match.away_team_id])
+        .eq('status', 'active');
+      const result: PlayerWithTeam[] = (data ?? [])
+        .map((tm: any) => tm.profiles ? { profile: tm.profiles as Profile, teamId: tm.team_id as string } : null)
+        .filter(Boolean) as PlayerWithTeam[];
+      setPlayers(result);
     };
     fetch();
   }, [match?.id]);
 
-  const toggleScorer = (playerId: string) => {
-    setScorers(s => s.includes(playerId) ? s.filter(x => x !== playerId) : [...s, playerId]);
+  const setGoals = (playerId: string, count: number) => {
+    setGoalCounts(prev => ({ ...prev, [playerId]: count }));
   };
+
+  const totalGoalsEntered = Object.values(goalCounts).reduce((a, b) => a + b, 0);
 
   const handleSubmit = async () => {
     if (!captainTeam || !id) return;
     setLoading(true);
+
+    // Build events: one entry per player who scored, for own team only
+    const events = players
+      .filter(p => p.teamId === captainTeam.id && (goalCounts[p.profile.id] ?? 0) > 0)
+      .map(p => ({
+        scorer_id: p.profile.id,
+        team_id: captainTeam.id,
+        goals: goalCounts[p.profile.id],
+      }));
+
     const { error } = await supabase.rpc('submit_result', {
       p_match_id: id,
       p_team_id: captainTeam.id,
@@ -76,6 +119,7 @@ export function SubmitResult() {
       p_away_score: awayScore,
       p_mvp_id: mvp || null,
       p_notes: notes || null,
+      p_events: events,
     });
     setLoading(false);
     if (!error) {
@@ -109,6 +153,12 @@ export function SubmitResult() {
 
   const homeTeam = match.home_team;
   const awayTeam = match.away_team;
+  const myTeamId = captainTeam?.id;
+
+  // Only show scorers for own team (captain attests to their own players)
+  const myPlayers = players.filter(p => p.teamId === myTeamId);
+  const opponentPlayers = players.filter(p => p.teamId !== myTeamId);
+  const allPlayersForMvp = players;
 
   return (
     <div style={{ background: bg, minHeight: '100vh', fontFamily: 'Roboto, sans-serif' }}>
@@ -120,6 +170,8 @@ export function SubmitResult() {
       </div>
 
       <div className="px-4 pt-6 pb-24 flex flex-col gap-5">
+
+        {/* Score */}
         <div className="p-5 rounded-2xl border" style={{ background: cardBg, borderColor }}>
           <p style={{ fontSize: '13px', fontWeight: 600, color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px' }}>
             Final Score
@@ -139,28 +191,55 @@ export function SubmitResult() {
           </div>
         </div>
 
-        {allPlayers.length > 0 && (
+        {/* Goal scorers — own team only */}
+        {myPlayers.length > 0 && (
           <div>
-            <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary, marginBottom: '10px' }}>⚽ Goal Scorers</p>
+            <div className="flex items-center justify-between mb-2">
+              <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>⚽ Goals — {captainTeam?.name ?? 'My Team'}</p>
+              {totalGoalsEntered > 0 && (
+                <span style={{ fontSize: '13px', color: '#2E7D32', fontWeight: 600 }}>{totalGoalsEntered} goal{totalGoalsEntered !== 1 ? 's' : ''} entered</span>
+              )}
+            </div>
             <div className="flex flex-col gap-2">
-              {allPlayers.map(p => (
-                <button key={p.id} onClick={() => toggleScorer(p.id)}
-                  className="flex items-center gap-3 p-3 rounded-2xl border transition-all text-left"
-                  style={{ background: scorers.includes(p.id) ? (isDark ? '#1E2B1E' : '#E8F5E9') : cardBg, borderColor: scorers.includes(p.id) ? '#2E7D32' : borderColor }}>
-                  <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={32} />
-                  <span style={{ fontSize: '14px', fontWeight: 500, color: textPrimary, flex: 1 }}>{p.full_name}</span>
-                  {scorers.includes(p.id) && <Check size={16} color="#2E7D32" />}
-                </button>
-              ))}
+              {myPlayers.map(({ profile: p }) => {
+                const count = goalCounts[p.id] ?? 0;
+                return (
+                  <div key={p.id}
+                    className="flex items-center gap-3 p-3 rounded-2xl border"
+                    style={{ background: count > 0 ? (isDark ? '#1E2B1E' : '#E8F5E9') : cardBg, borderColor: count > 0 ? '#2E7D32' : borderColor }}>
+                    <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={32} />
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: textPrimary, flex: 1 }}>{p.full_name}</span>
+                    <GoalStepper value={count} onChange={v => setGoals(p.id, v)} color="#2E7D32" />
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-2 px-1" style={{ fontSize: '12px', color: textSecondary }}>
+              You can only log goals for your own team's players.
+            </p>
+          </div>
+        )}
+
+        {/* Opponent players — display only, no editing */}
+        {opponentPlayers.length > 0 && (
+          <div>
+            <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary, marginBottom: '8px' }}>
+              ⚽ Goals — {myTeamId === homeTeam.id ? awayTeam.name : homeTeam.name}
+            </p>
+            <div className="px-4 py-3 rounded-2xl border" style={{ background: cardBg, borderColor }}>
+              <p style={{ fontSize: '13px', color: textSecondary }}>
+                The opposing captain will log their own players' goals when they submit.
+              </p>
             </div>
           </div>
         )}
 
-        {allPlayers.length > 0 && (
+        {/* MVP */}
+        {allPlayersForMvp.length > 0 && (
           <div>
             <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary, marginBottom: '10px' }}>⭐ Vote MVP</p>
             <div className="flex flex-wrap gap-2">
-              {allPlayers.map(p => (
+              {allPlayersForMvp.map(({ profile: p }) => (
                 <button key={p.id} onClick={() => setMvp(p.id === mvp ? '' : p.id)}
                   className="px-3 py-1.5 rounded-full border transition-all"
                   style={{ borderColor: mvp === p.id ? '#E65100' : borderColor, background: mvp === p.id ? '#FFF3E0' : cardBg, color: mvp === p.id ? '#E65100' : textSecondary, fontSize: '13px', fontWeight: mvp === p.id ? 600 : 400 }}>
@@ -171,6 +250,7 @@ export function SubmitResult() {
           </div>
         )}
 
+        {/* Notes */}
         <div>
           <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary, marginBottom: '8px' }}>Notes (optional)</p>
           <textarea value={notes} onChange={e => setNotes(e.target.value)}

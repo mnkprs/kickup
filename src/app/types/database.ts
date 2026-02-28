@@ -213,3 +213,15 @@ export interface Notification {
   avatar_color: string | null;
   created_at: string;
 }
+
+export interface TournamentPlayerStat {
+  player_id: string;
+  full_name: string;
+  avatar_initials: string;
+  avatar_color: string;
+  avatar_url: string | null;
+  team_id: string;
+  team_name: string;
+  team_emoji: string;
+  goals: number;
+}
