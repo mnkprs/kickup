@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { ArrowLeft, Minus, Plus, Check } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useMatch } from '../../hooks/useMatch';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
 import type { Profile } from '../../types/database';
 
@@ -14,7 +14,7 @@ interface PlayerWithTeam {
   teamId: string;
 }
 
-function ScoreStepper({ value, onChange, color }: { value: number; onChange: (v: number) => void; color: string }) {
+const ScoreStepper = memo(function ScoreStepper({ value, onChange, color }: { value: number; onChange: (v: number) => void; color: string }) {
   return (
     <div className="flex items-center gap-4">
       <button onClick={() => onChange(Math.max(0, value - 1))}
@@ -30,9 +30,9 @@ function ScoreStepper({ value, onChange, color }: { value: number; onChange: (v:
       </button>
     </div>
   );
-}
+});
 
-function GoalStepper({ value, onChange, color }: { value: number; onChange: (v: number) => void; color: string }) {
+const GoalStepper = memo(function GoalStepper({ value, onChange, color }: { value: number; onChange: (v: number) => void; color: string }) {
   return (
     <div className="flex items-center gap-2">
       <button
@@ -52,30 +52,23 @@ function GoalStepper({ value, onChange, color }: { value: number; onChange: (v: 
       </button>
     </div>
   );
-}
+});
 
 export function SubmitResult() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isDark } = useTheme();
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const { match, loading: matchLoading } = useMatch(id);
   const { captainTeam } = useAuth();
 
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
-  // goalCounts: playerId → number of goals
   const [goalCounts, setGoalCounts] = useState<Record<string, number>>({});
   const [mvp, setMvp] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [players, setPlayers] = useState<PlayerWithTeam[]>([]);
-
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
 
   useEffect(() => {
     if (!match) return;
@@ -93,17 +86,24 @@ export function SubmitResult() {
     fetch();
   }, [match?.id]);
 
-  const setGoals = (playerId: string, count: number) => {
+  const setGoals = useCallback((playerId: string, count: number) => {
     setGoalCounts(prev => ({ ...prev, [playerId]: count }));
-  };
+  }, []);
 
-  const totalGoalsEntered = Object.values(goalCounts).reduce((a, b) => a + b, 0);
+  const myTeamId = captainTeam?.id;
+  const myPlayers = useMemo(() => players.filter(p => p.teamId === myTeamId), [players, myTeamId]);
+  const opponentPlayers = useMemo(() => players.filter(p => p.teamId !== myTeamId), [players, myTeamId]);
+  const allPlayersForMvp = players;
+
+  const totalGoalsEntered = useMemo(
+    () => Object.values(goalCounts).reduce((a, b) => a + b, 0),
+    [goalCounts]
+  );
 
   const handleSubmit = async () => {
     if (!captainTeam || !id) return;
     setLoading(true);
 
-    // Build events: one entry per player who scored, for own team only
     const events = players
       .filter(p => p.teamId === captainTeam.id && (goalCounts[p.profile.id] ?? 0) > 0)
       .map(p => ({
@@ -153,12 +153,6 @@ export function SubmitResult() {
 
   const homeTeam = match.home_team;
   const awayTeam = match.away_team;
-  const myTeamId = captainTeam?.id;
-
-  // Only show scorers for own team (captain attests to their own players)
-  const myPlayers = players.filter(p => p.teamId === myTeamId);
-  const opponentPlayers = players.filter(p => p.teamId !== myTeamId);
-  const allPlayersForMvp = players;
 
   return (
     <div style={{ background: bg, minHeight: '100vh', fontFamily: 'Roboto, sans-serif' }}>
@@ -192,13 +186,13 @@ export function SubmitResult() {
         </div>
 
         {/* Goal scorers — own team only */}
-        {myPlayers.length > 0 && (
+        {myPlayers.length > 0 ? (
           <div>
             <div className="flex items-center justify-between mb-2">
               <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>⚽ Goals — {captainTeam?.name ?? 'My Team'}</p>
-              {totalGoalsEntered > 0 && (
+              {totalGoalsEntered > 0 ? (
                 <span style={{ fontSize: '13px', color: '#2E7D32', fontWeight: 600 }}>{totalGoalsEntered} goal{totalGoalsEntered !== 1 ? 's' : ''} entered</span>
-              )}
+              ) : null}
             </div>
             <div className="flex flex-col gap-2">
               {myPlayers.map(({ profile: p }) => {
@@ -218,10 +212,10 @@ export function SubmitResult() {
               You can only log goals for your own team's players.
             </p>
           </div>
-        )}
+        ) : null}
 
         {/* Opponent players — display only, no editing */}
-        {opponentPlayers.length > 0 && (
+        {opponentPlayers.length > 0 ? (
           <div>
             <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary, marginBottom: '8px' }}>
               ⚽ Goals — {myTeamId === homeTeam.id ? awayTeam.name : homeTeam.name}
@@ -232,10 +226,10 @@ export function SubmitResult() {
               </p>
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* MVP */}
-        {allPlayersForMvp.length > 0 && (
+        {allPlayersForMvp.length > 0 ? (
           <div>
             <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary, marginBottom: '10px' }}>⭐ Vote MVP</p>
             <div className="flex flex-wrap gap-2">
@@ -248,7 +242,7 @@ export function SubmitResult() {
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Notes */}
         <div>
@@ -266,11 +260,11 @@ export function SubmitResult() {
           </p>
         </div>
 
-        {!captainTeam && (
+        {!captainTeam ? (
           <p style={{ fontSize: '13px', color: '#B3261E', textAlign: 'center' }}>
             Only team captains can submit results.
           </p>
-        )}
+        ) : null}
 
         <button onClick={handleSubmit} disabled={loading || !captainTeam}
           className="w-full h-[52px] rounded-2xl flex items-center justify-center transition-all active:scale-95"

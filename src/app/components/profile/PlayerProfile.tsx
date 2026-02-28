@@ -1,43 +1,27 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Camera, ChevronRight, LogOut, MapPin, Pencil, Shield } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../hooks/useMatches';
 import { formatMatchDate } from '../../lib/formatDate';
 import { uploadAvatar } from '../../lib/uploadAvatar';
 import { supabase } from '../../lib/supabase';
+import { calcAge, matchResult } from '../../lib/playerUtils';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
-import type { MatchWithTeams, OwnerApplication } from '../../types/database';
+import type { OwnerApplication } from '../../types/database';
 
 const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL ?? 'admin@kickup.app';
 
-function calcAge(dob: string | null): number | null {
-  if (!dob) return null;
-  const birth = new Date(dob);
-  const now = new Date();
-  let age = now.getFullYear() - birth.getFullYear();
-  if (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate())) age--;
-  return age;
-}
-
-function matchResult(match: MatchWithTeams, teamId: string): 'win' | 'loss' | 'draw' | null {
-  if (match.home_score === null || match.away_score === null) return null;
-  const isHome = match.home_team_id === teamId;
-  const my = isHome ? match.home_score : match.away_score;
-  const their = isHome ? match.away_score : match.home_score;
-  if (my > their) return 'win';
-  if (my < their) return 'loss';
-  return 'draw';
-}
-
 export function PlayerProfile() {
-  const { isDark } = useTheme();
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const { signOut, profile, user, captainTeam, playerTeams, refreshProfile } = useAuth();
-  const myTeams = captainTeam
+  const myTeams = useMemo(() => captainTeam
     ? [{ team: captainTeam, isCaptain: true }, ...playerTeams.filter(t => t.id !== captainTeam.id).map(t => ({ team: t, isCaptain: false }))]
-    : playerTeams.map(t => ({ team: t, isCaptain: false }));
+    : playerTeams.map(t => ({ team: t, isCaptain: false })),
+    [captainTeam, playerTeams]
+  );
   const navigate = useNavigate();
   const { matches } = useMatches();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +52,6 @@ export function PlayerProfile() {
     if (data) {
       setApplication(data as OwnerApplication);
       setShowApplyForm(false);
-      // Open mailto as fallback notification to admin
       const subject = encodeURIComponent(`Field Owner Application – ${profile.full_name}`);
       const body = encodeURIComponent(
         `Name: ${profile.full_name}\nUser ID: ${user.id}\nEmail: ${user.email ?? 'N/A'}\nArea: ${profile.area ?? 'N/A'}\n\nMessage:\n${applyMessage.trim() || '(none)'}`
@@ -78,30 +61,27 @@ export function PlayerProfile() {
     setApplyLoading(false);
   };
 
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
+  const myTeamIds = useMemo(() => new Set(myTeams.map(mt => mt.team.id)), [myTeams]);
 
-  const myTeamIds = new Set(myTeams.map(mt => mt.team.id));
-  const playerMatches = myTeamIds.size > 0
-    ? matches.filter(m => (myTeamIds.has(m.home_team_id) || myTeamIds.has(m.away_team_id)) && m.status === 'completed').slice(0, 4)
-    : matches.filter(m => m.status === 'completed').slice(0, 4);
+  const playerMatches = useMemo(() => (
+    myTeamIds.size > 0
+      ? matches.filter(m => (myTeamIds.has(m.home_team_id) || myTeamIds.has(m.away_team_id)) && m.status === 'completed').slice(0, 4)
+      : matches.filter(m => m.status === 'completed').slice(0, 4)
+  ), [matches, myTeamIds]);
 
-  const age = calcAge(profile?.date_of_birth ?? null);
+  const age = useMemo(() => calcAge(profile?.date_of_birth ?? null), [profile?.date_of_birth]);
 
   const statMatches = profile?.stat_matches ?? 0;
   const statWins = profile?.stat_wins ?? 0;
   const winRate = statMatches > 0 ? Math.round((statWins / statMatches) * 100) : 0;
 
-  const statItems = [
+  const statItems = useMemo(() => [
     { label: 'Played', value: statMatches, emoji: '🎮' },
     { label: 'Wins', value: statWins, color: '#2E7D32', emoji: '🏆' },
     { label: 'Goals', value: profile?.stat_goals ?? 0, color: '#B3261E', emoji: '⚽' },
     { label: 'Assists', value: profile?.stat_assists ?? 0, color: '#E65100', emoji: '🎯' },
     { label: 'MVPs', value: profile?.stat_mvp ?? 0, color: '#1565C0', emoji: '⭐' },
-  ];
+  ], [statMatches, statWins, profile?.stat_goals, profile?.stat_assists, profile?.stat_mvp]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -152,19 +132,17 @@ export function PlayerProfile() {
           <div className="text-center w-full">
             <h1 style={{ fontSize: '23px', fontWeight: 700, color: 'white', letterSpacing: '-0.3px' }}>{profile?.full_name ?? 'Player'}</h1>
 
-            {/* Position + Nationality */}
             <div className="flex items-center justify-center gap-2 mt-1.5">
-              {profile?.position && (
+              {profile?.position ? (
                 <span className="px-2.5 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.25)', color: 'white', fontSize: '12px', fontWeight: 700 }}>
                   {profile.position}
                 </span>
-              )}
-              {profile?.nationality && (
+              ) : null}
+              {profile?.nationality ? (
                 <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>{profile.nationality}</span>
-              )}
+              ) : null}
             </div>
 
-            {/* Biometrics */}
             {(() => {
               const bio = [
                 age !== null ? { value: String(age), label: 'Age' } : null,
@@ -184,15 +162,14 @@ export function PlayerProfile() {
               ) : null;
             })()}
 
-            {/* Location + Teams */}
-            {(profile?.area || myTeams.length > 0) && (
+            {(profile?.area || myTeams.length > 0) ? (
               <div className="flex items-center justify-center gap-3 mt-2.5 flex-wrap">
-                {profile?.area && (
+                {profile?.area ? (
                   <div className="flex items-center gap-1">
                     <MapPin size={11} color="rgba(255,255,255,0.65)" />
                     <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>{profile.area}</span>
                   </div>
-                )}
+                ) : null}
                 {myTeams.map(({ team, isCaptain: cap }, i) => (
                   <button key={team.id} onClick={() => navigate(`/app/teams/${team.id}`)}
                     className="flex items-center gap-1">
@@ -204,7 +181,7 @@ export function PlayerProfile() {
                   </button>
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
@@ -316,7 +293,7 @@ export function PlayerProfile() {
           </button>
         ) : null}
 
-        {playerMatches.length > 0 && (
+        {playerMatches.length > 0 ? (
           <div>
             <h3 style={{ fontSize: '16px', fontWeight: 500, color: textPrimary, marginBottom: '12px' }}>Recent Matches</h3>
             <div className="flex flex-col gap-2">
@@ -349,7 +326,7 @@ export function PlayerProfile() {
               })}
             </div>
           </div>
-        )}
+        ) : null}
 
         <div className="flex flex-col gap-2 mt-2">
           <button onClick={handleSignOut}
