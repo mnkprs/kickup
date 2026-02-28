@@ -8,6 +8,13 @@ import { supabase } from '../../lib/supabase';
 
 const FORMATS = ['5v5', '6v6', '7v7', '8v8', '11v11'];
 
+const LABEL_STYLE: React.CSSProperties = {
+  fontSize: '13px',
+  fontWeight: 500,
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+};
+
 export function CreateTournament() {
   const { isDark } = useTheme();
   const navigate = useNavigate();
@@ -34,9 +41,13 @@ export function CreateTournament() {
   const borderColor = isDark ? '#49454F' : '#E7E0EC';
   const inputBg = isDark ? '#3A3940' : '#F7F2FA';
 
+  const inputStyle: React.CSSProperties = {
+    background: inputBg, borderColor, color: textPrimary,
+    fontSize: '15px', fontFamily: 'Roboto, sans-serif',
+  };
+
   const allAreas = groups.flatMap(g => g.areas);
 
-  // Gate: only field owners
   if (!profile?.is_field_owner) {
     return (
       <div style={{ background: bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -73,27 +84,6 @@ export function CreateTournament() {
     navigate(`/app/tournaments/${data.id}/manage`, { replace: true });
   };
 
-  function Field({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-      <div className="flex flex-col gap-1">
-        <label style={{ fontSize: '13px', fontWeight: 500, color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</label>
-        {children}
-      </div>
-    );
-  }
-
-  function TextInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
-    return (
-      <input
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full h-[52px] px-4 rounded-2xl outline-none border"
-        style={{ background: inputBg, borderColor, color: textPrimary, fontSize: '15px', fontFamily: 'Roboto, sans-serif' }}
-      />
-    );
-  }
-
   return (
     <div style={{ background: bg, minHeight: '100vh', fontFamily: 'Roboto, sans-serif' }}>
       {/* Header */}
@@ -116,38 +106,60 @@ export function CreateTournament() {
       </div>
 
       <div className="px-4 flex flex-col gap-5 pb-32">
-        <Field label="Tournament Name *">
-          <TextInput value={name} onChange={setName} placeholder="e.g. Summer Cup 2026" />
-        </Field>
+        {/* Name */}
+        <div className="flex flex-col gap-1">
+          <label style={{ ...LABEL_STYLE, color: textSecondary }}>Tournament Name *</label>
+          <input
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="e.g. Summer Cup 2026"
+            className="w-full h-[52px] px-4 rounded-2xl outline-none border"
+            style={inputStyle}
+          />
+        </div>
 
-        <Field label="Description">
+        {/* Description */}
+        <div className="flex flex-col gap-1">
+          <label style={{ ...LABEL_STYLE, color: textSecondary }}>Description</label>
           <textarea
             value={description}
             onChange={e => setDescription(e.target.value)}
             placeholder="Tell teams about this tournament..."
             rows={3}
             className="w-full px-4 py-3 rounded-2xl outline-none border resize-none"
-            style={{ background: inputBg, borderColor, color: textPrimary, fontSize: '15px', fontFamily: 'Roboto, sans-serif' }}
+            style={inputStyle}
           />
-        </Field>
+        </div>
 
-        <Field label="Venue">
-          <TextInput value={venue} onChange={setVenue} placeholder="e.g. Stade Municipal" />
-        </Field>
+        {/* Venue */}
+        <div className="flex flex-col gap-1">
+          <label style={{ ...LABEL_STYLE, color: textSecondary }}>Venue</label>
+          <input
+            value={venue}
+            onChange={e => setVenue(e.target.value)}
+            placeholder="e.g. Stade Municipal"
+            className="w-full h-[52px] px-4 rounded-2xl outline-none border"
+            style={inputStyle}
+          />
+        </div>
 
-        <Field label="Area *">
+        {/* Area */}
+        <div className="flex flex-col gap-1">
+          <label style={{ ...LABEL_STYLE, color: textSecondary }}>Area *</label>
           <select
             value={area}
             onChange={e => setArea(e.target.value)}
             className="w-full h-[52px] px-4 rounded-2xl outline-none border appearance-none"
-            style={{ background: inputBg, borderColor, color: area ? textPrimary : textSecondary, fontSize: '15px', fontFamily: 'Roboto, sans-serif' }}
+            style={{ ...inputStyle, color: area ? textPrimary : textSecondary }}
           >
             <option value="" disabled>Select area…</option>
             {allAreas.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
-        </Field>
+        </div>
 
-        <Field label="Match Format">
+        {/* Match Format */}
+        <div className="flex flex-col gap-2">
+          <label style={{ ...LABEL_STYLE, color: textSecondary }}>Match Format</label>
           <div className="flex gap-2 flex-wrap">
             {FORMATS.map(f => (
               <button
@@ -166,55 +178,69 @@ export function CreateTournament() {
               </button>
             ))}
           </div>
-        </Field>
+        </div>
 
+        {/* Max Teams + Teams per Group */}
         <div className="flex gap-4">
-          <Field label="Max Teams">
+          <div className="flex flex-col gap-1">
+            <label style={{ ...LABEL_STYLE, color: textSecondary }}>Max Teams</label>
             <select
               value={maxTeams}
               onChange={e => setMaxTeams(Number(e.target.value))}
               className="h-[52px] px-4 rounded-2xl outline-none border appearance-none"
-              style={{ background: inputBg, borderColor, color: textPrimary, fontSize: '15px', minWidth: '120px', fontFamily: 'Roboto, sans-serif' }}
+              style={{ ...inputStyle, minWidth: '120px' }}
             >
               {[4, 8, 12, 16, 24, 32].map(n => <option key={n} value={n}>{n} teams</option>)}
             </select>
-          </Field>
-          <Field label="Teams per Group">
+          </div>
+          <div className="flex flex-col gap-1">
+            <label style={{ ...LABEL_STYLE, color: textSecondary }}>Teams per Group</label>
             <select
               value={teamsPerGroup}
               onChange={e => setTeamsPerGroup(Number(e.target.value))}
               className="h-[52px] px-4 rounded-2xl outline-none border appearance-none"
-              style={{ background: inputBg, borderColor, color: textPrimary, fontSize: '15px', minWidth: '120px', fontFamily: 'Roboto, sans-serif' }}
+              style={{ ...inputStyle, minWidth: '120px' }}
             >
               {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n} per group</option>)}
             </select>
-          </Field>
+          </div>
         </div>
 
+        {/* Dates */}
         <div className="flex gap-4">
-          <Field label="Start Date">
+          <div className="flex flex-col gap-1">
+            <label style={{ ...LABEL_STYLE, color: textSecondary }}>Start Date</label>
             <input
               type="date"
               value={startDate}
               onChange={e => setStartDate(e.target.value)}
               className="h-[52px] px-4 rounded-2xl outline-none border"
-              style={{ background: inputBg, borderColor, color: textPrimary, fontSize: '15px', fontFamily: 'Roboto, sans-serif', minWidth: '150px' }}
+              style={{ ...inputStyle, minWidth: '150px' }}
             />
-          </Field>
-          <Field label="End Date">
+          </div>
+          <div className="flex flex-col gap-1">
+            <label style={{ ...LABEL_STYLE, color: textSecondary }}>End Date</label>
             <input
               type="date"
               value={endDate}
               onChange={e => setEndDate(e.target.value)}
               className="h-[52px] px-4 rounded-2xl outline-none border"
-              style={{ background: inputBg, borderColor, color: textPrimary, fontSize: '15px', fontFamily: 'Roboto, sans-serif', minWidth: '150px' }}
+              style={{ ...inputStyle, minWidth: '150px' }}
             />
-          </Field>
+          </div>
         </div>
 
-        <Field label="Prize / Reward">
-          <TextInput value={prize} onChange={setPrize} placeholder="e.g. Trophy + 5,000 DA" />
-        </Field>
+        {/* Prize */}
+        <div className="flex flex-col gap-1">
+          <label style={{ ...LABEL_STYLE, color: textSecondary }}>Prize / Reward</label>
+          <input
+            value={prize}
+            onChange={e => setPrize(e.target.value)}
+            placeholder="e.g. Trophy + 5,000 DA"
+            className="w-full h-[52px] px-4 rounded-2xl outline-none border"
+            style={inputStyle}
+          />
+        </div>
 
         {error && (
           <p className="px-4 py-3 rounded-2xl" style={{ background: '#FFEBEE', color: '#B3261E', fontSize: '14px' }}>{error}</p>
