@@ -221,6 +221,13 @@ export function TournamentDetail() {
           </div>
         )}
 
+        {/* Registration closed notice for captains not in this tournament */}
+        {!!myTeamId && !myReg && tournament.status !== 'registration' && (
+          <div className="mb-4 px-4 py-3 rounded-2xl text-center" style={{ background: isDark ? '#2D2C31' : '#EEEEEE', color: '#4E4E4E' }}>
+            <span style={{ fontSize: '14px', fontWeight: 500 }}>Registration is closed for this tournament</span>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex gap-1 rounded-2xl p-1" style={{ background: isDark ? '#2D2C31' : '#F1EFF5' }}>
           {TABS.map(({ key, label }) => (
