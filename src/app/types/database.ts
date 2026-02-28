@@ -208,6 +208,7 @@ export interface Notification {
   read: boolean;
   team_id: string | null;
   match_id: string | null;
+  tournament_id: string | null;
   avatar_emoji: string | null;
   avatar_color: string | null;
   created_at: string;
