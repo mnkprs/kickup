@@ -34,7 +34,6 @@ export function Onboarding() {
   const [saving,        setSaving]        = useState(false);
   const [error,         setError]         = useState('');
 
-  // If somehow user doesn't need onboarding, send to app
   if (!needsOnboarding && !saving) {
     navigate('/app', { replace: true });
     return null;
@@ -46,8 +45,10 @@ export function Onboarding() {
   const fieldStyle = "w-full h-[56px] px-4 rounded-2xl border-2 border-[#CAC4D0] bg-white outline-none focus:border-[#2E7D32] transition-colors";
   const fontStyle  = { fontFamily: 'Roboto, sans-serif', fontSize: '16px', color: '#1C1B1F' };
   const labelStyle = { fontFamily: 'Roboto, sans-serif', fontSize: '12px', fontWeight: 500 as const, color: '#49454F', textTransform: 'uppercase' as const, letterSpacing: '0.5px' };
+  const optLabelStyle = { ...labelStyle, color: '#79747E' };
 
-  const canSubmit = !!fullName.trim() && !!area && !areasLoading;
+  // position + area are required; optional fields can be empty
+  const canSubmit = !!fullName.trim() && !!position && !!area && !areasLoading;
 
   const handleSubmit = async () => {
     if (!user || !canSubmit) return;
@@ -60,7 +61,7 @@ export function Onboarding() {
       full_name:       fullName.trim(),
       avatar_initials: profileInitials,
       avatar_color:    activeColor,
-      position:        position   || null,
+      position,
       area,
       nationality:     nationality.trim() || null,
       date_of_birth:   dateOfBirth        || null,
@@ -81,14 +82,13 @@ export function Onboarding() {
   return (
     <div className="fixed inset-0 flex justify-center" style={{ background: 'linear-gradient(180deg, #E8F5E9 0%, #FFFBFE 40%)' }}>
       <div className="w-full max-w-[430px] flex flex-col overflow-y-auto">
-        {/* Header */}
         <div className="px-6 pt-12 pb-6">
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
             <h1 style={{ fontFamily: 'Roboto, sans-serif', fontSize: '26px', fontWeight: 700, color: '#1C1B1F' }}>
-              Welcome to Kickup! 👋
+              What position do you play? 🏃
             </h1>
             <p style={{ fontFamily: 'Roboto, sans-serif', fontSize: '15px', color: '#49454F', marginTop: '6px' }}>
-              Just a few details before you hit the pitch.
+              Two quick picks and you're on the pitch.
             </p>
           </motion.div>
         </div>
@@ -96,14 +96,14 @@ export function Onboarding() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
           className="px-6 flex flex-col gap-6 pb-12">
 
-          {/* Avatar preview */}
+          {/* Avatar */}
           <div className="flex flex-col items-center gap-3">
             {googleAvatar ? (
               <img src={googleAvatar} alt="avatar" className="w-20 h-20 rounded-full object-cover shadow-md" />
             ) : (
               <PlayerAvatar initials={initials} color={activeColor} size={80} />
             )}
-            {!googleAvatar && (
+            {!googleAvatar ? (
               <div className="flex gap-2">
                 {colors.map(c => (
                   <button key={c} onClick={() => setAvatarColor(c)}
@@ -111,7 +111,7 @@ export function Onboarding() {
                     style={{ background: c, border: activeColor === c ? '2px solid white' : '2px solid transparent', boxShadow: activeColor === c ? `0 0 0 2px ${c}` : 'none' }} />
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* Full Name */}
@@ -121,7 +121,7 @@ export function Onboarding() {
               onChange={e => setFullName(e.target.value)} placeholder="e.g. Nikos Papadopoulos" />
           </div>
 
-          {/* Position */}
+          {/* Position — required */}
           <div className="flex flex-col gap-2">
             <span style={labelStyle}>Position</span>
             <div className="flex gap-3">
@@ -137,7 +137,7 @@ export function Onboarding() {
 
           {/* Area — required */}
           <div className="flex flex-col gap-1">
-            <span style={labelStyle}>Area / Neighbourhood <span style={{ color: '#B3261E' }}>*</span></span>
+            <span style={labelStyle}>Area / Neighbourhood</span>
             <div className="relative">
               <select value={area} onChange={e => setArea(e.target.value)} disabled={areasLoading}
                 className="w-full h-[56px] px-4 pr-10 rounded-2xl border-2 border-[#CAC4D0] bg-white outline-none focus:border-[#2E7D32] transition-colors appearance-none"
@@ -153,16 +153,25 @@ export function Onboarding() {
             </div>
           </div>
 
+          {/* ── Optional divider ── */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px" style={{ background: '#E7E0EC' }} />
+            <span style={{ fontFamily: 'Roboto, sans-serif', fontSize: '11px', color: '#79747E', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+              Optional · add later
+            </span>
+            <div className="flex-1 h-px" style={{ background: '#E7E0EC' }} />
+          </div>
+
           {/* Nationality + DOB */}
           <div className="flex gap-3">
             <div className="flex flex-col gap-1 flex-1">
-              <span style={labelStyle}>Nationality</span>
-              <input className={fieldStyle} style={fontStyle} value={nationality}
+              <span style={optLabelStyle}>Nationality</span>
+              <input className={fieldStyle} style={{ ...fontStyle, color: '#79747E' }} value={nationality}
                 onChange={e => setNationality(e.target.value)} placeholder="e.g. Greek" />
             </div>
             <div className="flex flex-col gap-1 flex-1">
-              <span style={labelStyle}>Date of Birth</span>
-              <input className={fieldStyle} style={fontStyle} type="date" value={dateOfBirth}
+              <span style={optLabelStyle}>Date of Birth</span>
+              <input className={fieldStyle} style={{ ...fontStyle, color: '#79747E' }} type="date" value={dateOfBirth}
                 onChange={e => setDateOfBirth(e.target.value)} max={new Date().toISOString().split('T')[0]} />
             </div>
           </div>
@@ -170,17 +179,17 @@ export function Onboarding() {
           {/* Height + Preferred Foot */}
           <div className="flex gap-3">
             <div className="flex flex-col gap-1 flex-1">
-              <span style={labelStyle}>Height (cm)</span>
-              <input className={fieldStyle} style={fontStyle} type="number" min="100" max="230"
+              <span style={optLabelStyle}>Height (cm)</span>
+              <input className={fieldStyle} style={{ ...fontStyle, color: '#79747E' }} type="number" min="100" max="230"
                 value={height} onChange={e => setHeight(e.target.value)} placeholder="e.g. 178" />
             </div>
             <div className="flex flex-col gap-1 flex-1">
-              <span style={labelStyle}>Preferred Foot</span>
+              <span style={optLabelStyle}>Preferred Foot</span>
               <div className="flex gap-2 h-[56px] items-center">
                 {FEET.map(({ value, label }) => (
                   <button key={value} onClick={() => setPreferredFoot(preferredFoot === value ? '' : value)}
                     className="flex-1 h-full rounded-2xl border-2 flex items-center justify-center transition-all"
-                    style={{ borderColor: preferredFoot === value ? '#2E7D32' : '#CAC4D0', background: preferredFoot === value ? '#E8F5E9' : 'white', fontFamily: 'Roboto, sans-serif', fontSize: '13px', fontWeight: preferredFoot === value ? 700 : 400, color: preferredFoot === value ? '#2E7D32' : '#49454F' }}>
+                    style={{ borderColor: preferredFoot === value ? '#2E7D32' : '#E7E0EC', background: preferredFoot === value ? '#E8F5E9' : 'white', fontFamily: 'Roboto, sans-serif', fontSize: '13px', fontWeight: preferredFoot === value ? 700 : 400, color: preferredFoot === value ? '#2E7D32' : '#79747E' }}>
                     {label}
                   </button>
                 ))}
@@ -188,8 +197,17 @@ export function Onboarding() {
             </div>
           </div>
 
-          {error && <p style={{ fontFamily: 'Roboto, sans-serif', fontSize: '13px', color: '#B3261E' }}>{error}</p>}
+          {error ? <p style={{ fontFamily: 'Roboto, sans-serif', fontSize: '13px', color: '#B3261E' }}>{error}</p> : null}
 
+          {/* Skip optional fields */}
+          <button
+            onClick={handleSubmit}
+            disabled={!canSubmit || saving}
+            style={{ fontFamily: 'Roboto, sans-serif', fontSize: '14px', color: canSubmit ? '#49454F' : '#CAC4D0', textDecoration: 'underline', background: 'none', border: 'none', cursor: canSubmit ? 'pointer' : 'default', textAlign: 'center' as const }}>
+            Skip optional info for now
+          </button>
+
+          {/* Primary CTA */}
           <button
             onClick={handleSubmit}
             disabled={!canSubmit || saving}
