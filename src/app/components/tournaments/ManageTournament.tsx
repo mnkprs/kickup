@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ChevronLeft, Trophy, Check, X, Calendar, Play, Flag, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronLeft, Trophy, Check, X, Calendar, Play, Flag, ChevronDown, ChevronUp, UserPlus } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTournamentDetail } from '../../hooks/useTournamentDetail';
+import { useTeams } from '../../hooks/useTeams';
 import { supabase } from '../../lib/supabase';
 import type { TournamentMatch } from '../../types/database';
 
@@ -21,6 +22,11 @@ export function ManageTournament() {
   const [scheduleTime, setScheduleTime] = useState('');
   const [stageBusy, setStageBusy] = useState(false);
   const [stageError, setStageError] = useState('');
+  const [addTeamId, setAddTeamId] = useState('');
+  const [addingTeam, setAddingTeam] = useState(false);
+  const [addTeamError, setAddTeamError] = useState('');
+
+  const { teams: allTeams } = useTeams();
 
   const bg = isDark ? '#1C1B1F' : '#FFFBFE';
   const cardBg = isDark ? '#2D2C31' : 'white';
@@ -120,6 +126,20 @@ export function ManageTournament() {
     setScheduleOpen(null);
     setScheduleDate('');
     setScheduleTime('');
+    refresh();
+  };
+
+  const handleAddTeam = async () => {
+    if (!addTeamId || !id) return;
+    setAddingTeam(true);
+    setAddTeamError('');
+    const { error } = await supabase.rpc('organizer_add_team', {
+      p_tournament_id: id,
+      p_team_id: addTeamId,
+    });
+    setAddingTeam(false);
+    if (error) { setAddTeamError(error.message); return; }
+    setAddTeamId('');
     refresh();
   };
 
@@ -233,6 +253,56 @@ export function ManageTournament() {
             )}
           </div>
         </div>
+
+        {/* ── Add Team ── */}
+        {tournament.status === 'registration' && (
+          <div>
+            <SectionTitle>Add Team Directly</SectionTitle>
+            <div className="rounded-2xl border p-4 flex flex-col gap-3" style={{ background: cardBg, borderColor }}>
+              <p style={{ fontSize: '13px', color: textSecondary }}>
+                Add a team directly without requiring them to self-register.
+              </p>
+              {(() => {
+                const registeredIds = new Set(registrations.map(r => r.team_id));
+                const eligibleTeams = allTeams.filter(t => !registeredIds.has(t.id));
+                return (
+                  <>
+                    <select
+                      value={addTeamId}
+                      onChange={e => setAddTeamId(e.target.value)}
+                      className="w-full h-[48px] px-4 rounded-xl border outline-none appearance-none"
+                      style={{ background: inputBg, borderColor, color: addTeamId ? textPrimary : textSecondary, fontSize: '14px', fontFamily: 'Roboto, sans-serif' }}
+                    >
+                      <option value="" disabled>Select a team…</option>
+                      {eligibleTeams.map(t => (
+                        <option key={t.id} value={t.id}>{t.emoji} {t.name} ({t.area})</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleAddTeam}
+                      disabled={!addTeamId || addingTeam}
+                      className="w-full h-[48px] rounded-xl flex items-center justify-center gap-2"
+                      style={{
+                        background: addTeamId ? '#6A1B9A' : (isDark ? '#49454F' : '#E7E0EC'),
+                        color: addTeamId ? 'white' : textSecondary,
+                        fontSize: '15px', fontWeight: 500,
+                        opacity: addingTeam ? 0.6 : 1,
+                      }}
+                    >
+                      {addingTeam
+                        ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        : <><UserPlus size={18} /> Add Team</>
+                      }
+                    </button>
+                    {addTeamError && (
+                      <p className="px-3 py-2 rounded-xl" style={{ background: '#FFEBEE', color: '#B3261E', fontSize: '13px' }}>{addTeamError}</p>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* ── Pending Registrations ── */}
         {pending.length > 0 && (
