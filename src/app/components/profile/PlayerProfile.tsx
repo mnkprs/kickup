@@ -1,7 +1,7 @@
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { Camera, LogOut, MapPin, Pencil, Shield } from 'lucide-react';
+import { Camera, ChevronRight, LogOut, MapPin, Pencil, Shield } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../hooks/useMatches';
@@ -9,7 +9,9 @@ import { formatMatchDate } from '../../lib/formatDate';
 import { uploadAvatar } from '../../lib/uploadAvatar';
 import { supabase } from '../../lib/supabase';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
-import type { MatchWithTeams } from '../../types/database';
+import type { MatchWithTeams, OwnerApplication } from '../../types/database';
+
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL ?? 'admin@kickup.app';
 
 function calcAge(dob: string | null): number | null {
   if (!dob) return null;
@@ -32,12 +34,50 @@ function matchResult(match: MatchWithTeams, teamId: string): 'win' | 'loss' | 'd
 
 export function PlayerProfile() {
   const { isDark } = useTheme();
-  const { signOut, profile, user, captainTeam, playerTeam, refreshProfile } = useAuth();
-  const myTeam = captainTeam ?? playerTeam;
-  const isCaptain = !!captainTeam;
+  const { signOut, profile, user, captainTeam, playerTeams, refreshProfile } = useAuth();
+  const myTeams = captainTeam
+    ? [{ team: captainTeam, isCaptain: true }, ...playerTeams.filter(t => t.id !== captainTeam.id).map(t => ({ team: t, isCaptain: false }))]
+    : playerTeams.map(t => ({ team: t, isCaptain: false }));
+  const myTeam = myTeams[0]?.team ?? null;
   const navigate = useNavigate();
   const { matches } = useMatches();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [application, setApplication] = useState<OwnerApplication | null | undefined>(undefined);
+  const [showApplyForm, setShowApplyForm] = useState(false);
+  const [applyMessage, setApplyMessage] = useState('');
+  const [applyLoading, setApplyLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('owner_applications')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setApplication(data ?? null));
+  }, [user]);
+
+  const handleApplySubmit = async () => {
+    if (!user || !profile) return;
+    setApplyLoading(true);
+    const { data } = await supabase
+      .from('owner_applications')
+      .insert({ user_id: user.id, message: applyMessage.trim() })
+      .select()
+      .single();
+    if (data) {
+      setApplication(data as OwnerApplication);
+      setShowApplyForm(false);
+      // Open mailto as fallback notification to admin
+      const subject = encodeURIComponent(`Field Owner Application – ${profile.full_name}`);
+      const body = encodeURIComponent(
+        `Name: ${profile.full_name}\nUser ID: ${user.id}\nEmail: ${user.email ?? 'N/A'}\nArea: ${profile.area ?? 'N/A'}\n\nMessage:\n${applyMessage.trim() || '(none)'}`
+      );
+      window.location.href = `mailto:${ADMIN_EMAIL}?subject=${subject}&body=${body}`;
+    }
+    setApplyLoading(false);
+  };
 
   const bg = isDark ? '#1C1B1F' : '#FFFBFE';
   const cardBg = isDark ? '#2D2C31' : 'white';
@@ -45,8 +85,9 @@ export function PlayerProfile() {
   const textSecondary = isDark ? '#CAC4D0' : '#49454F';
   const borderColor = isDark ? '#49454F' : '#E7E0EC';
 
-  const playerMatches = myTeam
-    ? matches.filter(m => (m.home_team_id === myTeam.id || m.away_team_id === myTeam.id) && m.status === 'completed').slice(0, 4)
+  const myTeamIds = new Set(myTeams.map(mt => mt.team.id));
+  const playerMatches = myTeamIds.size > 0
+    ? matches.filter(m => (myTeamIds.has(m.home_team_id) || myTeamIds.has(m.away_team_id)) && m.status === 'completed').slice(0, 4)
     : matches.filter(m => m.status === 'completed').slice(0, 4);
 
   const age = calcAge(profile?.date_of_birth ?? null);
@@ -144,8 +185,8 @@ export function PlayerProfile() {
               ) : null;
             })()}
 
-            {/* Location + Team */}
-            {(profile?.area || myTeam) && (
+            {/* Location + Teams */}
+            {(profile?.area || myTeams.length > 0) && (
               <div className="flex items-center justify-center gap-3 mt-2.5 flex-wrap">
                 {profile?.area && (
                   <div className="flex items-center gap-1">
@@ -153,16 +194,16 @@ export function PlayerProfile() {
                     <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>{profile.area}</span>
                   </div>
                 )}
-                {profile?.area && myTeam && <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>·</span>}
-                {myTeam && (
-                  <button onClick={() => navigate(`/app/teams/${myTeam.id}`)}
+                {myTeams.map(({ team, isCaptain: cap }, i) => (
+                  <button key={team.id} onClick={() => navigate(`/app/teams/${team.id}`)}
                     className="flex items-center gap-1">
+                    {(i > 0 || profile?.area) && <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>·</span>}
                     <Shield size={11} color="rgba(255,255,255,0.65)" />
                     <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
-                      {myTeam.name}{isCaptain ? ' · Captain' : ''}
+                      {team.name}{cap ? ' · Captain' : ''}
                     </span>
                   </button>
-                )}
+                ))}
               </div>
             )}
           </div>
@@ -205,6 +246,77 @@ export function PlayerProfile() {
           </button>
         </div>
 
+        {/* Field Owner Application Card */}
+        {profile?.is_field_owner ? (
+          <div className="p-4 rounded-2xl border flex items-center gap-3" style={{ background: cardBg, borderColor }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: '#E8F5E9' }}>
+              <span style={{ fontSize: '18px' }}>🏟️</span>
+            </div>
+            <div className="flex-1">
+              <p style={{ fontSize: '15px', fontWeight: 600, color: '#2E7D32' }}>Field Owner</p>
+              <p style={{ fontSize: '12px', color: textSecondary }}>You have access to tournament management</p>
+            </div>
+          </div>
+        ) : application?.status === 'pending' ? (
+          <div className="p-4 rounded-2xl border flex items-center gap-3" style={{ background: cardBg, borderColor }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: isDark ? '#3A3A2A' : '#FFFDE7' }}>
+              <span style={{ fontSize: '18px' }}>⏳</span>
+            </div>
+            <div className="flex-1">
+              <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>Application Under Review</p>
+              <p style={{ fontSize: '12px', color: textSecondary }}>We'll get back to you soon</p>
+            </div>
+          </div>
+        ) : application?.status === 'rejected' ? (
+          <div className="p-4 rounded-2xl border flex items-center gap-3" style={{ background: cardBg, borderColor }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: isDark ? '#3A2020' : '#FFF3F3' }}>
+              <span style={{ fontSize: '18px' }}>❌</span>
+            </div>
+            <div className="flex-1">
+              <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>Application Not Approved</p>
+              <p style={{ fontSize: '12px', color: textSecondary }}>Contact us for more info</p>
+            </div>
+          </div>
+        ) : showApplyForm ? (
+          <div className="p-4 rounded-2xl border flex flex-col gap-3" style={{ background: cardBg, borderColor }}>
+            <p style={{ fontSize: '15px', fontWeight: 600, color: textPrimary }}>Become a Field Owner</p>
+            <p style={{ fontSize: '13px', color: textSecondary }}>Tell us about your field (location, capacity, etc.)</p>
+            <textarea
+              rows={3}
+              value={applyMessage}
+              onChange={e => setApplyMessage(e.target.value)}
+              placeholder="e.g. I own a 5v5 turf in Ampelokipoi, Athens…"
+              className="w-full rounded-xl px-3 py-2.5 resize-none outline-none"
+              style={{ background: isDark ? '#1C1B1F' : '#F7F2FA', border: `1px solid ${borderColor}`, color: textPrimary, fontSize: '14px' }}
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setShowApplyForm(false)}
+                className="flex-1 py-2.5 rounded-xl"
+                style={{ background: isDark ? '#49454F' : '#E7E0EC', color: textPrimary, fontSize: '14px', fontWeight: 500 }}>
+                Cancel
+              </button>
+              <button onClick={handleApplySubmit} disabled={applyLoading}
+                className="flex-1 py-2.5 rounded-xl"
+                style={{ background: '#2E7D32', color: 'white', fontSize: '14px', fontWeight: 600, opacity: applyLoading ? 0.6 : 1 }}>
+                {applyLoading ? 'Sending…' : 'Submit'}
+              </button>
+            </div>
+          </div>
+        ) : application === null ? (
+          <button onClick={() => setShowApplyForm(true)}
+            className="p-4 rounded-2xl border flex items-center gap-3 w-full text-left"
+            style={{ background: cardBg, borderColor }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: '#E8F5E9' }}>
+              <span style={{ fontSize: '18px' }}>🏟️</span>
+            </div>
+            <div className="flex-1">
+              <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>Become a Field Owner</p>
+              <p style={{ fontSize: '12px', color: textSecondary }}>Organize tournaments at your field</p>
+            </div>
+            <ChevronRight size={18} color={textSecondary} />
+          </button>
+        ) : null}
+
         {playerMatches.length > 0 && (
           <div>
             <h3 style={{ fontSize: '16px', fontWeight: 500, color: textPrimary, marginBottom: '12px' }}>Recent Matches</h3>
@@ -213,7 +325,7 @@ export function PlayerProfile() {
                 const homeTeam = match.home_team;
                 const awayTeam = match.away_team;
                 if (!homeTeam || !awayTeam || match.home_score === null) return null;
-                const teamId = myTeam?.id ?? match.home_team_id;
+                const teamId = myTeamIds.has(match.home_team_id) ? match.home_team_id : match.away_team_id;
                 const result = matchResult(match, teamId);
                 const resultColor = result === 'win' ? '#2E7D32' : result === 'loss' ? '#B3261E' : '#1565C0';
                 return (

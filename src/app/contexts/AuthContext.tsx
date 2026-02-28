@@ -7,8 +7,8 @@ interface AuthContextType {
   session: Session | null
   user: User | null
   profile: Profile | null
-  captainTeam: Team | null  // team where user is active captain
-  playerTeam: Team | null   // any team user is an active member of
+  captainTeam: Team | null  // first team where user is active captain
+  playerTeams: Team[]       // all teams user is an active member of
   loading: boolean
   needsOnboarding: boolean  // true for OAuth users who haven't filled profile yet
   signOut: () => Promise<void>
@@ -20,7 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   captainTeam: null,
-  playerTeam: null,
+  playerTeams: [],
   loading: true,
   needsOnboarding: false,
   signOut: async () => {},
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [captainTeam, setCaptainTeam] = useState<Team | null>(null)
-  const [playerTeam, setPlayerTeam] = useState<Team | null>(null)
+  const [playerTeams, setPlayerTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchProfileData = async (user: User) => {
@@ -47,25 +47,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       p.avatar_url = user.user_metadata.avatar_url
     }
 
-    const { data: captainTm } = await supabase
+    const { data: memberships } = await supabase
       .from('team_members')
-      .select('teams(*)')
+      .select('role, teams(*)')
       .eq('player_id', user.id)
-      .eq('role', 'captain')
       .eq('status', 'active')
-      .maybeSingle()
+      .order('joined_at')
 
-    const { data: memberTm } = await supabase
-      .from('team_members')
-      .select('teams(*)')
-      .eq('player_id', user.id)
-      .eq('status', 'active')
-      .limit(1)
-      .maybeSingle()
+    const allTeams = (memberships ?? []).map(m => m.teams as unknown as Team).filter(Boolean)
+    const captain = (memberships ?? []).find(m => m.role === 'captain')
+    const captainT = captain ? (captain.teams as unknown as Team) : null
 
     setProfile(p ?? null)
-    setCaptainTeam((captainTm?.teams as unknown as Team) ?? null)
-    setPlayerTeam((memberTm?.teams as unknown as Team) ?? null)
+    setCaptainTeam(captainT ?? null)
+    setPlayerTeams(allTeams)
   }
 
   useEffect(() => {
@@ -85,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setProfile(null)
         setCaptainTeam(null)
-        setPlayerTeam(null)
+        setPlayerTeams([])
       }
       setLoading(false)
     })
@@ -103,13 +98,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
     setProfile(null)
     setCaptainTeam(null)
-    setPlayerTeam(null)
+    setPlayerTeams([])
   }
 
   const needsOnboarding = !loading && !!session && !!profile && !profile.area
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, captainTeam, playerTeam, loading, needsOnboarding, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, captainTeam, playerTeams, loading, needsOnboarding, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

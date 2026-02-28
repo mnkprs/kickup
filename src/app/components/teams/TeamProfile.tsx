@@ -36,7 +36,7 @@ export function TeamProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const { user, captainTeam, playerTeam, refreshProfile } = useAuth();
+  const { user, captainTeam, playerTeams, refreshProfile } = useAuth();
   const { addToast } = useToast();
   const { team, loading: teamLoading, refresh } = useTeam(id);
   const { matches, loading: matchesLoading } = useMatches();
@@ -68,7 +68,7 @@ export function TeamProfile() {
   }
 
   const isMyCaptainTeam = captainTeam?.id === id;
-  const isMyPlayerTeam = playerTeam?.id === id;
+  const isMyPlayerTeam = playerTeams.some(t => t.id === id);
   const isMyTeam = isMyCaptainTeam || isMyPlayerTeam;
   const isCaptain = isMyCaptainTeam;
 

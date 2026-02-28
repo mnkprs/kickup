@@ -109,7 +109,7 @@ function TeamCard({ team, isDark, onNavigate, isMyTeam, isCaptain }: { team: Tea
 export function TeamsList() {
   const { isDark } = useTheme();
   const navigate = useNavigate();
-  const { captainTeam, playerTeam } = useAuth();
+  const { captainTeam, playerTeams } = useAuth();
   const [query, setQuery] = useState('');
   const [formatFilter, setFormatFilter] = useState('All');
   const [cityFilter, setCityFilter] = useState('All');
@@ -119,10 +119,10 @@ export function TeamsList() {
   const { teams, loading } = useTeams();
   const { groups } = useAreas();
 
-  const myTeamIds = new Set([captainTeam?.id, playerTeam?.id].filter(Boolean) as string[]);
-  const myTeams: Array<{ team: Team; isCaptain: boolean }> = [];
-  if (captainTeam) myTeams.push({ team: captainTeam, isCaptain: true });
-  if (playerTeam && playerTeam.id !== captainTeam?.id) myTeams.push({ team: playerTeam, isCaptain: false });
+  const myTeams: Array<{ team: Team; isCaptain: boolean }> = captainTeam
+    ? [{ team: captainTeam, isCaptain: true }, ...playerTeams.filter(t => t.id !== captainTeam.id).map(t => ({ team: t, isCaptain: false }))]
+    : playerTeams.map(t => ({ team: t, isCaptain: false }));
+  const myTeamIds = new Set(myTeams.map(mt => mt.team.id));
 
   const bg = isDark ? '#1C1B1F' : '#FFFBFE';
   const cardBg = isDark ? '#2D2C31' : 'white';

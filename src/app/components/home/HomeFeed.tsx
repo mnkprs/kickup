@@ -33,9 +33,9 @@ export function HomeFeed() {
   const [refreshing, setRefreshing] = useState(false);
   const [locationFilter] = useState('Athens · 10km');
 
-  const { user, profile, captainTeam, playerTeam } = useAuth();
+  const { user, profile, captainTeam, playerTeams } = useAuth();
   const { teams: teamsLookingRaw, loading: teamsLoading } = useTeams({ searching_for_opponent: true });
-  const myTeamIds = new Set([captainTeam?.id, playerTeam?.id].filter(Boolean) as string[]);
+  const myTeamIds = new Set([captainTeam?.id, ...playerTeams.map(t => t.id)].filter(Boolean) as string[]);
   const teamsLooking = teamsLookingRaw.filter(t => !myTeamIds.has(t.id));
   const { matches, loading: matchesLoading } = useMatches();
   const { freelancers: allFreelancers, loading: freelancersLoading } = useFreelancers();
