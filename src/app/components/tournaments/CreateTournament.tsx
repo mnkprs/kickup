@@ -18,7 +18,7 @@ const LABEL_STYLE: React.CSSProperties = {
 export function CreateTournament() {
   const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, isAdmin } = useAuth();
   const { groups } = useAreas();
 
   const [name, setName] = useState('');
@@ -43,7 +43,7 @@ export function CreateTournament() {
 
   const allAreas = groups.flatMap(g => g.areas);
 
-  if (!profile?.is_field_owner) {
+  if (!profile?.is_field_owner && !isAdmin) {
     return (
       <div style={{ background: bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ color: textSecondary }}>Only field owners can create tournaments.</p>

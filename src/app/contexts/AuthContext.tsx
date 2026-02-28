@@ -7,6 +7,7 @@ interface AuthContextType {
   session: Session | null
   user: User | null
   profile: Profile | null
+  isAdmin: boolean
   captainTeam: Team | null  // first team where user is active captain
   playerTeams: Team[]       // all teams user is an active member of
   loading: boolean
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   profile: null,
+  isAdmin: false,
   captainTeam: null,
   playerTeams: [],
   loading: true,
@@ -102,9 +104,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const needsOnboarding = !loading && !!session && !!profile && !profile.area
+  const isAdmin = profile?.is_admin ?? false
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, captainTeam, playerTeams, loading, needsOnboarding, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, isAdmin, captainTeam, playerTeams, loading, needsOnboarding, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

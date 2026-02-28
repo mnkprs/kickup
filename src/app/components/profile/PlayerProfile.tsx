@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { Camera, ChevronRight, LogOut, MapPin, Pencil, Shield } from 'lucide-react';
+import { Camera, ChevronRight, ChevronDown, ChevronUp, LogOut, MapPin, Pencil, Shield, ShieldCheck } from 'lucide-react';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../hooks/useMatches';
@@ -16,7 +16,7 @@ const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL ?? 'admin@kickup.app';
 
 export function PlayerProfile() {
   const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
-  const { signOut, profile, user, captainTeam, playerTeams, refreshProfile } = useAuth();
+  const { signOut, profile, user, isAdmin, captainTeam, playerTeams, refreshProfile } = useAuth();
   const myTeams = useMemo(() => captainTeam
     ? [{ team: captainTeam, isCaptain: true }, ...playerTeams.filter(t => t.id !== captainTeam.id).map(t => ({ team: t, isCaptain: false }))]
     : playerTeams.map(t => ({ team: t, isCaptain: false })),
@@ -31,6 +31,17 @@ export function PlayerProfile() {
   const [applyMessage, setApplyMessage] = useState('');
   const [applyLoading, setApplyLoading] = useState(false);
 
+  // Matches the player was in (via lineup, not current team membership)
+  const [playerMatchIds, setPlayerMatchIds] = useState<Set<string>>(new Set());
+  const [playerTeamByMatch, setPlayerTeamByMatch] = useState<Map<string, string>>(new Map());
+
+  // Admin panel state
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [pendingApps, setPendingApps] = useState<Array<{ id: string; user_id: string; message: string; profiles: { full_name: string; avatar_initials: string; avatar_color: string } | null }>>([]);
+  const [disputedMatches, setDisputedMatches] = useState<Array<{ id: string; home_score: number | null; away_score: number | null; home_team: { name: string } | null; away_team: { name: string } | null }>>([]);
+  const [resolveScores, setResolveScores] = useState<Record<string, { home: string; away: string }>>({});
+  const [adminActioning, setAdminActioning] = useState<string | null>(null);
+
   useEffect(() => {
     if (!user) return;
     supabase
@@ -39,7 +50,35 @@ export function PlayerProfile() {
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data }) => setApplication(data ?? null));
+    supabase
+      .from('match_lineups')
+      .select('match_id, team_id')
+      .eq('player_id', user.id)
+      .then(({ data }) => {
+        setPlayerMatchIds(new Set((data ?? []).map(l => l.match_id)));
+        setPlayerTeamByMatch(new Map((data ?? []).map(l => [l.match_id, l.team_id])));
+      });
   }, [user]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    supabase
+      .from('owner_applications')
+      .select('*, profiles(full_name, avatar_initials, avatar_color)')
+      .eq('status', 'pending')
+      .then(({ data }) => setPendingApps((data ?? []) as typeof pendingApps));
+    supabase
+      .from('matches')
+      .select('*, home_team:teams!home_team_id(name), away_team:teams!away_team_id(name)')
+      .eq('status', 'disputed')
+      .then(({ data }) => {
+        const rows = (data ?? []) as typeof disputedMatches;
+        setDisputedMatches(rows);
+        const scores: Record<string, { home: string; away: string }> = {};
+        rows.forEach(m => { scores[m.id] = { home: String(m.home_score ?? 0), away: String(m.away_score ?? 0) }; });
+        setResolveScores(scores);
+      });
+  }, [isAdmin]);
 
   const handleApplySubmit = async () => {
     if (!user || !profile) return;
@@ -61,13 +100,9 @@ export function PlayerProfile() {
     setApplyLoading(false);
   };
 
-  const myTeamIds = useMemo(() => new Set(myTeams.map(mt => mt.team.id)), [myTeams]);
-
-  const playerMatches = useMemo(() => (
-    myTeamIds.size > 0
-      ? matches.filter(m => (myTeamIds.has(m.home_team_id) || myTeamIds.has(m.away_team_id)) && m.status === 'completed').slice(0, 4)
-      : matches.filter(m => m.status === 'completed').slice(0, 4)
-  ), [matches, myTeamIds]);
+  const playerMatches = useMemo(() =>
+    matches.filter(m => m.status === 'completed' && playerMatchIds.has(m.id)).slice(0, 4),
+    [matches, playerMatchIds]);
 
   const age = useMemo(() => calcAge(profile?.date_of_birth ?? null), [profile?.date_of_birth]);
 
@@ -82,6 +117,32 @@ export function PlayerProfile() {
     { label: 'Assists', value: profile?.stat_assists ?? 0, color: '#E65100', emoji: '🎯' },
     { label: 'MVPs', value: profile?.stat_mvp ?? 0, color: '#1565C0', emoji: '⭐' },
   ], [statMatches, statWins, profile?.stat_goals, profile?.stat_assists, profile?.stat_mvp]);
+
+  const handleAdminApprove = async (userId: string) => {
+    setAdminActioning(userId);
+    await supabase.rpc('admin_approve_field_owner', { p_user_id: userId });
+    setPendingApps(prev => prev.filter(a => a.user_id !== userId));
+    setAdminActioning(null);
+  };
+
+  const handleAdminReject = async (userId: string) => {
+    setAdminActioning(userId);
+    await supabase.rpc('admin_reject_field_owner', { p_user_id: userId });
+    setPendingApps(prev => prev.filter(a => a.user_id !== userId));
+    setAdminActioning(null);
+  };
+
+  const handleResolveDispute = async (matchId: string) => {
+    setAdminActioning(matchId);
+    const scores = resolveScores[matchId];
+    await supabase.rpc('admin_resolve_dispute', {
+      p_match_id: matchId,
+      p_home: parseInt(scores.home, 10),
+      p_away: parseInt(scores.away, 10),
+    });
+    setDisputedMatches(prev => prev.filter(m => m.id !== matchId));
+    setAdminActioning(null);
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -255,7 +316,7 @@ export function PlayerProfile() {
           </div>
         ) : showApplyForm ? (
           <div className="p-4 rounded-2xl border flex flex-col gap-3" style={{ background: cardBg, borderColor }}>
-            <p style={{ fontSize: '15px', fontWeight: 600, color: textPrimary }}>Become a Field Owner</p>
+            <p style={{ fontSize: '15px', fontWeight: 600, color: textPrimary }}>Participate as a Field Owner</p>
             <p style={{ fontSize: '13px', color: textSecondary }}>Tell us about your field (location, capacity, etc.)</p>
             <textarea
               rows={3}
@@ -286,7 +347,7 @@ export function PlayerProfile() {
               <span style={{ fontSize: '18px' }}>🏟️</span>
             </div>
             <div className="flex-1">
-              <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>Become a Field Owner</p>
+              <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>Are you a Field Owner?</p>
               <p style={{ fontSize: '12px', color: textSecondary }}>Organize tournaments at your field</p>
             </div>
             <ChevronRight size={18} color={textSecondary} />
@@ -301,7 +362,7 @@ export function PlayerProfile() {
                 const homeTeam = match.home_team;
                 const awayTeam = match.away_team;
                 if (!homeTeam || !awayTeam || match.home_score === null) return null;
-                const teamId = myTeamIds.has(match.home_team_id) ? match.home_team_id : match.away_team_id;
+                const teamId = playerTeamByMatch.get(match.id) ?? match.home_team_id;
                 const result = matchResult(match, teamId);
                 const resultColor = result === 'win' ? '#2E7D32' : result === 'loss' ? '#B3261E' : '#1565C0';
                 return (
@@ -325,6 +386,112 @@ export function PlayerProfile() {
                 );
               })}
             </div>
+          </div>
+        ) : null}
+
+        {isAdmin ? (
+          <div className="rounded-2xl border overflow-hidden" style={{ background: cardBg, borderColor }}>
+            <button
+              onClick={() => setAdminOpen(o => !o)}
+              className="w-full flex items-center gap-3 p-4"
+            >
+              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: '#F3E5F5' }}>
+                <ShieldCheck size={18} color="#6A1B9A" />
+              </div>
+              <div className="flex-1 text-left">
+                <p style={{ fontSize: '15px', fontWeight: 600, color: '#6A1B9A' }}>Admin Panel</p>
+                <p style={{ fontSize: '12px', color: textSecondary }}>
+                  {pendingApps.length} pending · {disputedMatches.length} disputed
+                </p>
+              </div>
+              {adminOpen ? <ChevronUp size={18} color={textSecondary} /> : <ChevronDown size={18} color={textSecondary} />}
+            </button>
+
+            {adminOpen ? (
+              <div className="border-t px-4 pb-4 flex flex-col gap-4" style={{ borderColor }}>
+                {/* Field Owner Applications */}
+                <div className="pt-3">
+                  <p style={{ fontSize: '12px', fontWeight: 700, color: '#6A1B9A', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                    Field Owner Applications
+                  </p>
+                  {pendingApps.length === 0 ? (
+                    <p style={{ fontSize: '13px', color: textSecondary }}>No pending applications.</p>
+                  ) : pendingApps.map(app => (
+                    <div key={app.id} className="flex items-start gap-3 py-3 border-b last:border-b-0" style={{ borderColor }}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                        style={{ background: app.profiles?.avatar_color ?? '#6A1B9A', fontSize: '12px', fontWeight: 700, color: 'white' }}>
+                        {app.profiles?.avatar_initials ?? '?'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{app.profiles?.full_name ?? 'Unknown'}</p>
+                        {app.message ? <p style={{ fontSize: '12px', color: textSecondary }} className="truncate">{app.message}</p> : null}
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          onClick={() => handleAdminApprove(app.user_id)}
+                          disabled={adminActioning === app.user_id}
+                          className="px-3 py-1.5 rounded-xl"
+                          style={{ background: '#E8F5E9', color: '#2E7D32', fontSize: '13px', fontWeight: 600, opacity: adminActioning === app.user_id ? 0.5 : 1 }}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleAdminReject(app.user_id)}
+                          disabled={adminActioning === app.user_id}
+                          className="px-3 py-1.5 rounded-xl"
+                          style={{ background: '#FFEBEE', color: '#B3261E', fontSize: '13px', fontWeight: 600, opacity: adminActioning === app.user_id ? 0.5 : 1 }}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Disputed Matches */}
+                <div>
+                  <p style={{ fontSize: '12px', fontWeight: 700, color: '#6A1B9A', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                    Disputed Matches
+                  </p>
+                  {disputedMatches.length === 0 ? (
+                    <p style={{ fontSize: '13px', color: textSecondary }}>No disputed matches.</p>
+                  ) : disputedMatches.map(m => (
+                    <div key={m.id} className="py-3 border-b last:border-b-0 flex flex-col gap-2" style={{ borderColor }}>
+                      <p style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>
+                        {m.home_team?.name ?? 'Home'} vs {m.away_team?.name ?? 'Away'}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          value={resolveScores[m.id]?.home ?? '0'}
+                          onChange={e => setResolveScores(s => ({ ...s, [m.id]: { ...s[m.id], home: e.target.value } }))}
+                          className="w-14 h-9 text-center rounded-xl border outline-none"
+                          style={{ background: isDark ? '#3A3940' : '#F7F2FA', borderColor, color: textPrimary, fontSize: '16px', fontWeight: 700 }}
+                        />
+                        <span style={{ fontSize: '14px', color: textSecondary }}>–</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={resolveScores[m.id]?.away ?? '0'}
+                          onChange={e => setResolveScores(s => ({ ...s, [m.id]: { ...s[m.id], away: e.target.value } }))}
+                          className="w-14 h-9 text-center rounded-xl border outline-none"
+                          style={{ background: isDark ? '#3A3940' : '#F7F2FA', borderColor, color: textPrimary, fontSize: '16px', fontWeight: 700 }}
+                        />
+                        <button
+                          onClick={() => handleResolveDispute(m.id)}
+                          disabled={adminActioning === m.id}
+                          className="flex-1 py-2 rounded-xl"
+                          style={{ background: '#6A1B9A', color: 'white', fontSize: '13px', fontWeight: 600, opacity: adminActioning === m.id ? 0.5 : 1 }}
+                        >
+                          {adminActioning === m.id ? '…' : 'Resolve'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : null}
 

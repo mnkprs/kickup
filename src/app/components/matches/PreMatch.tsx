@@ -74,15 +74,16 @@ export function PreMatch() {
   const homeLineup = (match.match_lineups ?? []).filter(l => l.team_id === match.home_team_id).map(l => l.profiles).filter(Boolean) as Profile[];
   const awayLineup = (match.match_lineups ?? []).filter(l => l.team_id === match.away_team_id).map(l => l.profiles).filter(Boolean) as Profile[];
 
-  // Top scorer: player with most events in this match
+  // Top scorer + per-player goal counts
   const events = match.match_events ?? [];
+  const goalsByPlayer = new Map<string, number>();
+  events.forEach(e => goalsByPlayer.set(e.scorer_id, (goalsByPlayer.get(e.scorer_id) ?? 0) + 1));
+
   let topScorer: Profile | null = null;
   let topGoals = 0;
   if (events.length > 0) {
-    const counts = new Map<string, number>();
-    events.forEach(e => counts.set(e.scorer_id, (counts.get(e.scorer_id) ?? 0) + 1));
     let topId = '';
-    counts.forEach((count, scorerId) => {
+    goalsByPlayer.forEach((count, scorerId) => {
       if (count > topGoals) { topGoals = count; topId = scorerId; }
     });
     topScorer = events.find(e => e.scorer_id === topId)?.scorer ?? null;
@@ -108,10 +109,13 @@ export function PreMatch() {
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
           className="p-6 rounded-3xl" style={{ background: 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #388E3C 100%)' }}>
           <div className="flex items-center justify-between">
-            <div className="flex flex-col items-center gap-2 flex-1">
+            <button
+              onClick={() => navigate(`/app/teams/${homeTeam.id}`)}
+              className="flex flex-col items-center gap-2 flex-1"
+            >
               <span style={{ fontSize: '40px' }}>{homeTeam.emoji}</span>
               <span style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>{homeTeam.short_name}</span>
-            </div>
+            </button>
             <div className="flex flex-col items-center gap-1 px-4">
               {match.home_score !== null ? (
                 <div className="flex items-center gap-3">
@@ -124,10 +128,13 @@ export function PreMatch() {
               )}
               <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>{match.format}</span>
             </div>
-            <div className="flex flex-col items-center gap-2 flex-1">
+            <button
+              onClick={() => navigate(`/app/teams/${awayTeam.id}`)}
+              className="flex flex-col items-center gap-2 flex-1"
+            >
               <span style={{ fontSize: '40px' }}>{awayTeam.emoji}</span>
               <span style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>{awayTeam.short_name}</span>
-            </div>
+            </button>
           </div>
         </motion.div>
 
@@ -213,24 +220,37 @@ export function PreMatch() {
           <div>
             <h3 style={{ fontSize: '15px', fontWeight: 500, color: textPrimary, marginBottom: '12px' }}>Lineups</h3>
             <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-2">
-                <span style={{ fontSize: '12px', fontWeight: 600, color: '#2E7D32', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{homeTeam.short_name}</span>
-                {homeLineup.map(p => (
-                  <div key={p.id} className="flex items-center gap-2">
-                    <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={28} />
-                    <span style={{ fontSize: '12px', color: textPrimary }}>{p.full_name.split(' ')[0]}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex flex-col gap-2">
-                <span style={{ fontSize: '12px', fontWeight: 600, color: '#1565C0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{awayTeam.short_name}</span>
-                {awayLineup.map(p => (
-                  <div key={p.id} className="flex items-center gap-2">
-                    <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={28} />
-                    <span style={{ fontSize: '12px', color: textPrimary }}>{p.full_name.split(' ')[0]}</span>
-                  </div>
-                ))}
-              </div>
+              {[
+                { team: homeTeam, lineup: homeLineup, color: '#2E7D32' },
+                { team: awayTeam, lineup: awayLineup, color: '#1565C0' },
+              ].map(({ team, lineup, color }) => (
+                <div key={team.id} className="flex flex-col gap-2">
+                  <button
+                    onClick={() => navigate(`/app/teams/${team.id}`)}
+                    className="flex items-center gap-1.5"
+                  >
+                    <span style={{ fontSize: '16px' }}>{team.emoji}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{team.short_name}</span>
+                  </button>
+                  {lineup.map(p => {
+                    const g = goalsByPlayer.get(p.id) ?? 0;
+                    return (
+                      <div key={p.id} className="flex items-start gap-2">
+                        <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={28} />
+                        <div className="flex flex-col" style={{ minWidth: 0 }}>
+                          <span style={{ fontSize: '12px', color: textPrimary, lineHeight: 1.3 }}>{p.full_name}</span>
+                          <div className="flex items-center gap-1">
+                            {p.position ? (
+                              <span style={{ fontSize: '10px', color: textSecondary }}>({p.position})</span>
+                            ) : null}
+                            {g > 0 ? <span style={{ fontSize: '11px', letterSpacing: '-1px', lineHeight: 1 }}>{'⚽'.repeat(Math.min(g, 5))}</span> : null}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
         ) : null}

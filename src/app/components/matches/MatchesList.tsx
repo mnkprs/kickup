@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Clock, MapPin } from 'lucide-react';
 import { useThemeColors } from '../../hooks/useThemeColors';
+import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../hooks/useMatches';
 import { formatMatchDate } from '../../lib/formatDate';
 
@@ -27,19 +28,43 @@ function StatusBadge({ status }: { status: string }) {
 export function MatchesList() {
   const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const navigate = useNavigate();
+  const { captainTeam, playerTeams } = useAuth();
   const [tab, setTab] = useState('Upcoming');
+  const [myOnly, setMyOnly] = useState(false);
   const { matches, loading } = useMatches();
 
+  const myTeamIds = useMemo(() =>
+    new Set([captainTeam?.id, ...playerTeams.map(t => t.id)].filter(Boolean) as string[]),
+    [captainTeam, playerTeams]);
+
   const filtered = matches.filter(m => {
-    if (tab === 'Upcoming') return m.status === 'pre_match' || m.status === 'scheduling';
-    if (tab === 'Pending') return m.status === 'pending_challenge' || m.status === 'disputed';
-    return m.status === 'completed';
+    const statusOk = (() => {
+      if (tab === 'Upcoming') return m.status === 'pre_match' || m.status === 'scheduling';
+      if (tab === 'Pending') return m.status === 'pending_challenge' || m.status === 'disputed';
+      return m.status === 'completed';
+    })();
+    const mineOk = !myOnly || myTeamIds.has(m.home_team_id) || myTeamIds.has(m.away_team_id);
+    return statusOk && mineOk;
   });
 
   return (
     <div style={{ background: bg, minHeight: '100vh', fontFamily: 'Roboto, sans-serif' }}>
       <div className="px-4 pt-12 pb-3 sticky top-0 z-20" style={{ background: bg, borderBottom: `1px solid ${borderColor}` }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 500, color: textPrimary, marginBottom: '12px' }}>Matches</h1>
+        <div className="flex items-center justify-between mb-3">
+          <h1 style={{ fontSize: '24px', fontWeight: 500, color: textPrimary }}>Matches</h1>
+          <button
+            onClick={() => setMyOnly(v => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all"
+            style={{
+              borderColor: myOnly ? '#2E7D32' : borderColor,
+              background: myOnly ? '#E8F5E9' : 'transparent',
+              color: myOnly ? '#2E7D32' : textSecondary,
+              fontSize: '13px', fontWeight: myOnly ? 600 : 400,
+            }}
+          >
+            <span>{myOnly ? '⚽' : '🌐'}</span> {myOnly ? 'My Matches' : 'All Matches'}
+          </button>
+        </div>
         <div className="flex gap-1">
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)}

@@ -20,6 +20,7 @@ export interface Profile {
   is_freelancer: boolean;
   freelancer_until: string | null;
   is_field_owner: boolean;
+  is_admin: boolean;
   avatar_url: string | null;
   stat_matches: number;
   stat_goals: number;

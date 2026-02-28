@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAreas, useAvatarColors } from '../../hooks/useConfig';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
 
-const POSITIONS = ['GK', 'DEF', 'MID', 'FWD'];
+const POSITIONS = ['Any', 'GK', 'DEF', 'MID', 'FWD'];
 const FEET = [
   { value: 'right', label: 'Right' },
   { value: 'left',  label: 'Left'  },
@@ -61,7 +61,7 @@ export function Onboarding() {
       full_name:       fullName.trim(),
       avatar_initials: profileInitials,
       avatar_color:    activeColor,
-      position,
+      position: position === 'Any' ? null : (position || null),
       area,
       nationality:     nationality.trim() || null,
       date_of_birth:   dateOfBirth        || null,
@@ -123,7 +123,7 @@ export function Onboarding() {
 
           {/* Position — required */}
           <div className="flex flex-col gap-2">
-            <span style={labelStyle}>Position</span>
+            <span style={labelStyle}>Position <span style={{ color: '#B3261E' }}>*</span></span>
             <div className="flex gap-3">
               {POSITIONS.map(pos => (
                 <button key={pos} onClick={() => setPosition(position === pos ? '' : pos)}
@@ -137,7 +137,7 @@ export function Onboarding() {
 
           {/* Area — required */}
           <div className="flex flex-col gap-1">
-            <span style={labelStyle}>Area / Neighbourhood</span>
+            <span style={labelStyle}>Area / Neighbourhood <span style={{ color: '#B3261E' }}>*</span></span>
             <div className="relative">
               <select value={area} onChange={e => setArea(e.target.value)} disabled={areasLoading}
                 className="w-full h-[56px] px-4 pr-10 rounded-2xl border-2 border-[#CAC4D0] bg-white outline-none focus:border-[#2E7D32] transition-colors appearance-none"

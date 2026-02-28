@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
-import { Bell, MapPin, ChevronRight, Clock, RefreshCw } from 'lucide-react';
+import { MapPin, ChevronRight, Clock, RefreshCw } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTeams } from '../../hooks/useTeams';
 import { useMatches } from '../../hooks/useMatches';
 import { useFreelancers } from '../../hooks/useFreelancers';
-import { useNotifications } from '../../hooks/useNotifications';
 import { formatMatchDate } from '../../lib/formatDate';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
 
@@ -42,12 +41,9 @@ export function HomeFeed() {
   const { matches, loading: matchesLoading } = useMatches();
   const { freelancers: allFreelancers, loading: freelancersLoading } = useFreelancers();
   const freelancePlayers = allFreelancers.filter(p => p.id !== user?.id);
-  const { notifs } = useNotifications(user?.id);
-
   const sectionBg = isDark ? '#1E2B1E' : '#E8F5E9';
 
   const loading = teamsLoading || matchesLoading || freelancersLoading;
-  const unread = notifs.filter(n => !n.read).length;
 
   const completedMatches = matches.filter(m => m.status === 'completed').slice(0, 3);
   const upcomingMatch = matches.find(m => m.status === 'pre_match' || m.status === 'scheduling');
@@ -85,10 +81,6 @@ export function HomeFeed() {
           </button>
           <button onClick={toggleTheme} className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#E8F5E9] transition-colors">
             <span style={{ fontSize: '18px' }}>{isDark ? '☀️' : '🌙'}</span>
-          </button>
-          <button onClick={() => navigate('/app/notifications')} className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#E8F5E9] transition-colors relative">
-            <Bell size={20} color={textSecondary} />
-            {unread > 0 ? (<span className="absolute top-1 right-1 w-4 h-4 bg-[#B3261E] rounded-full flex items-center justify-center"><span className="text-white" style={{ fontSize: '9px' }}>{unread}</span></span>) : null}
           </button>
           <button onClick={() => navigate('/app/profile')}>
             <PlayerAvatar initials={avatarInitials} color={avatarColor} avatarUrl={profile?.avatar_url} size={36} />

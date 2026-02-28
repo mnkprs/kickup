@@ -1,9 +1,11 @@
-import { useState, memo, useMemo } from 'react';
+import { useState, memo, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { ChevronLeft, Trophy, MapPin, Calendar, Users, Settings } from 'lucide-react';
+import type { Profile } from '../../types/database';
 import { motion } from 'motion/react';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
+import { PlayerAvatar } from '../ui/PlayerAvatar';
 import { useTournamentDetail, useTournamentStandings, useTournamentPlayerStats } from '../../hooks/useTournamentDetail';
 import { supabase } from '../../lib/supabase';
 import type { TournamentStatus } from '../../types/database';
@@ -19,6 +21,7 @@ type TabKey = 'standings' | 'bracket' | 'teams' | 'scorers';
 
 const StandingsTable = memo(function StandingsTable({ tournamentId, groupLabel }: { tournamentId: string; groupLabel: string }) {
   const { isDark, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
+  const navigate = useNavigate();
   const { standings, loading } = useTournamentStandings(tournamentId, groupLabel);
 
   return (
@@ -41,9 +44,10 @@ const StandingsTable = memo(function StandingsTable({ tournamentId, groupLabel }
         ) : standings.length === 0 ? (
           <p className="text-center py-4" style={{ fontSize: '13px', color: textSecondary }}>No data yet</p>
         ) : standings.map((row, i) => (
-          <div
+          <button
             key={row.team_id}
-            className="flex items-center px-3 py-2 border-b last:border-b-0"
+            onClick={() => navigate(`/app/teams/${row.team_id}`)}
+            className="w-full flex items-center px-3 py-2 border-b last:border-b-0 text-left"
             style={{ borderColor, background: i % 2 === 0 ? 'transparent' : (isDark ? '#33313A' : '#FAFAFA') }}
           >
             <div style={{ flex: 3, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -54,7 +58,7 @@ const StandingsTable = memo(function StandingsTable({ tournamentId, groupLabel }
             {[row.played, row.w, row.d, row.l, row.gf, row.ga, row.gd, row.pts].map((v, vi) => (
               <span key={vi} style={{ flex: 1, textAlign: 'center', fontSize: '13px', color: vi === 7 ? '#6A1B9A' : textPrimary, fontWeight: vi === 7 ? 700 : 400 }}>{v}</span>
             ))}
-          </div>
+          </button>
         ))}
       </div>
     </div>
@@ -110,13 +114,24 @@ export function TournamentDetail() {
   const { id } = useParams<{ id: string }>();
   const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const navigate = useNavigate();
-  const { user, captainTeam } = useAuth();
+  const { user, captainTeam, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>('standings');
   const [registering, setRegistering] = useState(false);
   const [regError, setRegError] = useState('');
 
   const { detail, loading, refresh } = useTournamentDetail(id);
   const { stats: playerStats, loading: statsLoading } = useTournamentPlayerStats(id ?? '');
+
+  const [organizer, setOrganizer] = useState<Pick<Profile, 'id' | 'full_name' | 'avatar_initials' | 'avatar_color' | 'avatar_url'> | null>(null);
+  useEffect(() => {
+    if (!detail?.tournament.organizer_id) return;
+    supabase
+      .from('profiles')
+      .select('id, full_name, avatar_initials, avatar_color, avatar_url')
+      .eq('id', detail.tournament.organizer_id)
+      .single()
+      .then(({ data }) => setOrganizer(data ?? null));
+  }, [detail?.tournament.organizer_id]);
 
   // Derived data — memoized (null-guarded for Rules of Hooks compliance before early returns)
   const groupLabels = useMemo(
@@ -154,7 +169,7 @@ export function TournamentDetail() {
 
   const { tournament, registrations } = detail;
   const s = STATUS_LABELS[tournament.status];
-  const isOrganizer = user?.id === tournament.organizer_id;
+  const isOrganizer = user?.id === tournament.organizer_id || isAdmin;
 
   const myTeamId = captainTeam?.id;
   const myReg = myTeamId ? registrations.find(r => r.team_id === myTeamId) : null;
@@ -238,6 +253,24 @@ export function TournamentDetail() {
 
           {tournament.description ? (
             <p className="mt-3" style={{ fontSize: '14px', color: textSecondary, lineHeight: 1.5 }}>{tournament.description}</p>
+          ) : null}
+
+          {organizer ? (
+            <div className="mt-3 pt-3 border-t" style={{ borderColor }}>
+              <p style={{ fontSize: '11px', color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>Organizer</p>
+              <button
+                onClick={() => navigate(`/app/players/${organizer.id}`)}
+                className="flex items-center gap-2"
+              >
+                <PlayerAvatar
+                  initials={organizer.avatar_initials}
+                  color={organizer.avatar_color}
+                  avatarUrl={organizer.avatar_url}
+                  size={28}
+                />
+                <span style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{organizer.full_name}</span>
+              </button>
+            </div>
           ) : null}
         </div>
 

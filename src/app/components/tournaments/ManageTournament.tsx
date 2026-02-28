@@ -269,7 +269,7 @@ export function ManageTournament() {
   const { id } = useParams<{ id: string }>();
   const { isDark, bg, cardBg, textPrimary, textSecondary } = useThemeColors();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const { detail, loading, refresh } = useTournamentDetail(id);
 
@@ -303,7 +303,7 @@ export function ManageTournament() {
 
   const { tournament, registrations, tournamentMatches } = detail;
 
-  if (user?.id !== tournament.organizer_id) {
+  if (user?.id !== tournament.organizer_id && !isAdmin) {
     return (
       <div style={{ background: bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ color: textSecondary }}>Access denied.</p>
