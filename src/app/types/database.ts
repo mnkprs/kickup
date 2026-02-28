@@ -1,7 +1,7 @@
 export type PlayerPosition = 'GK' | 'DEF' | 'MID' | 'FWD';
 export type MatchFormat = '5v5' | '6v6' | '7v7' | '8v8' | '11v11';
 export type MatchStatus = 'pending_challenge' | 'scheduling' | 'pre_match' | 'disputed' | 'completed';
-export type NotifType = 'challenge' | 'scheduling' | 'spot_applied' | 'result_confirmed' | 'bet_reminder' | 'match_reminder' | 'team_invite';
+export type NotifType = 'challenge' | 'scheduling' | 'spot_applied' | 'result_confirmed' | 'bet_reminder' | 'match_reminder' | 'team_invite' | 'tournament_approved' | 'tournament_rejected' | 'tournament_invite';
 export type TeamMemberRole = 'captain' | 'player';
 export type TeamMemberStatus = 'active' | 'pending';
 

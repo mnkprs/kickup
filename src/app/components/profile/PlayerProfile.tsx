@@ -38,7 +38,6 @@ export function PlayerProfile() {
   const myTeams = captainTeam
     ? [{ team: captainTeam, isCaptain: true }, ...playerTeams.filter(t => t.id !== captainTeam.id).map(t => ({ team: t, isCaptain: false }))]
     : playerTeams.map(t => ({ team: t, isCaptain: false }));
-  const myTeam = myTeams[0]?.team ?? null;
   const navigate = useNavigate();
   const { matches } = useMatches();
   const fileInputRef = useRef<HTMLInputElement>(null);
