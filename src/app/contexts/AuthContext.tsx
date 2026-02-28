@@ -60,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select('teams(*)')
       .eq('player_id', user.id)
       .eq('status', 'active')
+      .limit(1)
       .maybeSingle()
 
     setProfile(p ?? null)
