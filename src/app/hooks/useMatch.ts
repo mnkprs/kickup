@@ -17,7 +17,8 @@ export function useMatch(id: string | undefined) {
           away_team:teams!away_team_id(*),
           match_lineups(*, profiles(*)),
           match_proposals(*, proposed_by_team:teams!proposed_by_team_id(*)),
-          match_events(*, scorer:profiles!scorer_id(*))
+          match_events(*, scorer:profiles!scorer_id(*)),
+          tournament_matches(tournaments(organizer_id))
         `)
         .eq('id', id)
         .single();

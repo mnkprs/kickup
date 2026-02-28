@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { ArrowLeft, Clock, MapPin, ChevronRight, Check } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useMatch } from '../../hooks/useMatch';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { formatMatchDate } from '../../lib/formatDate';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
 import type { Profile } from '../../types/database';
 
 export function PreMatch() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isDark } = useTheme();
+  const { bg, cardBg, textPrimary, textSecondary, borderColor, isDark } = useThemeColors();
   const { match, loading } = useMatch(id);
   const { user, captainTeam } = useAuth();
 
@@ -22,26 +22,6 @@ export function PreMatch() {
   const [editLocation, setEditLocation] = useState('');
   const [saving, setSaving] = useState(false);
   const [accepting, setAccepting] = useState(false);
-  const [tournamentOrganizerId, setTournamentOrganizerId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!id) return;
-    supabase
-      .from('tournament_matches')
-      .select('tournaments(organizer_id)')
-      .eq('match_id', id)
-      .maybeSingle()
-      .then(({ data }) => {
-        const org = (data?.tournaments as any)?.organizer_id ?? null;
-        setTournamentOrganizerId(org);
-      });
-  }, [id]);
-
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
 
   if (loading) {
     return (
@@ -63,6 +43,8 @@ export function PreMatch() {
   const awayTeam = match.away_team;
   const isCompleted = match.status === 'completed';
   const isPendingChallenge = match.status === 'pending_challenge';
+
+  const tournamentOrganizerId = match.tournament_matches?.[0]?.tournaments?.organizer_id ?? null;
 
   const isCaptainOfMatch = !!(captainTeam &&
     (captainTeam.id === match.home_team_id || captainTeam.id === match.away_team_id));
@@ -177,57 +159,57 @@ export function PreMatch() {
               style={{ background: '#2E7D32', color: 'white', fontSize: '14px', fontWeight: 500, opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Saving…' : 'Save Details'}
             </button>
-            {isAwayCapt && (
+            {isAwayCapt ? (
               <button onClick={handleAccept} disabled={accepting}
                 className="w-full h-[44px] rounded-xl flex items-center justify-center gap-2 border-2"
                 style={{ borderColor: '#2E7D32', color: '#2E7D32', fontSize: '14px', fontWeight: 500, opacity: accepting ? 0.7 : 1 }}>
                 <Check size={16} color="#2E7D32" />
                 {accepting ? 'Accepting…' : 'Accept Challenge'}
               </button>
-            )}
+            ) : null}
           </motion.div>
-        ) : (match.match_date || match.location) && (
+        ) : (match.match_date || match.location) ? (
           <div className="p-4 rounded-2xl border flex flex-col gap-2" style={{ background: cardBg, borderColor }}>
-            {match.match_date && (
+            {match.match_date ? (
               <div className="flex items-center gap-2">
                 <Clock size={16} color={textSecondary} />
                 <span style={{ fontSize: '14px', color: textPrimary }}>{formatMatchDate(match.match_date, match.match_time)}</span>
               </div>
-            )}
-            {match.location && (
+            ) : null}
+            {match.location ? (
               <div className="flex items-center gap-2">
                 <MapPin size={16} color={textSecondary} />
                 <span style={{ fontSize: '14px', color: textPrimary }}>{match.location}</span>
               </div>
-            )}
+            ) : null}
           </div>
-        )}
+        ) : null}
 
-        {match.bet && (
+        {match.bet ? (
           <div className="p-4 rounded-2xl" style={{ background: isDark ? '#2B2100' : '#FFF8E1', border: `1px solid ${isDark ? '#5D4037' : '#FFD54F'}` }}>
             <p style={{ fontSize: '13px', fontWeight: 600, color: '#E65100', marginBottom: '4px' }}>🍺 Pre-match Bet (Honor System)</p>
             <p style={{ fontSize: '15px', color: isDark ? '#FFD54F' : '#BF360C' }}>{match.bet}</p>
           </div>
-        )}
+        ) : null}
 
-        {(topScorer || match.mvp_id) && (
+        {(topScorer || match.mvp_id) ? (
           <div className="p-4 rounded-2xl border flex gap-4" style={{ background: cardBg, borderColor }}>
-            {topScorer && (
+            {topScorer ? (
               <div>
                 <p style={{ fontSize: '11px', color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Top Scorer</p>
                 <p style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>⚽ {topScorer.full_name.split(' ')[0]}. {topScorer.full_name.split(' ').slice(-1)[0]?.[0]}. ({topGoals})</p>
               </div>
-            )}
-            {match.mvp_id && (
+            ) : null}
+            {match.mvp_id ? (
               <div>
                 <p style={{ fontSize: '11px', color: textSecondary, textTransform: 'uppercase', letterSpacing: '0.5px' }}>MVP</p>
                 <p style={{ fontSize: '14px', fontWeight: 500, color: '#E65100' }}>⭐ Player</p>
               </div>
-            )}
+            ) : null}
           </div>
-        )}
+        ) : null}
 
-        {(homeLineup.length > 0 || awayLineup.length > 0) && (
+        {(homeLineup.length > 0 || awayLineup.length > 0) ? (
           <div>
             <h3 style={{ fontSize: '15px', fontWeight: 500, color: textPrimary, marginBottom: '12px' }}>Lineups</h3>
             <div className="grid grid-cols-2 gap-3">
@@ -251,25 +233,25 @@ export function PreMatch() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
         <div className="flex flex-col gap-2 mt-2">
-          {match.status === 'scheduling' && isCaptainOfMatch && (
+          {match.status === 'scheduling' && isCaptainOfMatch ? (
             <button onClick={() => navigate(`/app/matches/${id}/schedule`)}
               className="w-full h-[52px] rounded-2xl flex items-center justify-center gap-2 border-2"
               style={{ borderColor: '#2E7D32', color: '#2E7D32', background: 'transparent' }}>
               <Clock size={18} color="#2E7D32" />
               <span style={{ fontSize: '16px', fontWeight: 500 }}>Propose Time / Venue</span>
             </button>
-          )}
-          {match.status === 'pre_match' && canSubmitResult && (
+          ) : null}
+          {match.status === 'pre_match' && canSubmitResult ? (
             <button onClick={() => navigate(`/app/matches/${id}/result`)}
               className="w-full h-[52px] rounded-2xl flex items-center justify-center gap-2"
               style={{ background: 'linear-gradient(135deg, #2E7D32 0%, #43A047 100%)', boxShadow: '0 4px 12px rgba(46,125,50,0.35)' }}>
               <span style={{ fontSize: '16px', fontWeight: 500, color: 'white' }}>Submit Result</span>
               <ChevronRight size={18} color="white" />
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

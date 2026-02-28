@@ -126,6 +126,7 @@ export interface MatchFull extends MatchWithTeams {
   match_lineups: MatchLineup[];
   match_proposals: MatchProposal[];
   match_events: MatchEvent[];
+  tournament_matches: Array<{ tournaments: { organizer_id: string } | null }> | null;
 }
 
 export type TournamentStatus = 'registration' | 'group_stage' | 'knockout_stage' | 'completed';
