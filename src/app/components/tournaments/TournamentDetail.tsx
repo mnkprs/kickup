@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, memo, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { ChevronLeft, Trophy, MapPin, Calendar, Users, Settings } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTournamentDetail, useTournamentStandings, useTournamentPlayerStats } from '../../hooks/useTournamentDetail';
 import { supabase } from '../../lib/supabase';
@@ -17,12 +17,9 @@ const STATUS_LABELS: Record<TournamentStatus, { label: string; color: string; bg
 
 type TabKey = 'standings' | 'bracket' | 'teams' | 'scorers';
 
-function StandingsTable({ tournamentId, groupLabel, isDark }: { tournamentId: string; groupLabel: string; isDark: boolean }) {
+const StandingsTable = memo(function StandingsTable({ tournamentId, groupLabel }: { tournamentId: string; groupLabel: string }) {
+  const { isDark, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const { standings, loading } = useTournamentStandings(tournamentId, groupLabel);
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
-  const cardBg = isDark ? '#2D2C31' : 'white';
 
   return (
     <div className="mb-4">
@@ -62,11 +59,56 @@ function StandingsTable({ tournamentId, groupLabel, isDark }: { tournamentId: st
       </div>
     </div>
   );
-}
+});
+
+const KnockoutMatchCard = memo(function KnockoutMatchCard({ tm, navigate }: {
+  tm: import('../../types/database').TournamentMatch;
+  navigate: (path: string) => void;
+}) {
+  const { cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
+  const match = tm.matches;
+  if (!match) return null;
+  const home = match.home_team;
+  const away = match.away_team;
+  const isCompleted = match.status === 'completed';
+
+  return (
+    <button
+      onClick={() => navigate(`/app/matches/${match.id}/pre`)}
+      className="w-full rounded-2xl border p-4 text-left"
+      style={{ background: cardBg, borderColor }}
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex-1 flex flex-col items-end gap-1">
+          <span style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{home?.name ?? 'TBD'}</span>
+          <span style={{ fontSize: '20px' }}>{home?.emoji ?? '❓'}</span>
+        </div>
+        <div className="flex flex-col items-center gap-1 px-3">
+          {isCompleted ? (
+            <span style={{ fontSize: '22px', fontWeight: 700, color: textPrimary }}>
+              {match.home_score} – {match.away_score}
+            </span>
+          ) : (
+            <span style={{ fontSize: '16px', fontWeight: 500, color: textSecondary }}>vs</span>
+          )}
+          {match.match_date ? (
+            <span style={{ fontSize: '11px', color: textSecondary }}>
+              {new Date(match.match_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+          ) : null}
+        </div>
+        <div className="flex-1 flex flex-col items-start gap-1">
+          <span style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{away?.name ?? 'TBD'}</span>
+          <span style={{ fontSize: '20px' }}>{away?.emoji ?? '❓'}</span>
+        </div>
+      </div>
+    </button>
+  );
+});
 
 export function TournamentDetail() {
   const { id } = useParams<{ id: string }>();
-  const { isDark } = useTheme();
+  const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
   const navigate = useNavigate();
   const { user, captainTeam } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>('standings');
@@ -76,11 +118,23 @@ export function TournamentDetail() {
   const { detail, loading, refresh } = useTournamentDetail(id);
   const { stats: playerStats, loading: statsLoading } = useTournamentPlayerStats(id ?? '');
 
-  const bg = isDark ? '#1C1B1F' : '#FFFBFE';
-  const cardBg = isDark ? '#2D2C31' : 'white';
-  const textPrimary = isDark ? '#E6E1E5' : '#1C1B1F';
-  const textSecondary = isDark ? '#CAC4D0' : '#49454F';
-  const borderColor = isDark ? '#49454F' : '#E7E0EC';
+  // Derived data — memoized (null-guarded for Rules of Hooks compliance before early returns)
+  const groupLabels = useMemo(
+    () => detail ? [...new Set(detail.groups.map(g => g.group_label))].sort() : [],
+    [detail]
+  );
+  const approvedTeams = useMemo(
+    () => detail ? detail.registrations.filter(r => r.status === 'approved') : [],
+    [detail]
+  );
+  const semiFinals = useMemo(
+    () => detail ? detail.tournamentMatches.filter(tm => tm.stage === 'semi_final') : [],
+    [detail]
+  );
+  const finals = useMemo(
+    () => detail ? detail.tournamentMatches.filter(tm => tm.stage === 'final') : [],
+    [detail]
+  );
 
   if (loading) {
     return (
@@ -98,21 +152,13 @@ export function TournamentDetail() {
     );
   }
 
-  const { tournament, registrations, groups, tournamentMatches } = detail;
+  const { tournament, registrations } = detail;
   const s = STATUS_LABELS[tournament.status];
   const isOrganizer = user?.id === tournament.organizer_id;
-  const approvedTeams = registrations.filter(r => r.status === 'approved');
 
   const myTeamId = captainTeam?.id;
   const myReg = myTeamId ? registrations.find(r => r.team_id === myTeamId) : null;
   const canRegister = !!myTeamId && !myReg && tournament.status === 'registration';
-
-  // Unique group labels
-  const groupLabels = [...new Set(groups.map(g => g.group_label))].sort();
-
-  // Knockout matches
-  const semiFinals = tournamentMatches.filter(tm => tm.stage === 'semi_final');
-  const finals = tournamentMatches.filter(tm => tm.stage === 'final');
 
   const handleRegister = async () => {
     if (!myTeamId || !id) return;
@@ -143,7 +189,7 @@ export function TournamentDetail() {
             <ChevronLeft size={24} color={textPrimary} />
           </button>
           <h1 style={{ fontSize: '20px', fontWeight: 500, color: textPrimary }} className="truncate flex-1">{tournament.name}</h1>
-          {isOrganizer && (
+          {isOrganizer ? (
             <button
               onClick={() => navigate(`/app/tournaments/${id}/manage`)}
               className="w-10 h-10 flex items-center justify-center rounded-full"
@@ -151,7 +197,7 @@ export function TournamentDetail() {
             >
               <Settings size={20} color="#6A1B9A" />
             </button>
-          )}
+          ) : null}
         </div>
 
         {/* Info card */}
@@ -167,13 +213,13 @@ export function TournamentDetail() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            {tournament.area && (
+            {tournament.area ? (
               <div className="flex items-center gap-1">
                 <MapPin size={13} color={textSecondary} />
                 <span style={{ fontSize: '13px', color: textSecondary }}>{tournament.area}{tournament.venue ? ` · ${tournament.venue}` : ''}</span>
               </div>
-            )}
-            {tournament.start_date && (
+            ) : null}
+            {tournament.start_date ? (
               <div className="flex items-center gap-1">
                 <Calendar size={13} color={textSecondary} />
                 <span style={{ fontSize: '13px', color: textSecondary }}>
@@ -181,22 +227,22 @@ export function TournamentDetail() {
                   {tournament.end_date ? ` – ${new Date(tournament.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
                 </span>
               </div>
-            )}
+            ) : null}
           </div>
 
-          {tournament.prize && (
+          {tournament.prize ? (
             <div className="mt-3 pt-3 border-t" style={{ borderColor }}>
               <span style={{ fontSize: '14px', color: '#6A1B9A', fontWeight: 500 }}>🏆 {tournament.prize}</span>
             </div>
-          )}
+          ) : null}
 
-          {tournament.description && (
+          {tournament.description ? (
             <p className="mt-3" style={{ fontSize: '14px', color: textSecondary, lineHeight: 1.5 }}>{tournament.description}</p>
-          )}
+          ) : null}
         </div>
 
         {/* Register button */}
-        {canRegister && (
+        {canRegister ? (
           <div className="mb-4">
             <button
               onClick={handleRegister}
@@ -206,11 +252,11 @@ export function TournamentDetail() {
             >
               {registering ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <>Register My Team — {captainTeam?.name}</>}
             </button>
-            {regError && <p className="mt-2 text-center" style={{ fontSize: '13px', color: '#B3261E' }}>{regError}</p>}
+            {regError ? <p className="mt-2 text-center" style={{ fontSize: '13px', color: '#B3261E' }}>{regError}</p> : null}
           </div>
-        )}
+        ) : null}
 
-        {myReg && (
+        {myReg ? (
           <div className="mb-4 px-4 py-3 rounded-2xl text-center" style={{
             background: myReg.status === 'approved' ? '#E8F5E9' : myReg.status === 'rejected' ? '#FFEBEE' : '#FFF3E0',
             color: myReg.status === 'approved' ? '#2E7D32' : myReg.status === 'rejected' ? '#B3261E' : '#E65100',
@@ -221,14 +267,14 @@ export function TournamentDetail() {
               {myReg.status === 'rejected' && '✗ Registration not approved'}
             </span>
           </div>
-        )}
+        ) : null}
 
         {/* Registration closed notice for captains not in this tournament */}
-        {!!myTeamId && !myReg && tournament.status !== 'registration' && (
+        {!!myTeamId && !myReg && tournament.status !== 'registration' ? (
           <div className="mb-4 px-4 py-3 rounded-2xl text-center" style={{ background: isDark ? '#2D2C31' : '#EEEEEE', color: '#4E4E4E' }}>
             <span style={{ fontSize: '14px', fontWeight: 500 }}>Registration is closed for this tournament</span>
           </div>
-        )}
+        ) : null}
 
         {/* Tabs */}
         <div className="flex gap-1 rounded-2xl p-1" style={{ background: isDark ? '#2D2C31' : '#F1EFF5' }}>
@@ -254,7 +300,7 @@ export function TournamentDetail() {
       {/* Tab content */}
       <div className="px-4 pb-24">
         {/* STANDINGS TAB */}
-        {activeTab === 'standings' && (
+        {activeTab === 'standings' ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             {tournament.status === 'registration' ? (
               <div className="text-center py-12">
@@ -265,14 +311,14 @@ export function TournamentDetail() {
               <p className="text-center py-8" style={{ fontSize: '14px', color: textSecondary }}>No groups yet.</p>
             ) : (
               groupLabels.map(gl => (
-                <StandingsTable key={gl} tournamentId={id!} groupLabel={gl} isDark={isDark} />
+                <StandingsTable key={gl} tournamentId={id!} groupLabel={gl} />
               ))
             )}
           </motion.div>
-        )}
+        ) : null}
 
         {/* BRACKET TAB */}
-        {activeTab === 'bracket' && (
+        {activeTab === 'bracket' ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             {semiFinals.length === 0 ? (
               <div className="text-center py-12">
@@ -283,23 +329,23 @@ export function TournamentDetail() {
               <div className="flex flex-col gap-4">
                 <p style={{ fontSize: '13px', fontWeight: 700, color: '#6A1B9A', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Semi-Finals</p>
                 {semiFinals.map(tm => (
-                  <KnockoutMatchCard key={tm.id} tm={tm} cardBg={cardBg} textPrimary={textPrimary} textSecondary={textSecondary} borderColor={borderColor} navigate={navigate} />
+                  <KnockoutMatchCard key={tm.id} tm={tm} navigate={navigate} />
                 ))}
-                {finals.length > 0 && (
+                {finals.length > 0 ? (
                   <>
                     <p className="mt-2" style={{ fontSize: '13px', fontWeight: 700, color: '#6A1B9A', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Final</p>
                     {finals.map(tm => (
-                      <KnockoutMatchCard key={tm.id} tm={tm} cardBg={cardBg} textPrimary={textPrimary} textSecondary={textSecondary} borderColor={borderColor} navigate={navigate} />
+                      <KnockoutMatchCard key={tm.id} tm={tm} navigate={navigate} />
                     ))}
                   </>
-                )}
+                ) : null}
               </div>
             )}
           </motion.div>
-        )}
+        ) : null}
 
         {/* SCORERS TAB */}
-        {activeTab === 'scorers' && (
+        {activeTab === 'scorers' ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             {statsLoading ? (
               <div className="flex justify-center py-12">
@@ -346,10 +392,10 @@ export function TournamentDetail() {
               </div>
             )}
           </motion.div>
-        )}
+        ) : null}
 
         {/* TEAMS TAB */}
-        {activeTab === 'teams' && (
+        {activeTab === 'teams' ? (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-3">
             {approvedTeams.length === 0 ? (
               <div className="text-center py-12">
@@ -381,56 +427,8 @@ export function TournamentDetail() {
               );
             })}
           </motion.div>
-        )}
+        ) : null}
       </div>
     </div>
-  );
-}
-
-function KnockoutMatchCard({ tm, cardBg, textPrimary, textSecondary, borderColor, navigate }: {
-  tm: import('../../types/database').TournamentMatch;
-  cardBg: string;
-  textPrimary: string;
-  textSecondary: string;
-  borderColor: string;
-  navigate: (path: string) => void;
-}) {
-  const match = tm.matches;
-  if (!match) return null;
-  const home = match.home_team;
-  const away = match.away_team;
-  const isCompleted = match.status === 'completed';
-
-  return (
-    <button
-      onClick={() => navigate(`/app/matches/${match.id}/pre`)}
-      className="w-full rounded-2xl border p-4 text-left"
-      style={{ background: cardBg, borderColor }}
-    >
-      <div className="flex items-center gap-3">
-        <div className="flex-1 flex flex-col items-end gap-1">
-          <span style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{home?.name ?? 'TBD'}</span>
-          <span style={{ fontSize: '20px' }}>{home?.emoji ?? '❓'}</span>
-        </div>
-        <div className="flex flex-col items-center gap-1 px-3">
-          {isCompleted ? (
-            <span style={{ fontSize: '22px', fontWeight: 700, color: textPrimary }}>
-              {match.home_score} – {match.away_score}
-            </span>
-          ) : (
-            <span style={{ fontSize: '16px', fontWeight: 500, color: textSecondary }}>vs</span>
-          )}
-          {match.match_date && (
-            <span style={{ fontSize: '11px', color: textSecondary }}>
-              {new Date(match.match_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            </span>
-          )}
-        </div>
-        <div className="flex-1 flex flex-col items-start gap-1">
-          <span style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{away?.name ?? 'TBD'}</span>
-          <span style={{ fontSize: '20px' }}>{away?.emoji ?? '❓'}</span>
-        </div>
-      </div>
-    </button>
   );
 }
