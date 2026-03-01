@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 interface TournamentHeaderProps {
@@ -25,9 +26,12 @@ export function TournamentHeader({
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {canCreate && (
-            <button className="h-10 w-10 rounded-full bg-accent flex items-center justify-center hover:opacity-90 transition-opacity">
+            <Link
+              href="/tournaments/create"
+              className="h-10 w-10 rounded-full bg-accent flex items-center justify-center hover:opacity-90 transition-opacity"
+            >
               <Plus size={18} className="text-accent-foreground" />
-            </button>
+            </Link>
           )}
         </div>
       </div>

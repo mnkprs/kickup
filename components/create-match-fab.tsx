@@ -46,8 +46,8 @@ export function CreateMatchFab() {
   if (HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;
 
   const actions = [
-    { label: "Challenge a team", icon: Swords, href: "/matches" },
-    ...(isFieldOwner ? [{ label: "Create league", icon: Trophy, href: "/tournaments" }] : []),
+    { label: "Challenge a team", icon: Swords, href: "/matches/challenge" },
+    ...(isFieldOwner ? [{ label: "Create league", icon: Trophy, href: "/tournaments/create" }] : []),
     { label: "Create a team", icon: Users, href: "/teams/create" },
     { label: "Find players", icon: UserSearch, href: "/teams" },
   ];

@@ -36,6 +36,7 @@ function mapTeam(row: Record<string, unknown>): Team {
 function mapMatch(row: Record<string, unknown>): Match {
   const homeTeamRow = row.home_team as Record<string, unknown>;
   const awayTeamRow = row.away_team as Record<string, unknown>;
+  const dbStatus = row.status as string;
 
   return {
     id: row.id as string,
@@ -44,7 +45,8 @@ function mapMatch(row: Record<string, unknown>): Match {
     home_team: mapTeam(homeTeamRow),
     away_team: mapTeam(awayTeamRow),
     format: row.format as string,
-    status: mapStatus(row.status as string),
+    status: mapStatus(dbStatus),
+    raw_status: dbStatus,
     date: row.match_date as string | null,
     time: row.match_time as string | null,
     location: row.location as string | null,

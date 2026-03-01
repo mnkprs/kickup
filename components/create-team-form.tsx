@@ -2,17 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, Users } from "lucide-react";
+import { ArrowLeft, Users } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ColorSwatchPicker } from "@/components/color-swatch-picker";
+import { AreaGroupSelect } from "@/components/area-group-select";
 import { createTeamAction } from "@/app/actions/teams";
+import type { AreaGroup } from "@/lib/types";
 
 const FORMAT_OPTIONS = ["5v5", "6v6", "7v7", "8v8", "11v11"];
-
-interface AreaGroup {
-  city: string;
-  areas: string[];
-}
 
 interface CreateTeamFormProps {
   areaGroups: AreaGroup[];
@@ -142,24 +140,12 @@ export function CreateTeamForm({ areaGroups, emojis, colors }: CreateTeamFormPro
           <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
             Area <span className="text-destructive">*</span>
           </label>
-          <select
+          <AreaGroupSelect
+            areaGroups={areaGroups}
             value={area}
-            onChange={(e) => setArea(e.target.value)}
-            className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
-          >
-            <option value="" disabled>
-              Select area...
-            </option>
-            {areaGroups.map(({ city, areas }) => (
-              <optgroup key={city} label={city}>
-                {areas.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+            onChange={setArea}
+            required
+          />
         </div>
 
         {/* Emoji */}
@@ -190,21 +176,7 @@ export function CreateTeamForm({ areaGroups, emojis, colors }: CreateTeamFormPro
           <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
             Team Color
           </label>
-          <div className="flex flex-wrap gap-3">
-            {colors.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setColor(c)}
-                className="h-10 w-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
-                style={{ backgroundColor: c }}
-              >
-                {color === c && (
-                  <Check size={16} className="text-white" strokeWidth={3} />
-                )}
-              </button>
-            ))}
-          </div>
+          <ColorSwatchPicker colors={colors} value={color} onChange={setColor} />
         </div>
 
         {/* Description */}

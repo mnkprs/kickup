@@ -69,8 +69,10 @@ export interface Match {
   home_team: Team;
   away_team: Team;
   format: string;
-  // normalized status: 'upcoming' | 'completed' | raw DB value
+  // normalized status for display
   status: "upcoming" | "live" | "completed" | string;
+  // raw DB status: pending_challenge | scheduling | pre_match | disputed | completed
+  raw_status: string;
   date: string | null;
   time: string | null;
   location: string | null;
@@ -127,6 +129,11 @@ export interface TournamentStanding {
   goals_against: number;
   goal_diff: number;
   points: number;
+}
+
+export interface AreaGroup {
+  city: string;
+  areas: string[];
 }
 
 export interface OwnerApplication {
