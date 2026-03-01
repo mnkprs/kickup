@@ -73,6 +73,7 @@ export function PlayerPublicProfile() {
             color={profile.avatar_color ?? '#2E7D32'}
             avatarUrl={profile.avatar_url}
             size={88}
+            showAvailable={profile.is_freelancer ?? false}
           />
           <div className="text-center w-full">
             <h1 style={{ fontSize: '23px', fontWeight: 700, color: 'white', letterSpacing: '-0.3px' }}>{profile.full_name}</h1>

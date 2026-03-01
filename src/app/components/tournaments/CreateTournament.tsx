@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAreas } from '../../hooks/useConfig';
 import { supabase } from '../../lib/supabase';
 
-const FORMATS = ['5v5', '6v6', '7v7', '8v8', '11v11'];
+const FORMATS = ['5v5', '6v6', '7v7', '8v8'];
 
 const LABEL_STYLE: React.CSSProperties = {
   fontSize: '13px',

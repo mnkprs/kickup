@@ -8,7 +8,7 @@ import { useTeams } from '../../hooks/useTeams';
 import { useAreas } from '../../hooks/useConfig';
 import type { Team } from '../../types/database';
 
-const FORMATS = ['All', '5v5', '6v6', '7v7', '8v8', '11v11'];
+const FORMATS = ['All', '5v5', '6v6', '7v7', '8v8'];
 
 function StatPill({ label, value, color }: { label: string; value: number; color: string }) {
   return (
@@ -58,7 +58,9 @@ function TeamCard({ team, onNavigate, isMyTeam, isCaptain }: { team: Team; onNav
                   <MapPin size={11} color={textSecondary} />
                   <span style={{ fontSize: '12px', color: textSecondary }}>{team.area}</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full border" style={{ borderColor: '#CAC4D0', color: textSecondary, fontSize: '11px' }}>{team.format}</span>
+                {(team.formats?.length ? team.formats : [team.format]).map(f => (
+                  <span key={f} className="px-2 py-0.5 rounded-full border" style={{ borderColor: '#CAC4D0', color: textSecondary, fontSize: '11px' }}>{f}</span>
+                ))}
                 {team.open_spots > 0 ? (
                   <span className="px-2 py-0.5 rounded-full" style={{ background: '#FFF3E0', color: '#E65100', fontSize: '10px', fontWeight: 700 }}>
                     {team.open_spots} spot{team.open_spots > 1 ? 's' : ''} open
@@ -124,7 +126,8 @@ export function TeamsList() {
   const filtered = teams.filter(t => {
     if (myTeamIds.has(t.id)) return false;
     const matchQuery = t.name.toLowerCase().includes(query.toLowerCase()) || t.area.toLowerCase().includes(query.toLowerCase());
-    const matchFormat = formatFilter === 'All' || t.format === formatFilter;
+    const teamFormats = t.formats?.length ? t.formats : [t.format];
+    const matchFormat = formatFilter === 'All' || teamFormats.includes(formatFilter as import('../../types/database').MatchFormat);
     const matchArea = cityFilter === 'All' || (groups.find(g => g.city === cityFilter)?.areas.includes(t.area) ?? false);
     const matchOpponent = !opponentOnly || t.searching_for_opponent;
     return matchQuery && matchFormat && matchArea && matchOpponent;

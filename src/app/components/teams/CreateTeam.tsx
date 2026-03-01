@@ -8,7 +8,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useAreas, useAvatarColors, useTeamEmojis } from '../../hooks/useConfig';
 import type { MatchFormat } from '../../types/database';
 
-const FORMATS: MatchFormat[] = ['5v5', '6v6', '7v7', '8v8', '11v11'];
+const ALL_FORMATS: MatchFormat[] = ['5v5', '6v6', '7v7', '8v8'];
 
 export function CreateTeam() {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ export function CreateTeam() {
   const { emojis, loading: emojisLoading } = useTeamEmojis();
 
   const [name, setName] = useState('');
-  const [format, setFormat] = useState<MatchFormat | ''>('');
+  const [formats, setFormats] = useState<MatchFormat[]>([]);
   const [area, setArea] = useState('');
   const [emoji, setEmoji] = useState('');
   const [color, setColor] = useState('');
@@ -35,7 +35,10 @@ export function CreateTeam() {
   const fontStyle = { fontFamily: 'Roboto, sans-serif', fontSize: '16px', color: '#1C1B1F' };
   const labelStyle = { fontFamily: 'Roboto, sans-serif', fontSize: '12px', fontWeight: 500 as const, color: '#49454F', textTransform: 'uppercase' as const, letterSpacing: '0.5px' };
 
-  const canSubmit = name && format && area && !areasLoading && !colorsLoading && !emojisLoading;
+  const canSubmit = name && formats.length > 0 && area && !areasLoading && !colorsLoading && !emojisLoading;
+
+  const toggleFormat = (f: MatchFormat) =>
+    setFormats(prev => prev.includes(f) ? prev.filter(x => x !== f) : [...prev, f]);
 
   const handleCreate = async () => {
     if (!user) return;
@@ -44,7 +47,7 @@ export function CreateTeam() {
     const { data: teamId, error: rpcError } = await supabase.rpc('create_team_with_captain', {
       p_name: name,
       p_short_name: name.slice(0, 3).toUpperCase(),
-      p_format: format,
+      p_formats: formats,
       p_area: area,
       p_emoji: activeEmoji,
       p_color: activeColor,
@@ -103,15 +106,21 @@ export function CreateTeam() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <span style={labelStyle}>Format</span>
+            <div className="flex items-center justify-between">
+              <span style={labelStyle}>Formats</span>
+              <span style={{ fontFamily: 'Roboto, sans-serif', fontSize: '11px', color: '#79747E' }}>Select all that apply</span>
+            </div>
             <div className="flex gap-2 flex-wrap">
-              {FORMATS.map(f => (
-                <button key={f} onClick={() => setFormat(f)}
-                  className="flex-1 h-[48px] rounded-2xl border-2 flex items-center justify-center transition-all"
-                  style={{ borderColor: format === f ? '#2E7D32' : '#CAC4D0', background: format === f ? '#E8F5E9' : 'white', fontFamily: 'Roboto, sans-serif', fontSize: '14px', fontWeight: format === f ? 700 : 400, color: format === f ? '#2E7D32' : '#49454F' }}>
-                  {f}
-                </button>
-              ))}
+              {ALL_FORMATS.map(f => {
+                const on = formats.includes(f);
+                return (
+                  <button key={f} onClick={() => toggleFormat(f)}
+                    className="flex-1 h-[48px] rounded-2xl border-2 flex items-center justify-center transition-all"
+                    style={{ borderColor: on ? '#2E7D32' : '#CAC4D0', background: on ? '#E8F5E9' : 'white', fontFamily: 'Roboto, sans-serif', fontSize: '14px', fontWeight: on ? 700 : 400, color: on ? '#2E7D32' : '#49454F' }}>
+                    {f}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

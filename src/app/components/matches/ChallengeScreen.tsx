@@ -8,7 +8,7 @@ import { useThemeColors } from '../../hooks/useThemeColors';
 import { supabase } from '../../lib/supabase';
 import type { MatchFormat, Team } from '../../types/database';
 
-const FORMATS: MatchFormat[] = ['5v5', '6v6', '7v7', '8v8', '11v11'];
+const FORMATS: MatchFormat[] = ['5v5', '6v6', '7v7', '8v8'];
 const STEPS = ['Your Team', 'Opponent', 'Details', 'Send!'];
 
 export function ChallengeScreen() {

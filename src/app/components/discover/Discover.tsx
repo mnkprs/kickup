@@ -14,7 +14,7 @@ import { PlayerAvatar } from '../ui/PlayerAvatar';
 
 const TABS = ['Freelancers', 'Teams', 'Open Matches'];
 const POSITIONS = ['All', 'GK', 'DEF', 'MID', 'FWD'];
-const FORMATS = ['All', '5v5', '6v6', '7v7', '11v11'];
+const FORMATS = ['All', '5v5', '6v6', '7v7', '8v8'];
 
 export function Discover() {
   const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
@@ -39,7 +39,7 @@ export function Discover() {
   );
 
   const filteredTeams = teams.filter(t =>
-    (format === 'All' || t.format === format) &&
+    (format === 'All' || (t.formats?.length ? t.formats : [t.format]).includes(format as import('../../types/database').MatchFormat)) &&
     (query === '' || t.name.toLowerCase().includes(query.toLowerCase()) || t.area.toLowerCase().includes(query.toLowerCase()))
   );
 
@@ -107,7 +107,7 @@ export function Discover() {
                 className="flex items-center gap-3 p-3 rounded-2xl border"
                 style={{ background: cardBg, borderColor }}>
                 <button onClick={() => navigate(`/app/players/${player.id}`)} className="shrink-0">
-                  <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={48} />
+                  <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={48} showAvailable={true} />
                 </button>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -173,8 +173,10 @@ export function Discover() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>{team.name}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span style={{ fontSize: '12px', color: textSecondary }}>{team.format}</span>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    {(team.formats?.length ? team.formats : [team.format]).map(f => (
+                      <span key={f} style={{ fontSize: '12px', color: textSecondary }}>{f}</span>
+                    ))}
                     <span style={{ fontSize: '12px', color: textSecondary }}>·</span>
                     <div className="flex items-center gap-1">
                       <MapPin size={10} color={textSecondary} />

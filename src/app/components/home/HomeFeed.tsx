@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { MapPin, ChevronRight, Clock, RefreshCw } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useThemeColors } from '../../hooks/useThemeColors';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTeams } from '../../hooks/useTeams';
@@ -28,7 +27,6 @@ function FormatChip({ format }: { format: string }) {
 
 export function HomeFeed() {
   const { isDark, bg, cardBg, textPrimary, textSecondary, borderColor } = useThemeColors();
-  const { toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -78,9 +76,6 @@ export function HomeFeed() {
         <div className="flex items-center gap-2">
           <button onClick={handleRefresh} className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#E8F5E9] transition-colors">
             <motion.div animate={{ rotate: refreshing ? 360 : 0 }} transition={{ duration: 0.8 }}><RefreshCw size={18} color={textSecondary} /></motion.div>
-          </button>
-          <button onClick={toggleTheme} className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#E8F5E9] transition-colors">
-            <span style={{ fontSize: '18px' }}>{isDark ? '☀️' : '🌙'}</span>
           </button>
           <button onClick={() => navigate('/app/profile')}>
             <PlayerAvatar initials={avatarInitials} color={avatarColor} avatarUrl={profile?.avatar_url} size={36} />
@@ -163,7 +158,7 @@ export function HomeFeed() {
               onClick={() => navigate(`/app/players/${player.id}`)}
               className="flex flex-col items-center gap-2 p-3 rounded-2xl border shrink-0 w-[100px]"
               style={{ background: cardBg, borderColor, boxShadow: isDark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={44} />
+              <PlayerAvatar initials={player.avatar_initials} color={player.avatar_color} avatarUrl={player.avatar_url} size={44} showAvailable={true} />
               <div className="text-center">
                 <p style={{ fontSize: '12px', fontWeight: 500, color: textPrimary, lineHeight: 1.2 }}>{player.full_name.split(' ')[0]}</p>
                 {player.position ? <span className="px-2 py-0.5 rounded-full mt-1 inline-block" style={{ background: '#FFF3E0', color: '#E65100', fontSize: '10px', fontWeight: 700 }}>{player.position}</span> : null}

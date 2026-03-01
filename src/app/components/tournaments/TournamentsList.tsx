@@ -15,7 +15,7 @@ const STATUS_LABELS: Record<TournamentStatus, { label: string; color: string; bg
   completed:      { label: 'Completed',          color: '#4E4E4E', bg: '#EEEEEE', gradient: 'linear-gradient(90deg, #4E4E4E, #757575)' },
 };
 
-const FORMATS = ['All', '5v5', '6v6', '7v7', '8v8', '11v11'];
+const FORMATS = ['All', '5v5', '6v6', '7v7', '8v8'];
 const STATUSES: Array<{ key: TournamentStatus | 'all'; label: string }> = [
   { key: 'all',            label: 'All' },
   { key: 'registration',   label: 'Registration' },

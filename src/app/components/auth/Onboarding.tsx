@@ -199,14 +199,6 @@ export function Onboarding() {
 
           {error ? <p style={{ fontFamily: 'Roboto, sans-serif', fontSize: '13px', color: '#B3261E' }}>{error}</p> : null}
 
-          {/* Skip optional fields */}
-          <button
-            onClick={handleSubmit}
-            disabled={!canSubmit || saving}
-            style={{ fontFamily: 'Roboto, sans-serif', fontSize: '14px', color: canSubmit ? '#49454F' : '#CAC4D0', textDecoration: 'underline', background: 'none', border: 'none', cursor: canSubmit ? 'pointer' : 'default', textAlign: 'center' as const }}>
-            Skip optional info for now
-          </button>
-
           {/* Primary CTA */}
           <button
             onClick={handleSubmit}

@@ -37,6 +37,7 @@ export interface Team {
   short_name: string;
   area: string;
   format: MatchFormat;
+  formats: MatchFormat[];
   emoji: string;
   color: string;
   avatar_url: string | null;
