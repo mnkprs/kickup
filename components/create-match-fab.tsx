@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Plus, X, Swords, Trophy, Users, UserSearch } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -9,8 +9,11 @@ const HIDDEN_ON = ["/auth"];
 
 export function CreateMatchFab() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isFieldOwner, setIsFieldOwner] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     const supabase = createClient();
@@ -25,14 +28,34 @@ export function CreateMatchFab() {
     });
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY.current + 8) {
+        setVisible(false);
+        setOpen(false);
+      } else if (currentScrollY < lastScrollY.current - 8) {
+        setVisible(true);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   if (HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;
 
   const actions = [
-    { label: "Challenge a team", icon: Swords },
-    ...(isFieldOwner ? [{ label: "Create league", icon: Trophy }] : []),
-    { label: "Create a team", icon: Users },
-    { label: "Find players", icon: UserSearch },
+    { label: "Challenge a team", icon: Swords, href: "/matches" },
+    ...(isFieldOwner ? [{ label: "Create league", icon: Trophy, href: "/tournaments" }] : []),
+    { label: "Create a team", icon: Users, href: "/teams" },
+    { label: "Find players", icon: UserSearch, href: "/teams" },
   ];
+
+  function handleAction(href: string) {
+    setOpen(false);
+    router.push(href);
+  }
 
   return (
     <>
@@ -41,7 +64,11 @@ export function CreateMatchFab() {
       )}
 
       {/* Single column container anchored above the nav */}
-      <div className="fixed bottom-20 right-4 z-40 flex flex-col items-end gap-3">
+      <div
+        className={`fixed bottom-20 right-4 z-40 flex flex-col items-end gap-3 transition-transform duration-300 ${
+          visible ? "translate-y-0" : "translate-y-40"
+        }`}
+      >
         {open && actions.map((action, i) => {
           const Icon = action.icon;
           return (
@@ -53,7 +80,10 @@ export function CreateMatchFab() {
               <span className="bg-card border border-border text-foreground text-xs font-medium px-3 py-1.5 rounded-full shadow-sm whitespace-nowrap">
                 {action.label}
               </span>
-              <button className="h-11 w-11 rounded-full bg-card border border-border flex items-center justify-center shadow-sm hover:bg-muted transition-colors shrink-0">
+              <button
+                onClick={() => handleAction(action.href)}
+                className="h-11 w-11 rounded-full bg-card border border-border flex items-center justify-center shadow-sm hover:bg-muted transition-colors shrink-0"
+              >
                 <Icon size={18} className="text-foreground" />
               </button>
             </div>
