@@ -1,6 +1,16 @@
 "use client";
 
-import { weeklyPerformance } from "@/lib/mock-data";
+const weeklyPerformance = [
+  { week: "W1", goals: 2, assists: 1, matches: 2 },
+  { week: "W2", goals: 3, assists: 0, matches: 2 },
+  { week: "W3", goals: 1, assists: 2, matches: 1 },
+  { week: "W4", goals: 4, assists: 1, matches: 3 },
+  { week: "W5", goals: 2, assists: 3, matches: 2 },
+  { week: "W6", goals: 3, assists: 1, matches: 2 },
+  { week: "W7", goals: 1, assists: 2, matches: 1 },
+  { week: "W8", goals: 5, assists: 1, matches: 3 },
+];
+
 import {
   BarChart,
   Bar,

@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AuthGuard } from "@/components/auth-guard";
+import { BottomNav } from "@/components/bottom-nav";
+import { CreateMatchFab } from "@/components/create-match-fab";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -32,7 +33,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <ThemeProvider>
-          <AuthGuard>{children}</AuthGuard>
+          <div className="min-h-dvh bg-background max-w-lg mx-auto relative">
+            {children}
+            <BottomNav />
+            <CreateMatchFab />
+          </div>
         </ThemeProvider>
       </body>
     </html>

@@ -1,11 +1,9 @@
-"use client";
-
-import { matches } from "@/lib/mock-data";
-import type { Match } from "@/lib/mock-data";
+import type { Match } from "@/lib/types";
 import { format, parseISO } from "date-fns";
+import Link from "next/link";
 
-function getResultForTeam(match: Match, teamId: string) {
-  if (match.home_score === null || match.away_score === null) return null;
+function getResultForTeam(match: Match, teamId: string | null | undefined) {
+  if (!teamId || match.home_score === null || match.away_score === null) return null;
   const isHome = match.home_team.id === teamId;
   const teamScore = isHome ? match.home_score : match.away_score;
   const opponentScore = isHome ? match.away_score : match.home_score;
@@ -20,16 +18,20 @@ const resultStyles: Record<string, { bg: string; text: string }> = {
   D: { bg: "bg-draw/15", text: "text-draw" },
 };
 
-function ResultMatchCard({ match }: { match: Match }) {
-  const myTeamId = "team_001";
-  const result = getResultForTeam(match, myTeamId);
+interface MatchesResultsProps {
+  matches: Match[];
+  teamId?: string | null;
+}
+
+function ResultMatchCard({ match, teamId }: { match: Match; teamId?: string | null }) {
+  const result = getResultForTeam(match, teamId);
   const style = result ? resultStyles[result] : null;
 
   return (
-    <div className="rounded-xl bg-card border border-border p-4 hover:border-accent/40 transition-colors cursor-pointer group">
+    <Link href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border p-4 hover:border-accent/40 transition-colors cursor-pointer group block">
       <div className="flex items-center justify-between mb-3">
         <span className="text-muted-foreground text-xs">
-          {format(parseISO(match.date), "EEE, d MMM yyyy")}
+          {match.date ? format(parseISO(match.date), "EEE, d MMM yyyy") : ""}
         </span>
         {style && result && (
           <span
@@ -40,7 +42,6 @@ function ResultMatchCard({ match }: { match: Match }) {
         )}
       </div>
 
-      {/* Scoreline */}
       <div className="flex items-center justify-center gap-4 mb-3">
         <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
           <span className="text-foreground text-sm font-medium truncate text-right">
@@ -73,28 +74,28 @@ function ResultMatchCard({ match }: { match: Match }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border">
-        <span className="text-muted-foreground text-xs truncate">
-          {match.location}
-        </span>
-      </div>
-    </div>
+      {match.location && (
+        <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border">
+          <span className="text-muted-foreground text-xs truncate">
+            {match.location}
+          </span>
+        </div>
+      )}
+    </Link>
   );
 }
 
-export function MatchesResults() {
-  const completedMatches = matches.filter((m) => m.status === "completed");
-
+export function MatchesResults({ matches, teamId }: MatchesResultsProps) {
   return (
     <section className="px-5">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-foreground font-semibold text-base">
-          {completedMatches.length} Results
+          {matches.length} Results
         </h2>
       </div>
       <div className="flex flex-col gap-3">
-        {completedMatches.map((match) => (
-          <ResultMatchCard key={match.id} match={match} />
+        {matches.map((match) => (
+          <ResultMatchCard key={match.id} match={match} teamId={teamId} />
         ))}
       </div>
     </section>

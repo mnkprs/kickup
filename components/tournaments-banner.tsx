@@ -1,35 +1,30 @@
-"use client";
-
-import { tournaments } from "@/lib/mock-data";
+import type { Tournament } from "@/lib/types";
 import { Trophy, Calendar, Users, ChevronRight } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
 
-export function TournamentsBanner() {
+interface TournamentsBannerProps {
+  tournaments: Tournament[];
+}
+
+export function TournamentsBanner({ tournaments }: TournamentsBannerProps) {
   const activeTournament = tournaments.find((t) => t.status === "in_progress");
   const upcomingTournament = tournaments.find((t) => t.status === "upcoming");
 
   return (
     <section className="px-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-base">Tournaments</h2>
-        <Link
-          href="/tournaments"
-          className="text-accent text-xs font-medium hover:underline"
-        >
+        <h2 className="text-foreground font-semibold text-base">Leagues</h2>
+        <Link href="/tournaments" className="text-accent text-xs font-medium hover:underline">
           Browse
         </Link>
       </div>
 
       <div className="flex flex-col gap-3">
-        {/* Active Tournament */}
         {activeTournament && (
           <Link
-            href="/tournaments"
-            className="rounded-xl p-4 group transition-all hover:shadow-lg block"
-            style={{
-              background: "linear-gradient(135deg, #1B5E20, #2E7D32)",
-            }}
+            href={`/tournaments/${activeTournament.id}`}
+            className="rounded-xl p-4 group transition-all hover:shadow-lg block bg-gradient-accent"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -50,8 +45,13 @@ export function TournamentsBanner() {
               <div className="flex items-center gap-1.5">
                 <Calendar size={12} className="text-accent-foreground/60" />
                 <span className="text-accent-foreground/60 text-xs">
-                  {format(parseISO(activeTournament.start_date), "d MMM")} -{" "}
-                  {format(parseISO(activeTournament.end_date), "d MMM")}
+                  {activeTournament.start_date
+                    ? format(parseISO(activeTournament.start_date), "d MMM")
+                    : "TBC"}{" "}
+                  -{" "}
+                  {activeTournament.end_date
+                    ? format(parseISO(activeTournament.end_date), "d MMM")
+                    : "TBC"}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -64,10 +64,9 @@ export function TournamentsBanner() {
           </Link>
         )}
 
-        {/* Upcoming Tournament */}
         {upcomingTournament && (
           <Link
-            href="/tournaments"
+            href={`/tournaments/${upcomingTournament.id}`}
             className="rounded-xl bg-card border border-border p-4 group hover:border-accent/40 transition-colors block"
           >
             <div className="flex items-center justify-between">
@@ -83,10 +82,9 @@ export function TournamentsBanner() {
                 <div className="flex items-center gap-4">
                   <span className="text-muted-foreground text-xs">
                     Starts{" "}
-                    {format(
-                      parseISO(upcomingTournament.start_date),
-                      "d MMM yyyy"
-                    )}
+                    {upcomingTournament.start_date
+                      ? format(parseISO(upcomingTournament.start_date), "d MMM yyyy")
+                      : "TBC"}
                   </span>
                   <span className="text-muted-foreground text-xs">
                     {upcomingTournament.teams_count} teams

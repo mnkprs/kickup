@@ -1,43 +1,29 @@
-"use client";
+import { Suspense } from "react";
+import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/db/profiles";
+import { getUpcomingMatches, getRecentResults } from "@/lib/db/matches";
+import { MatchesPageClient } from "@/components/matches-page-client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { MatchesHeader } from "@/components/matches-header";
-import { MatchesUpcoming } from "@/components/matches-upcoming";
-import { MatchesResults } from "@/components/matches-results";
-import { CreateMatchFab } from "@/components/create-match-fab";
-import { BottomNav } from "@/components/bottom-nav";
+export default async function MatchesPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-function MatchesContent() {
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState(
-    tabParam === "Results" ? "Results" : "Upcoming"
-  );
+  const profile = user ? await getProfile(user.id) : null;
 
-  useEffect(() => {
-    if (tabParam === "Results") setActiveTab("Results");
-  }, [tabParam]);
+  const [upcomingMatches, recentResults] = await Promise.all([
+    getUpcomingMatches(profile?.team_id),
+    getRecentResults(profile?.team_id),
+  ]);
 
-  return (
-    <div className="min-h-dvh bg-background max-w-lg mx-auto relative">
-      <MatchesHeader activeTab={activeTab} onTabChange={setActiveTab} />
-
-      <main className="flex flex-col gap-6 pb-24 pt-4">
-        {activeTab === "Upcoming" && <MatchesUpcoming />}
-        {activeTab === "Results" && <MatchesResults />}
-      </main>
-
-      <CreateMatchFab />
-      <BottomNav />
-    </div>
-  );
-}
-
-export default function MatchesPage() {
   return (
     <Suspense>
-      <MatchesContent />
+      <MatchesPageClient
+        upcomingMatches={upcomingMatches}
+        recentResults={recentResults}
+        teamId={profile?.team_id ?? null}
+      />
     </Suspense>
   );
 }

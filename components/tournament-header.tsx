@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowLeft, Search, Filter } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 interface TournamentHeaderProps {
   onFilterChange: (filter: string) => void;
   activeFilter: string;
+  canCreate?: boolean;
 }
 
 const filters = ["All", "Active", "Upcoming", "Completed"];
@@ -15,45 +15,29 @@ const filters = ["All", "Active", "Upcoming", "Completed"];
 export function TournamentHeader({
   onFilterChange,
   activeFilter,
+  canCreate = false,
 }: TournamentHeaderProps) {
-  const [showSearch, setShowSearch] = useState(false);
-
   return (
     <header className="px-5 pt-12 pb-2">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <Link
-            href="/"
+            href="/tournaments"
             className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
           >
             <ArrowLeft size={18} className="text-muted-foreground" />
           </Link>
-          <h1 className="text-foreground font-semibold text-lg">Tournaments</h1>
+          <h1 className="text-foreground font-semibold text-lg">Leagues</h1>
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <button
-            onClick={() => setShowSearch(!showSearch)}
-            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
-          >
-            <Search size={18} className="text-muted-foreground" />
-          </button>
-          <button className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors">
-            <Filter size={18} className="text-muted-foreground" />
-          </button>
+          {canCreate && (
+            <button className="h-10 w-10 rounded-full bg-accent flex items-center justify-center hover:opacity-90 transition-opacity">
+              <Plus size={18} className="text-accent-foreground" />
+            </button>
+          )}
         </div>
       </div>
-
-      {showSearch && (
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Search tournaments..."
-            autoFocus
-            className="w-full rounded-xl bg-card border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
-          />
-        </div>
-      )}
 
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
         {filters.map((filter) => {

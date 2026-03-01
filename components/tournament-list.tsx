@@ -1,6 +1,4 @@
-"use client";
-
-import { tournaments } from "@/lib/mock-data";
+import type { Tournament } from "@/lib/types";
 import {
   Trophy,
   Calendar,
@@ -11,6 +9,7 @@ import {
   Clock,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import Link from "next/link";
 
 function getStatusStyle(status: string) {
   switch (status) {
@@ -38,21 +37,24 @@ function getFormatLabel(format: string) {
   }
 }
 
+function formatDate(dateStr: string | null, formatStr: string = "d MMM") {
+  if (!dateStr) return "TBC";
+  return format(parseISO(dateStr), formatStr);
+}
+
 function ActiveTournamentCard({
   tournament,
 }: {
-  tournament: (typeof tournaments)[0];
+  tournament: Tournament;
 }) {
   const progress = Math.round(
     (tournament.matches_played / tournament.total_matches) * 100
   );
 
   return (
-    <div
-      className="rounded-xl p-4 cursor-pointer group transition-all hover:shadow-lg"
-      style={{
-        background: "linear-gradient(135deg, #1B5E20, #2E7D32)",
-      }}
+    <Link
+      href={`/tournaments/${tournament.id}`}
+      className="rounded-xl p-4 cursor-pointer group transition-all hover:shadow-lg bg-gradient-accent block"
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -76,8 +78,7 @@ function ActiveTournamentCard({
         <div className="flex items-center gap-1.5">
           <Calendar size={12} className="text-accent-foreground/60" />
           <span className="text-accent-foreground/60 text-xs">
-            {format(parseISO(tournament.start_date), "d MMM")} -{" "}
-            {format(parseISO(tournament.end_date), "d MMM")}
+            {formatDate(tournament.start_date)} - {formatDate(tournament.end_date)}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -99,20 +100,20 @@ function ActiveTournamentCard({
           {tournament.matches_played}/{tournament.total_matches} matches
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
 
 function TournamentCard({
   tournament,
 }: {
-  tournament: (typeof tournaments)[0];
+  tournament: Tournament;
 }) {
   const statusStyle = getStatusStyle(tournament.status);
   const spotsLeft = tournament.max_teams - tournament.teams_count;
 
   return (
-    <div className="rounded-xl bg-card border border-border p-4 cursor-pointer group hover:border-accent/40 transition-colors">
+    <Link href={`/tournaments/${tournament.id}`} className="rounded-xl bg-card border border-border p-4 cursor-pointer group hover:border-accent/40 transition-colors block">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span
@@ -141,9 +142,9 @@ function TournamentCard({
         <div className="flex items-center gap-1.5">
           <Calendar size={12} className="text-muted-foreground" />
           <span className="text-muted-foreground text-xs">
-            {format(parseISO(tournament.start_date), "d MMM")}
+            {formatDate(tournament.start_date)}
             {tournament.start_date !== tournament.end_date &&
-              ` - ${format(parseISO(tournament.end_date), "d MMM")}`}
+              ` - ${formatDate(tournament.end_date)}`}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -182,15 +183,16 @@ function TournamentCard({
           </span>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
 
 interface TournamentListProps {
+  tournaments: Tournament[];
   filter: string;
 }
 
-export function TournamentList({ filter }: TournamentListProps) {
+export function TournamentList({ tournaments, filter }: TournamentListProps) {
   const filtered =
     filter === "All"
       ? tournaments
@@ -229,10 +231,10 @@ export function TournamentList({ filter }: TournamentListProps) {
               <Clock size={14} className="text-muted-foreground" />
               <h2 className="text-foreground font-semibold text-sm">
                 {filter === "Completed"
-                  ? "Past Tournaments"
+                  ? "Past Leagues"
                   : filter === "Upcoming"
                     ? "Coming Soon"
-                    : "All Tournaments"}
+                    : "All Leagues"}
               </h2>
             </div>
           )}

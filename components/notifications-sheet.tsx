@@ -1,16 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { X, CalendarClock, Trophy, Clock } from "lucide-react";
-import { matches, teams } from "@/lib/mock-data";
+import type { Match } from "@/lib/types";
 import { format, parseISO } from "date-fns";
 
-const MY_TEAM_ID = "team_001";
-
-function getResult(homeId: string, hs: number, as: number) {
-  const isHome = homeId === MY_TEAM_ID;
-  const my = isHome ? hs : as;
-  const their = isHome ? as : hs;
+function getResult(match: Match, teamId: string | null) {
+  if (!teamId || match.home_score === null || match.away_score === null) return null;
+  const isHome = match.home_team_id === teamId;
+  const my = isHome ? match.home_score : match.away_score;
+  const their = isHome ? match.away_score : match.home_score;
   if (my > their) return "W";
   if (my < their) return "L";
   return "D";
@@ -25,43 +23,39 @@ const resultColors = {
 interface NotificationsSheetProps {
   open: boolean;
   onClose: () => void;
+  upcomingMatches: Match[];
+  recentResults: Match[];
+  teamId: string | null;
 }
 
-export function NotificationsSheet({ open, onClose }: NotificationsSheetProps) {
-  const nextMatch = matches
+export function NotificationsSheet({
+  open,
+  onClose,
+  upcomingMatches,
+  recentResults,
+  teamId,
+}: NotificationsSheetProps) {
+  const nextMatch = upcomingMatches
     .filter(
-      (m) =>
-        m.status === "upcoming" &&
-        (m.home_team.id === MY_TEAM_ID || m.away_team.id === MY_TEAM_ID)
+      (m) => m.home_team_id === teamId || m.away_team_id === teamId
     )
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+    .sort((a, b) => new Date(a.date ?? 0).getTime() - new Date(b.date ?? 0).getTime())[0];
 
-  const recentResults = matches
+  const recentTeamResults = recentResults
     .filter(
-      (m) =>
-        m.status === "completed" &&
-        (m.home_team.id === MY_TEAM_ID || m.away_team.id === MY_TEAM_ID)
+      (m) => m.home_team_id === teamId || m.away_team_id === teamId
     )
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 3);
 
   if (!open) return null;
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Sheet */}
       <div className="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-background border-l border-border shadow-2xl flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h2 className="text-base font-semibold text-foreground">
-            Notifications
-          </h2>
+          <h2 className="text-base font-semibold text-foreground">Notifications</h2>
           <button
             onClick={onClose}
             className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
@@ -70,9 +64,7 @@ export function NotificationsSheet({ open, onClose }: NotificationsSheetProps) {
           </button>
         </div>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
-          {/* Upcoming match reminder */}
           {nextMatch && (
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
@@ -85,67 +77,61 @@ export function NotificationsSheet({ open, onClose }: NotificationsSheetProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground">
-                      {nextMatch.home_team.short_name} vs{" "}
-                      {nextMatch.away_team.short_name}
+                      {nextMatch.home_team.short_name} vs {nextMatch.away_team.short_name}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {format(parseISO(nextMatch.date), "EEE, MMM d")} at{" "}
-                      {nextMatch.time}
+                      {nextMatch.date ? format(parseISO(nextMatch.date), "EEE, MMM d") : "TBC"}
+                      {nextMatch.time ? ` at ${nextMatch.time.slice(0, 5)}` : ""}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {nextMatch.location}
-                    </p>
+                    {nextMatch.location && (
+                      <p className="text-xs text-muted-foreground mt-0.5">{nextMatch.location}</p>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Recent results */}
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-              Results
-            </p>
-            <div className="flex flex-col gap-2">
-              {recentResults.map((m) => {
-                const res = getResult(
-                  m.home_team.id,
-                  m.home_score!,
-                  m.away_score!
-                );
-                const opponent =
-                  m.home_team.id === MY_TEAM_ID
-                    ? m.away_team
-                    : m.home_team;
-                return (
-                  <div
-                    key={m.id}
-                    className="rounded-xl bg-card border border-border p-4 flex items-center gap-3"
-                  >
-                    <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-                      <Trophy size={16} className="text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground">
-                        {m.home_team.short_name} {m.home_score} - {m.away_score}{" "}
-                        {m.away_team.short_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {format(parseISO(m.date), "MMM d")} -- {m.location}
-                      </p>
-                    </div>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${resultColors[res]}`}
+          {recentTeamResults.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                Results
+              </p>
+              <div className="flex flex-col gap-2">
+                {recentTeamResults.map((m) => {
+                  const res = getResult(m, teamId);
+                  const opponent = m.home_team_id === teamId ? m.away_team : m.home_team;
+                  return (
+                    <div
+                      key={m.id}
+                      className="rounded-xl bg-card border border-border p-4 flex items-center gap-3"
                     >
-                      {res}
-                    </span>
-                  </div>
-                );
-              })}
+                      <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <Trophy size={16} className="text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          {m.home_team.short_name} {m.home_score} - {m.away_score}{" "}
+                          {m.away_team.short_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {m.date ? format(parseISO(m.date), "MMM d") : ""}{" "}
+                          {m.location ? `— ${m.location}` : ""}
+                        </p>
+                      </div>
+                      {res && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${resultColors[res as keyof typeof resultColors]}`}>
+                          {res}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
-          {recentResults.length === 0 && !nextMatch && (
+          {recentTeamResults.length === 0 && !nextMatch && (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Clock size={32} className="mb-3 opacity-50" />
               <p className="text-sm">No notifications yet</p>

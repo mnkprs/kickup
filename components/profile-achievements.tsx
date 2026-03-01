@@ -1,6 +1,15 @@
 "use client";
 
-import { achievements } from "@/lib/mock-data";
+// Static placeholder badges — replaced with real achievement system later
+const achievements = [
+  { id: "ach_1", name: "Top Scorer", description: "Lead the league in goals", icon: "crosshair" as const, unlocked: false },
+  { id: "ach_2", name: "Playmaker", description: "10+ assists in a season", icon: "handshake" as const, unlocked: false },
+  { id: "ach_3", name: "Iron Man", description: "40+ matches played", icon: "shield" as const, unlocked: false },
+  { id: "ach_4", name: "Hat-trick Hero", description: "Score 3 goals in a match", icon: "flame" as const, unlocked: false },
+  { id: "ach_5", name: "Clean Sheet King", description: "Win 10+ matches cleanly", icon: "lock" as const, unlocked: false },
+  { id: "ach_6", name: "Century Club", description: "Score 100 career goals", icon: "trophy" as const, unlocked: false },
+];
+
 import {
   Crosshair,
   Handshake,

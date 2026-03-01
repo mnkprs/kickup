@@ -1,14 +1,18 @@
 "use client";
 
-import { recentActivity } from "@/lib/mock-data";
 import { Crosshair, Trophy, Minus, Star } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
+// Static placeholder — replaced with real data once match_events are wired
+const recentActivity = [
+  { id: "act_1", type: "goal" as const, description: "No recent activity yet", date: new Date().toISOString().split("T")[0] },
+];
+
 const activityIcons = {
-  goal: { icon: Crosshair, color: "#F9A825", bg: "rgba(249,168,37,0.12)" },
-  win: { icon: Trophy, color: "#2E7D32", bg: "rgba(46,125,50,0.12)" },
-  draw: { icon: Minus, color: "#A3A3A3", bg: "rgba(163,163,163,0.12)" },
-  motm: { icon: Star, color: "#F9A825", bg: "rgba(249,168,37,0.12)" },
+  goal: { icon: Crosshair, iconClass: "text-draw", bgClass: "bg-draw/10" },
+  win: { icon: Trophy, iconClass: "text-win", bgClass: "bg-win/10" },
+  draw: { icon: Minus, iconClass: "text-muted-foreground", bgClass: "bg-muted" },
+  motm: { icon: Star, iconClass: "text-draw", bgClass: "bg-draw/10" },
 };
 
 export function ProfileActivity() {
@@ -33,11 +37,8 @@ export function ProfileActivity() {
                 i < 4 ? "border-b border-border" : ""
               }`}
             >
-              <div
-                className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
-                style={{ backgroundColor: config.bg }}
-              >
-                <Icon size={14} style={{ color: config.color }} />
+              <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${config.bgClass}`}>
+                <Icon size={14} className={config.iconClass} />
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-foreground text-sm font-medium block truncate">

@@ -1,14 +1,12 @@
-"use client";
-
-import { matches } from "@/lib/mock-data";
-import type { Match } from "@/lib/mock-data";
+import type { Match } from "@/lib/types";
 import { MapPin, ChevronRight, Clock } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
 
-function formatMatchDate(dateStr: string, timeStr: string) {
+function formatMatchDate(dateStr: string | null, timeStr: string | null) {
+  if (!dateStr) return "TBC";
   const date = parseISO(dateStr);
-  return `${format(date, "d MMM")} · ${timeStr.slice(0, 5)}`;
+  return `${format(date, "d MMM")}${timeStr ? ` · ${timeStr.slice(0, 5)}` : ""}`;
 }
 
 function TeamBadge({ shortName }: { shortName: string }) {
@@ -41,9 +39,7 @@ function UpcomingMatchCard({ match }: { match: Match }) {
             {match.home_team.name}
           </span>
         </div>
-        <span className="text-muted-foreground text-xs font-bold px-3 shrink-0">
-          VS
-        </span>
+        <span className="text-muted-foreground text-xs font-bold px-3 shrink-0">VS</span>
         <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end">
           <span className="text-foreground text-sm font-medium truncate text-right">
             {match.away_team.name}
@@ -51,36 +47,41 @@ function UpcomingMatchCard({ match }: { match: Match }) {
           <TeamBadge shortName={match.away_team.short_name} />
         </div>
       </div>
-      <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border">
-        <MapPin size={12} className="text-muted-foreground shrink-0" />
-        <span className="text-muted-foreground text-xs truncate">
-          {match.location}
-        </span>
-      </div>
+      {match.location && (
+        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border">
+          <MapPin size={12} className="text-muted-foreground shrink-0" />
+          <span className="text-muted-foreground text-xs truncate">{match.location}</span>
+        </div>
+      )}
     </div>
   );
 }
 
-export function UpcomingMatches() {
+interface UpcomingMatchesProps {
+  matches: Match[];
+}
+
+export function UpcomingMatches({ matches }: UpcomingMatchesProps) {
   const upcomingMatches = matches.filter((m) => m.status === "upcoming");
 
   return (
     <section className="px-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-base">
-          Upcoming Matches
-        </h2>
-        <Link
-          href="/matches"
-          className="text-accent text-xs font-medium hover:underline"
-        >
+        <h2 className="text-foreground font-semibold text-base">Upcoming Matches</h2>
+        <Link href="/matches" className="text-accent text-xs font-medium hover:underline">
           See all
         </Link>
       </div>
       <div className="flex flex-col gap-3">
-        {upcomingMatches.map((match) => (
-          <UpcomingMatchCard key={match.id} match={match} />
-        ))}
+        {upcomingMatches.length === 0 ? (
+          <p className="text-muted-foreground text-sm text-center py-6">No upcoming matches</p>
+        ) : (
+          upcomingMatches.map((match) => (
+            <Link key={match.id} href={`/matches/${match.id}`}>
+              <UpcomingMatchCard match={match} />
+            </Link>
+          ))
+        )}
       </div>
     </section>
   );

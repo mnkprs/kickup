@@ -1,52 +1,114 @@
 "use client";
 
-import { useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const tabs = ["Upcoming", "Results"];
+const formatOptions = ["All", "5v5", "7v7", "11v11"];
+
+export interface MatchFilters {
+  format: string;
+}
+
+interface MatchesHeaderProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+  filters: MatchFilters;
+  onFiltersChange: (f: MatchFilters) => void;
+  showFilters: boolean;
+  onToggleFilters: () => void;
+}
 
 export function MatchesHeader({
   activeTab,
   onTabChange,
-}: {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-}) {
-  return (
-    <header className="px-5 pt-12 pb-2">
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-foreground font-semibold text-base">Matches</h1>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <button className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors">
-            <Search size={18} className="text-muted-foreground" />
-          </button>
-          <button className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors">
-            <SlidersHorizontal
-              size={18}
-              className="text-muted-foreground"
-            />
-          </button>
-        </div>
-      </div>
+  filters,
+  onFiltersChange,
+  showFilters,
+  onToggleFilters,
+}: MatchesHeaderProps) {
+  const activeFilterCount = filters.format !== "All" ? 1 : 0;
 
-      {/* Tab bar */}
-      <div className="flex gap-1 p-1 rounded-xl bg-card border border-border">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => onTabChange(tab)}
-            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === tab
-                ? "bg-accent text-accent-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-    </header>
+  return (
+    <>
+      <header className="px-5 pt-12 pb-2">
+        <div className="flex items-center justify-between mb-5">
+          <h1 className="text-foreground font-semibold text-base">Matches</h1>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={onToggleFilters}
+              className="relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+            >
+              <SlidersHorizontal size={18} className="text-muted-foreground" />
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-accent text-accent-foreground text-[9px] font-bold flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-1 p-1 rounded-xl bg-card border border-border">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => onTabChange(tab)}
+              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === tab
+                  ? "bg-accent text-accent-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {showFilters && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={onToggleFilters} />
+          <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-50 bg-card rounded-t-2xl border-t border-border p-5 pb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-foreground font-semibold text-base">Filters</h2>
+              <button
+                onClick={onToggleFilters}
+                className="h-8 w-8 rounded-full bg-muted flex items-center justify-center"
+              >
+                <X size={16} className="text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="mb-5">
+              <p className="text-muted-foreground text-xs font-medium mb-2 uppercase tracking-wider">Format</p>
+              <div className="flex flex-wrap gap-2">
+                {formatOptions.map((fmt) => (
+                  <button
+                    key={fmt}
+                    onClick={() => onFiltersChange({ ...filters, format: fmt })}
+                    className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      filters.format === fmt
+                        ? "bg-accent text-accent-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {fmt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => { onFiltersChange({ format: "All" }); onToggleFilters(); }}
+              className="w-full py-2.5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Reset filters
+            </button>
+          </div>
+        </>
+      )}
+    </>
   );
 }

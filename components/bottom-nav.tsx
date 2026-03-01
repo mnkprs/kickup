@@ -8,7 +8,7 @@ const tabs = [
   { label: "Home", icon: Home, href: "/", match: "/" },
   { label: "Matches", icon: Swords, href: "/matches", match: "/matches" },
   { label: "Teams", icon: Users, href: "/teams", match: "/teams" },
-  { label: "Cups", icon: Trophy, href: "/tournaments", match: "/tournaments" },
+  { label: "Leagues", icon: Trophy, href: "/tournaments", match: "/tournaments" },
   { label: "Profile", icon: User, href: "/profile", match: "/profile" },
 ];
 

@@ -1,25 +1,54 @@
+import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/db/profiles";
+import { getUserTeam } from "@/lib/db/teams";
 import { ProfileHeader } from "@/components/profile-header";
 import { ProfileStats } from "@/components/profile-stats";
 import { ProfilePerformanceChart } from "@/components/profile-performance-chart";
 import { ProfileTeamCard } from "@/components/profile-team-card";
 import { ProfileActivity } from "@/components/profile-activity";
 import { ProfileAchievements } from "@/components/profile-achievements";
-import { BottomNav } from "@/components/bottom-nav";
+import { User } from "lucide-react";
 
-export default function ProfilePage() {
+function GuestProfile() {
   return (
-    <div className="min-h-dvh bg-background max-w-lg mx-auto relative">
-      <ProfileHeader />
+    <div className="flex flex-col items-center justify-center gap-4 py-24 px-5 text-center">
+      <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+        <User size={28} className="text-muted-foreground" />
+      </div>
+      <div>
+        <h2 className="text-foreground font-semibold text-lg mb-1">Not signed in</h2>
+        <p className="text-muted-foreground text-sm">Sign in to see your profile, stats and achievements.</p>
+      </div>
+    </div>
+  );
+}
+
+export default async function ProfilePage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return <GuestProfile />;
+
+  const [profile, team] = await Promise.all([
+    getProfile(user.id),
+    getUserTeam(user.id),
+  ]);
+
+  if (!profile) return <GuestProfile />;
+
+  return (
+    <>
+      <ProfileHeader profile={profile} team={team} />
 
       <main className="flex flex-col gap-6 pb-24">
-        <ProfileStats />
+        <ProfileStats profile={profile} />
         <ProfilePerformanceChart />
-        <ProfileTeamCard />
+        <ProfileTeamCard profile={profile} team={team} />
         <ProfileActivity />
         <ProfileAchievements />
       </main>
-
-      <BottomNav />
-    </div>
+    </>
   );
 }

@@ -1,34 +1,29 @@
-"use client";
-
-import { currentUser, teams } from "@/lib/mock-data";
+import type { Profile, Team } from "@/lib/types";
 import { ChevronRight, Users, MapPin, Trophy, Crown } from "lucide-react";
 import Link from "next/link";
 
-export function ProfileTeamCard() {
-  const team = teams.find((t) => t.id === currentUser.team_id);
+interface ProfileTeamCardProps {
+  profile: Profile;
+  team: Team | null;
+}
+
+export function ProfileTeamCard({ profile, team }: ProfileTeamCardProps) {
   if (!team) return null;
 
-  const isCaptain = team.captain_id === currentUser.id;
+  const isCaptain = team.captain_id === profile.id;
   const totalMatches = team.wins + team.losses + team.draws;
-  const memberCount = team.members?.length ?? 0;
 
   return (
     <section className="px-5">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-foreground font-semibold text-sm">My Team</h2>
-        <Link
-          href="/teams"
-          className="text-accent text-xs font-medium hover:underline"
-        >
+        <Link href="/teams" className="text-accent text-xs font-medium hover:underline">
           All teams
         </Link>
       </div>
       <Link href={`/teams/${team.id}`}>
         <div
-          className="rounded-xl p-4 cursor-pointer group transition-all hover:shadow-lg"
-          style={{
-            background: "linear-gradient(135deg, #1B5E20, #2E7D32)",
-          }}
+          className="rounded-xl p-4 cursor-pointer group transition-all hover:shadow-lg bg-gradient-accent"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -38,9 +33,7 @@ export function ProfileTeamCard() {
                 </span>
               </div>
               <div>
-                <h3 className="text-accent-foreground font-semibold text-sm">
-                  {team.name}
-                </h3>
+                <h3 className="text-accent-foreground font-semibold text-sm">{team.name}</h3>
                 <div className="flex items-center gap-2 mt-0.5">
                   {isCaptain && (
                     <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-draw">
@@ -60,42 +53,29 @@ export function ProfileTeamCard() {
           <div className="grid grid-cols-3 gap-3">
             <div className="flex items-center gap-1.5">
               <MapPin size={12} className="text-accent-foreground/60" />
-              <span className="text-accent-foreground/70 text-xs">
-                {team.area}
-              </span>
+              <span className="text-accent-foreground/70 text-xs">{team.area}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Users size={12} className="text-accent-foreground/60" />
               <span className="text-accent-foreground/70 text-xs">
-                {memberCount} players
+                {team.open_spots === 0 ? "Full" : `${team.open_spots} spots`}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <Trophy size={12} className="text-accent-foreground/60" />
-              <span className="text-accent-foreground/70 text-xs">
-                {totalMatches} played
-              </span>
+              <span className="text-accent-foreground/70 text-xs">{totalMatches} played</span>
             </div>
           </div>
 
           <div className="flex items-center gap-3 mt-3 pt-3 border-t border-accent-foreground/10">
             <span className="text-accent-foreground/80 text-xs">
-              <span className="font-bold text-accent-foreground">
-                {team.wins}
-              </span>
-              W
+              <span className="font-bold text-accent-foreground">{team.wins}</span>W
             </span>
             <span className="text-accent-foreground/80 text-xs">
-              <span className="font-bold text-accent-foreground">
-                {team.draws}
-              </span>
-              D
+              <span className="font-bold text-accent-foreground">{team.draws}</span>D
             </span>
             <span className="text-accent-foreground/80 text-xs">
-              <span className="font-bold text-accent-foreground">
-                {team.losses}
-              </span>
-              L
+              <span className="font-bold text-accent-foreground">{team.losses}</span>L
             </span>
             <span className="ml-auto text-accent-foreground font-bold text-sm">
               {team.points} pts

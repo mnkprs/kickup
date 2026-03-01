@@ -1,30 +1,20 @@
-"use client";
+import type { Profile } from "@/lib/types";
+import { Crosshair, Handshake, Swords, Trophy, ShieldAlert, Star } from "lucide-react";
 
-import { currentUser } from "@/lib/mock-data";
-import {
-  Crosshair,
-  Handshake,
-  Swords,
-  Trophy,
-  ShieldAlert,
-  Star,
-} from "lucide-react";
+interface ProfileStatsProps {
+  profile: Profile;
+}
 
-const stats = [
-  { label: "Goals", value: currentUser.goals, icon: Crosshair, color: "#F9A825" },
-  { label: "Assists", value: currentUser.assists, icon: Handshake, color: "#42A5F5" },
-  { label: "Matches", value: currentUser.matches_played, icon: Swords, color: "#A3A3A3" },
-  { label: "Wins", value: currentUser.wins, icon: Trophy, color: "#2E7D32" },
-  {
-    label: "Cards",
-    value: (currentUser.yellow_cards ?? 0) + (currentUser.red_cards ?? 0),
-    icon: ShieldAlert,
-    color: "#E65100",
-  },
-  { label: "MOTM", value: currentUser.man_of_match ?? 0, icon: Star, color: "#F9A825" },
-];
+export function ProfileStats({ profile }: ProfileStatsProps) {
+  const stats = [
+    { label: "Goals", value: profile.goals, icon: Crosshair, iconClass: "text-draw", bgClass: "bg-draw/10" },
+    { label: "Assists", value: profile.assists, icon: Handshake, iconClass: "text-info", bgClass: "bg-info/10" },
+    { label: "Matches", value: profile.matches_played, icon: Swords, iconClass: "text-muted-foreground", bgClass: "bg-muted" },
+    { label: "Wins", value: profile.wins, icon: Trophy, iconClass: "text-win", bgClass: "bg-win/10" },
+    { label: "Cards", value: profile.yellow_cards + profile.red_cards, icon: ShieldAlert, iconClass: "text-warning", bgClass: "bg-warning/10" },
+    { label: "MOTM", value: profile.man_of_match, icon: Star, iconClass: "text-draw", bgClass: "bg-draw/10" },
+  ];
 
-export function ProfileStats() {
   return (
     <section className="px-5">
       <h2 className="text-foreground font-semibold text-base mb-3">Season Stats</h2>
@@ -34,18 +24,11 @@ export function ProfileStats() {
             key={stat.label}
             className="flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border px-2 py-3"
           >
-            <div
-              className="h-8 w-8 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: `${stat.color}15` }}
-            >
-              <stat.icon size={16} style={{ color: stat.color }} />
+            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${stat.bgClass}`}>
+              <stat.icon size={16} className={stat.iconClass} />
             </div>
-            <span className="text-foreground font-bold text-lg leading-none">
-              {stat.value}
-            </span>
-            <span className="text-muted-foreground text-[11px] leading-none">
-              {stat.label}
-            </span>
+            <span className="text-foreground font-bold text-lg leading-none">{stat.value}</span>
+            <span className="text-muted-foreground text-[11px] leading-none">{stat.label}</span>
           </div>
         ))}
       </div>
