@@ -252,7 +252,7 @@ export function TournamentList({ tournaments, filter }: TournamentListProps) {
             <Trophy size={20} className="text-muted-foreground" />
           </div>
           <p className="text-muted-foreground text-sm">
-            No tournaments found
+            No leagues found
           </p>
         </div>
       )}

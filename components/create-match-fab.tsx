@@ -29,7 +29,7 @@ export function CreateMatchFab() {
 
   const actions = [
     { label: "Challenge a team", icon: Swords },
-    ...(isFieldOwner ? [{ label: "Create tournament", icon: Trophy }] : []),
+    ...(isFieldOwner ? [{ label: "Create league", icon: Trophy }] : []),
     { label: "Create a team", icon: Users },
     { label: "Find players", icon: UserSearch },
   ];
