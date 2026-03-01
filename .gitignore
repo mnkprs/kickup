@@ -1,0 +1,33 @@
+# v0 runtime files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+
+# Next.js
+.next/
+out/
+
+# Node
+node_modules/
+dist/
+package-lock.json
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Supabase
+supabase/.env
+supabase/.branches
+supabase/.temp
+
+# OS
+.DS_Store
+
+# Vercel
+.vercel
+
+# Claude / agents
+.agents
+.claude
