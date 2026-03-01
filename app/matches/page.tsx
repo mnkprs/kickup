@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { MatchesHeader } from "@/components/matches-header";
 import { MatchesUpcoming } from "@/components/matches-upcoming";
@@ -20,7 +20,7 @@ function MatchesContent() {
   }, [tabParam]);
 
   return (
-    <>
+    <div className="min-h-dvh bg-background max-w-lg mx-auto relative">
       <MatchesHeader activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="flex flex-col gap-6 pb-24 pt-4">
@@ -29,17 +29,15 @@ function MatchesContent() {
       </main>
 
       <CreateMatchFab />
-    </>
+      <BottomNav />
+    </div>
   );
 }
 
 export default function MatchesPage() {
   return (
-    <div className="min-h-dvh bg-background max-w-lg mx-auto relative">
-      <Suspense>
-        <MatchesContent />
-      </Suspense>
-      <BottomNav />
-    </div>
+    <Suspense>
+      <MatchesContent />
+    </Suspense>
   );
 }

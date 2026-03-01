@@ -31,3 +31,7 @@ supabase/.temp
 # Claude / agents
 .agents
 .claude
+
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md

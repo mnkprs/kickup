@@ -27,7 +27,6 @@ export default function LoginPage() {
       });
       if (error) throw error;
       router.push("/");
-      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

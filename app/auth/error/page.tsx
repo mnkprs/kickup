@@ -1,12 +1,13 @@
+"use client";
+
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
-export default async function AuthErrorPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
-  const params = await searchParams;
+function AuthErrorContent() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background px-5">
@@ -21,9 +22,9 @@ export default async function AuthErrorPage({
           <p className="text-muted-foreground text-sm leading-relaxed mb-2">
             We ran into a problem with your authentication.
           </p>
-          {params?.error && (
+          {error && (
             <p className="text-xs text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2 mb-6 w-full">
-              {params.error}
+              {error}
             </p>
           )}
           <Link
@@ -35,5 +36,13 @@ export default async function AuthErrorPage({
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense>
+      <AuthErrorContent />
+    </Suspense>
   );
 }
