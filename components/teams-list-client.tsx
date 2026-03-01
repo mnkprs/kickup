@@ -79,6 +79,14 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
             >
               <Search size={18} className="text-muted-foreground" />
             </button>
+            {!userTeamId && (
+              <Link
+                href="/teams/create"
+                className="h-10 w-10 rounded-full bg-accent flex items-center justify-center hover:opacity-90 transition-opacity"
+              >
+                <UserPlus size={18} className="text-accent-foreground" />
+              </Link>
+            )}
           </div>
         </div>
 

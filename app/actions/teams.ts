@@ -5,12 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function createTeamAction(data: {
   name: string;
-  short_name: string;
+  formats: string[];
   area: string;
-  format: string;
-  description?: string;
-  emoji?: string;
-  color?: string;
+  emoji: string;
+  color: string;
+  description: string;
 }) {
   const supabase = await createClient();
   const {
@@ -18,32 +17,22 @@ export async function createTeamAction(data: {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
-  const { data: team, error } = await supabase
-    .from("teams")
-    .insert({
-      name: data.name,
-      short_name: data.short_name,
-      area: data.area,
-      format: data.format,
-      description: data.description ?? "",
-      emoji: data.emoji ?? "⚽",
-      color: data.color ?? "#2E7D32",
-      captain_id: user.id,
-    })
-    .select("id")
-    .single();
+  const shortName = data.name.trim().slice(0, 3).toUpperCase();
 
-  if (error || !team) return { error: error?.message ?? "Failed to create team" };
-
-  // Auto-join as captain
-  await supabase.from("team_members").insert({
-    team_id: team.id,
-    player_id: user.id,
-    role: "captain",
+  const { data: teamId, error } = await supabase.rpc("create_team_with_captain", {
+    p_name: data.name.trim(),
+    p_short_name: shortName,
+    p_formats: data.formats,
+    p_area: data.area,
+    p_emoji: data.emoji,
+    p_color: data.color,
+    p_description: data.description,
   });
 
+  if (error) return { error: error.message };
+
   revalidatePath("/teams");
-  return { success: true, teamId: team.id };
+  return { teamId: teamId as string };
 }
 
 export async function joinTeamAction(teamId: string) {
@@ -53,7 +42,6 @@ export async function joinTeamAction(teamId: string) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
-  // Check not already a member
   const { data: existing } = await supabase
     .from("team_members")
     .select("id")
