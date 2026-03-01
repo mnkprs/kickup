@@ -12,7 +12,9 @@ import { uploadTeamAvatar } from '../../lib/uploadAvatar';
 import { supabase } from '../../lib/supabase';
 import { PlayerAvatar } from '../ui/PlayerAvatar';
 import { matchResult, calcAge } from '../../lib/playerUtils';
-import type { MatchWithTeams } from '../../types/database';
+import type { MatchFormat, MatchWithTeams } from '../../types/database';
+
+const ALL_FORMATS: MatchFormat[] = ['5v5', '6v6', '7v7', '8v8'];
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
@@ -45,7 +47,7 @@ function TeamStatsGrid({ statItems, winRate }: { statItems: StatItem[]; winRate:
   );
 }
 
-type PendingMember = { id: string; player_id: string; profiles: { avatar_initials: string; avatar_color: string; avatar_url: string | null; full_name: string; position?: string | null } | null };
+type PendingMember = { id: string; player_id: string; profiles: { avatar_initials: string; avatar_color: string; avatar_url: string | null; full_name: string; position?: string | null; is_freelancer?: boolean | null } | null };
 
 function PendingApplicationsCard({ pendingMembers, actionLoading, onAccept, onReject, navigate }: {
   pendingMembers: PendingMember[];
@@ -68,7 +70,7 @@ function PendingApplicationsCard({ pendingMembers, actionLoading, onAccept, onRe
           return (
             <div key={tm.id} className="flex items-center gap-3">
               <button onClick={() => navigate(`/app/players/${tm.player_id}`)} className="shrink-0">
-                <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={36} />
+                <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={36} showAvailable={p.is_freelancer ?? false} />
               </button>
               <div className="flex-1 min-w-0">
                 <p style={{ fontSize: '13px', fontWeight: 500, color: textPrimary }}>{p.full_name}</p>
@@ -94,7 +96,7 @@ function PendingApplicationsCard({ pendingMembers, actionLoading, onAccept, onRe
   );
 }
 
-type ActiveMember = { id: string; player_id: string; role: string; profiles: { avatar_initials: string; avatar_color: string; avatar_url: string | null; full_name: string; position?: string | null } | null };
+type ActiveMember = { id: string; player_id: string; role: string; profiles: { avatar_initials: string; avatar_color: string; avatar_url: string | null; full_name: string; position?: string | null; is_freelancer?: boolean | null; nationality?: string | null; height?: number | null; preferred_foot?: string | null; stat_goals?: number | null } | null };
 
 function SquadSection({ activeMembers, isCaptain, userId, actionLoading, onRemove, onMakeCaptain, navigate }: {
   activeMembers: ActiveMember[];
@@ -133,18 +135,37 @@ function SquadSection({ activeMembers, isCaptain, userId, actionLoading, onRemov
                   <div key={tm.id} className="flex items-center gap-3 p-3 rounded-2xl border"
                     style={{ background: cardBg, borderColor }}>
                     <button onClick={() => navigate(`/app/players/${tm.player_id}`)} className="shrink-0">
-                      <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={40} />
+                      <PlayerAvatar initials={p.avatar_initials} color={p.avatar_color} avatarUrl={p.avatar_url} size={40} showAvailable={p.is_freelancer ?? false} />
                     </button>
                     <div className="flex-1 min-w-0">
-                      <p style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{p.full_name}</p>
-                      <div className="flex items-center gap-2">
-                        {p.position ? <span style={{ fontSize: '12px', color: textSecondary }}>{p.position}</span> : null}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p style={{ fontSize: '14px', fontWeight: 500, color: textPrimary }}>{p.full_name}</p>
                         {tm.role === 'captain' ? (
-                          <span className="flex items-center gap-1" style={{ fontSize: '11px', color: '#E65100', fontWeight: 700 }}>
-                            <Crown size={10} color="#E65100" /> Captain
+                          <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full" style={{ background: '#FFF3E0', fontSize: '10px', color: '#E65100', fontWeight: 700 }}>
+                            <Crown size={9} color="#E65100" /> Cap
                           </span>
                         ) : null}
                       </div>
+                      {(() => {
+                        const details = [
+                          p.position ? { text: p.position, color: '#2E7D32', weight: 700 } : null,
+                          p.nationality ? { text: p.nationality } : null,
+                          p.height ? { text: `${p.height}cm` } : null,
+                          p.preferred_foot ? { text: `${p.preferred_foot.charAt(0).toUpperCase() + p.preferred_foot.slice(1)} ft` } : null,
+                          p.stat_goals ? { text: `⚽ ${p.stat_goals}`, color: '#B3261E', weight: 600 } : null,
+                        ].filter((x): x is NonNullable<typeof x> => x !== null);
+                        if (details.length === 0) return null;
+                        return (
+                          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                            {details.map((d, i) => (
+                              <span key={i} className="flex items-center gap-1">
+                                {i > 0 && <span style={{ fontSize: '10px', color: textSecondary }}>·</span>}
+                                <span style={{ fontSize: '11px', color: ('color' in d ? d.color : undefined) ?? textSecondary, fontWeight: ('weight' in d ? d.weight : undefined) ?? 400 }}>{d.text}</span>
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                     {isCaptain ? (
                       <div className="flex gap-1">
@@ -374,7 +395,9 @@ export function TeamProfile() {
           <div className="pb-1 flex-1">
             <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'white' }}>{team.name}</h1>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '11px', fontWeight: 600 }}>{team.format}</span>
+              {(team.formats?.length ? team.formats : [team.format]).map(f => (
+                <span key={f} className="px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', fontSize: '11px', fontWeight: 600 }}>{f}</span>
+              ))}
               <div className="flex items-center gap-1">
                 <MapPin size={11} color="rgba(255,255,255,0.8)" />
                 <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>{team.area}</span>
@@ -419,23 +442,56 @@ export function TeamProfile() {
         {/* Action buttons */}
         <div className="flex flex-col gap-3">
           {isCaptain ? (
-            <div className="p-4 rounded-2xl border flex items-center justify-between" style={{ background: cardBg, borderColor }}>
-              <div>
-                <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>Searching for Opponent</p>
-                <p style={{ fontSize: '12px', color: textSecondary }}>Show team as open for challenges</p>
+            <>
+              {/* Formats editor */}
+              <div className="p-4 rounded-2xl border flex flex-col gap-3" style={{ background: cardBg, borderColor }}>
+                <div>
+                  <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>Formats</p>
+                  <p style={{ fontSize: '12px', color: textSecondary }}>Formats your team plays</p>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {ALL_FORMATS.map(f => {
+                    const active = (team.formats?.length ? team.formats : [team.format]).includes(f);
+                    return (
+                      <button key={f}
+                        onClick={async () => {
+                          const current = team.formats?.length ? team.formats : [team.format];
+                          const next = active
+                            ? current.filter(x => x !== f)
+                            : [...current, f];
+                          if (next.length === 0) return; // require at least one
+                          const { error } = await supabase.from('teams').update({ formats: next }).eq('id', team.id);
+                          if (error) { addToast(error.message, 'error'); return; }
+                          refresh();
+                        }}
+                        className="flex-1 h-10 rounded-2xl border-2 flex items-center justify-center transition-all"
+                        style={{ borderColor: active ? '#2E7D32' : borderColor, background: active ? '#E8F5E9' : cardBg, fontSize: '13px', fontWeight: active ? 700 : 400, color: active ? '#2E7D32' : textSecondary }}>
+                        {f}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <button
-                onClick={async () => {
-                  const { error } = await supabase.from('teams').update({ searching_for_opponent: !team.searching_for_opponent }).eq('id', team.id);
-                  if (error) { addToast(error.message, 'error'); return; }
-                  refresh();
-                }}
-                className="w-12 h-6 rounded-full relative transition-colors"
-                style={{ background: team.searching_for_opponent ? '#2E7D32' : (isDark ? '#49454F' : '#E7E0EC') }}>
-                <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
-                  style={{ left: team.searching_for_opponent ? 'calc(100% - 22px)' : '2px' }} />
-              </button>
-            </div>
+
+              {/* Searching for Opponent */}
+              <div className="p-4 rounded-2xl border flex items-center justify-between" style={{ background: cardBg, borderColor }}>
+                <div>
+                  <p style={{ fontSize: '15px', fontWeight: 500, color: textPrimary }}>Searching for Opponent</p>
+                  <p style={{ fontSize: '12px', color: textSecondary }}>Show team as open for challenges</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    const { error } = await supabase.from('teams').update({ searching_for_opponent: !team.searching_for_opponent }).eq('id', team.id);
+                    if (error) { addToast(error.message, 'error'); return; }
+                    refresh();
+                  }}
+                  className="w-12 h-6 rounded-full relative transition-colors"
+                  style={{ background: team.searching_for_opponent ? '#2E7D32' : (isDark ? '#49454F' : '#E7E0EC') }}>
+                  <div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all"
+                    style={{ left: team.searching_for_opponent ? 'calc(100% - 22px)' : '2px' }} />
+                </button>
+              </div>
+            </>
           ) : null}
 
           {!isMember && !isCaptain && user ? (

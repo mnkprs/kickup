@@ -1,10 +1,11 @@
 import { Outlet, useLocation, useNavigate } from 'react-router';
-import { Home, Trophy, Users, User, Bell, Plus, Search, Target, Calendar, SlidersHorizontal } from 'lucide-react';
+import { Home, Trophy, Users, User, Bell, X, LayoutGrid, Search, Target, Calendar, SlidersHorizontal } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
+import { CookieBanner } from '../ui/CookieBanner';
 
 const NAV_ITEMS = [
   { to: '/app', icon: Home, label: 'Home' },
@@ -64,6 +65,8 @@ export function Layout() {
           <div className="absolute inset-0 z-30 bg-black/40 backdrop-blur-sm" onClick={() => setFabOpen(false)} />
         )}
 
+        <CookieBanner />
+
         <motion.div
           className="absolute right-4 z-40"
           style={{ bottom: '92px' }}
@@ -97,8 +100,8 @@ export function Layout() {
                     <button
                       key={path}
                       onClick={() => { navigate(path); setFabOpen(false); }}
-                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-white shadow-xl"
-                      style={{ background: color }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-white shadow-xl justify-between"
+                      style={{ background: color, width: 'auto', textWrapMode: 'nowrap' }}
                     >
                       <span style={{ fontFamily: 'Roboto, sans-serif', fontSize: '14px', fontWeight: 500 }}>{label}</span>
                       <Icon size={18} />
@@ -111,12 +114,10 @@ export function Layout() {
                 className="w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-200"
                 style={{
                   background: fabOpen ? '#1C1B1F' : 'linear-gradient(135deg, #2E7D32 0%, #43A047 100%)',
-                  boxShadow: '0 4px 16px rgba(46,125,50,0.45)',
+                  boxShadow: fabOpen ? '0 4px 16px rgba(0,0,0,0.35)' : '0 4px 16px rgba(46,125,50,0.45)',
                 }}
               >
-                <div style={{ transform: fabOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
-                  <Plus size={24} color="white" />
-                </div>
+                {fabOpen ? <X size={22} color="white" /> : <LayoutGrid size={22} color="white" />}
               </button>
             </>
           )}
