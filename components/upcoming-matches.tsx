@@ -3,6 +3,7 @@ import { MapPin, ChevronRight, Clock } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
 
+
 function formatMatchDate(dateStr: string | null, timeStr: string | null) {
   if (!dateStr) return "TBC";
   const date = parseISO(dateStr);
@@ -19,7 +20,7 @@ function TeamBadge({ shortName }: { shortName: string }) {
 
 function UpcomingMatchCard({ match }: { match: Match }) {
   return (
-    <div className="rounded-xl bg-card border border-border p-4 hover:border-accent/40 transition-colors cursor-pointer group">
+    <Link href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border p-4 hover:border-accent/40 transition-colors group block">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           <Clock size={12} className="text-accent" />
@@ -53,7 +54,7 @@ function UpcomingMatchCard({ match }: { match: Match }) {
           <span className="text-muted-foreground text-xs truncate">{match.location}</span>
         </div>
       )}
-    </div>
+    </Link>
   );
 }
 
@@ -77,9 +78,7 @@ export function UpcomingMatches({ matches }: UpcomingMatchesProps) {
           <p className="text-muted-foreground text-sm text-center py-6">No upcoming matches</p>
         ) : (
           upcomingMatches.map((match) => (
-            <Link key={match.id} href={`/matches/${match.id}`}>
-              <UpcomingMatchCard match={match} />
-            </Link>
+            <UpcomingMatchCard key={match.id} match={match} />
           ))
         )}
       </div>
