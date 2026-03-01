@@ -3,6 +3,7 @@
 import type { Profile, Team } from "@/lib/types";
 import { Settings, Share2, MapPin, Calendar, Crown } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 interface ProfileHeaderProps {
@@ -29,12 +30,13 @@ export function ProfileHeader({ profile, team }: ProfileHeaderProps) {
           >
             <Share2 size={18} className="text-muted-foreground" />
           </button>
-          <button
+          <Link
+            href="/profile/settings"
             aria-label="Settings"
             className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
           >
             <Settings size={18} className="text-muted-foreground" />
-          </button>
+          </Link>
         </div>
       </div>
 
