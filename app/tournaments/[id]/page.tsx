@@ -8,9 +8,11 @@ import {
 import { ArrowLeft, Trophy, Calendar, Users, MapPin } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
+import { createClient } from "@/lib/supabase/server";
 import { TournamentStandings } from "@/components/tournament-standings";
 import { TournamentFixtures } from "@/components/tournament-fixtures";
 import { TournamentScorers } from "@/components/tournament-scorers";
+import { RegisterTournamentButton } from "@/components/register-tournament-button";
 
 function getStatusStyle(status: string) {
   switch (status) {
@@ -41,6 +43,9 @@ export default async function TournamentDetailPage({
 }) {
   const { id } = await params;
 
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   const [tournament, standings, matches, scorers] = await Promise.all([
     getTournament(id),
     getTournamentStandings(id),
@@ -49,6 +54,29 @@ export default async function TournamentDetailPage({
   ]);
 
   if (!tournament) notFound();
+
+  // Check user's team + registration status
+  let userTeamId: string | null = null;
+  let registrationStatus: "none" | "pending" | "approved" | "rejected" = "none";
+
+  if (user) {
+    const { data: membership } = await supabase
+      .from("team_members")
+      .select("team_id")
+      .eq("player_id", user.id)
+      .maybeSingle();
+
+    if (membership?.team_id) {
+      userTeamId = membership.team_id;
+      const { data: reg } = await supabase
+        .from("tournament_registrations")
+        .select("status")
+        .eq("tournament_id", id)
+        .eq("team_id", userTeamId)
+        .maybeSingle();
+      if (reg) registrationStatus = reg.status as typeof registrationStatus;
+    }
+  }
 
   const statusStyle = getStatusStyle(tournament.status);
 
@@ -79,7 +107,19 @@ export default async function TournamentDetailPage({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+        {/* Register button (upcoming only, user has a team) */}
+      {userTeamId && tournament.status === "upcoming" && (
+        <div className="mt-4">
+          <RegisterTournamentButton
+            tournamentId={id}
+            teamId={userTeamId}
+            registrationStatus={registrationStatus}
+            isFull={tournament.teams_count >= tournament.max_teams}
+          />
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
           {tournament.start_date && (
             <div className="flex items-center gap-1.5">
               <Calendar size={12} className="text-muted-foreground" />

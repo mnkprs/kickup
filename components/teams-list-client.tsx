@@ -10,11 +10,12 @@ import {
   ChevronRight,
   Trophy,
   UserPlus,
+  Swords,
 } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-const filters = ["All", "My Team", "Open"];
+const filters = ["All", "My Team", "Open", "vs Ready"];
 
 function getTeamRecord(team: Team) {
   return {
@@ -42,6 +43,8 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
       result = result.filter((t) => t.id === userTeamId);
     } else if (activeFilter === "Open") {
       result = result.filter((t) => t.open_spots > 0);
+    } else if (activeFilter === "vs Ready") {
+      result = result.filter((t) => t.searching_for_opponent);
     }
 
     if (search.trim()) {
@@ -157,13 +160,19 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-foreground font-semibold text-sm truncate">
                         {team.name}
                       </h3>
                       {isMyTeam && (
                         <span className="text-[9px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded-full shrink-0">
                           My team
+                        </span>
+                      )}
+                      {team.searching_for_opponent && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-win bg-win/10 px-1.5 py-0.5 rounded-full shrink-0 flex items-center gap-0.5">
+                          <Swords size={9} />
+                          vs
                         </span>
                       )}
                     </div>

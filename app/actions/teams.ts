@@ -35,6 +35,23 @@ export async function createTeamAction(data: {
   return { teamId: teamId as string };
 }
 
+export async function toggleSearchingForOpponentAction(teamId: string, value: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("teams")
+    .update({ searching_for_opponent: value })
+    .eq("id", teamId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/teams/${teamId}`);
+  revalidatePath("/teams");
+  return { success: true };
+}
+
 export async function joinTeamAction(teamId: string) {
   const supabase = await createClient();
   const {

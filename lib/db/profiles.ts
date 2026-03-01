@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Profile, OwnerApplication } from "@/lib/types";
+import type { Profile, OwnerApplication, TopScorer } from "@/lib/types";
 
 function mapProfile(row: Record<string, unknown>): Profile {
   return {
@@ -70,6 +70,31 @@ export async function updateProfile(
 
   if (error || !updated) return null;
   return mapProfile(updated as Record<string, unknown>);
+}
+
+export async function getTopScorers(limit = 5): Promise<TopScorer[]> {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("*, team_members(team_id, teams(short_name))")
+    .gt("stat_goals", 0)
+    .order("stat_goals", { ascending: false })
+    .limit(limit);
+
+  if (!data) return [];
+
+  return (data as Record<string, unknown>[]).map((p) => {
+    const memberships = p.team_members as Record<string, unknown>[];
+    const teamShortName =
+      ((memberships?.[0]?.teams as Record<string, unknown>)?.short_name as string) ?? "—";
+    return {
+      player: mapProfile(p),
+      team_short_name: teamShortName,
+      goals: (p.stat_goals as number) ?? 0,
+      assists: (p.stat_assists as number) ?? 0,
+    };
+  });
 }
 
 export async function applyForFieldOwner(

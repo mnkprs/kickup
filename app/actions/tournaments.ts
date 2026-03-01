@@ -3,6 +3,24 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+export async function registerForTournamentAction(tournamentId: string, teamId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("tournament_registrations")
+    .upsert(
+      { tournament_id: tournamentId, team_id: teamId, status: "pending" },
+      { onConflict: "tournament_id,team_id" }
+    );
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/tournaments/${tournamentId}`);
+  return { success: true };
+}
+
 export async function createTournamentAction(data: {
   name: string;
   description: string;

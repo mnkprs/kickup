@@ -5,7 +5,6 @@ import type { Team, Profile, Match } from "@/lib/types";
 import {
   ArrowLeft,
   MapPin,
-  Calendar,
   Users,
   Crown,
   ChevronRight,
@@ -20,6 +19,8 @@ import {
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { JoinTeamButton } from "@/components/join-team-button";
+import { SearchingToggle } from "@/components/searching-toggle";
 
 const positionOrder: Record<string, number> = {
   GK: 0, CB: 1, LB: 2, RB: 3, CDM: 4, CM: 5, CAM: 6,
@@ -229,9 +230,20 @@ export default async function TeamDetailPage({
   const upcomingMatches = allMatches.filter((m) => m.status === "upcoming");
   const completedMatches = allMatches.filter((m) => m.status === "completed");
 
-  // Determine if the current user is on this team
   const isMyTeam = memberRows.some((m) => m.player_id === user?.id);
   const isCaptain = team.captain_id === user?.id;
+
+  // Check if user already has a pending join request
+  let hasPendingRequest = false;
+  let userHasAnyTeam = false;
+  if (user && !isMyTeam) {
+    const [{ data: pendingRow }, { data: anyMembership }] = await Promise.all([
+      supabase.from("team_members").select("id").eq("team_id", id).eq("player_id", user.id).eq("status", "pending").maybeSingle(),
+      supabase.from("team_members").select("id").eq("player_id", user.id).maybeSingle(),
+    ]);
+    hasPendingRequest = !!pendingRow;
+    userHasAnyTeam = !!anyMembership;
+  }
 
   const totalMatches = team.wins + team.draws + team.losses;
   const winRate = totalMatches > 0 ? Math.round((team.wins / totalMatches) * 100) : 0;
@@ -331,6 +343,25 @@ export default async function TeamDetailPage({
             </span>
           </div>
         </div>
+
+        {/* Actions row */}
+        {user && (
+          <div className="flex items-center gap-3 mt-4 flex-wrap">
+            {isCaptain && (
+              <SearchingToggle
+                teamId={team.id}
+                initial={team.searching_for_opponent ?? false}
+              />
+            )}
+            {!isMyTeam && !userHasAnyTeam && team.open_spots > 0 && (
+              <JoinTeamButton
+                teamId={team.id}
+                hasPendingRequest={hasPendingRequest}
+                isAlreadyMember={false}
+              />
+            )}
+          </div>
+        )}
       </header>
 
       <main className="flex flex-col gap-6 pt-4 pb-24">

@@ -29,6 +29,7 @@ function mapTeam(row: Record<string, unknown>): Team {
     points: (row.points as number) ?? 0,
     captain_id: row.captain_id as string | null,
     home_ground: row.home_ground as string | null,
+    searching_for_opponent: (row.searching_for_opponent as boolean) ?? false,
     created_at: row.created_at as string,
   };
 }

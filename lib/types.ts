@@ -50,6 +50,7 @@ export interface Team {
   // optional
   captain_id?: string | null;
   home_ground?: string | null;
+  searching_for_opponent?: boolean;
   created_at: string;
 }
 
