@@ -6,9 +6,8 @@ import {
   getTournamentTopScorers,
 } from "@/lib/db/tournaments";
 import { getProfile } from "@/lib/db/profiles";
-import { ArrowLeft, Trophy, Calendar, Users, MapPin } from "lucide-react";
+import { ArrowLeft, Trophy } from "lucide-react";
 import Link from "next/link";
-import { format, parseISO } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { TournamentStandings } from "@/components/tournament-standings";
 import { TournamentFixtures } from "@/components/tournament-fixtures";
@@ -17,6 +16,7 @@ import { TournamentScorers } from "@/components/tournament-scorers";
 import { TournamentPendingRegistrations } from "@/components/tournament-pending-registrations";
 import { TournamentOrganizerControls } from "@/components/tournament-organizer-controls";
 import { TournamentEditButton } from "@/components/tournament-edit-button";
+import { TournamentDetailsAccordion } from "@/components/tournament-details-accordion";
 import { RegisterTournamentButton } from "@/components/register-tournament-button";
 
 function getStatusStyle(status: string) {
@@ -140,45 +140,23 @@ export default async function TournamentDetailPage({
           />
         </div>
       )}
-
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
-          {tournament.start_date && (
-            <div className="flex items-center gap-1.5">
-              <Calendar size={12} className="text-muted-foreground" />
-              <span className="text-muted-foreground text-xs">
-                {format(parseISO(tournament.start_date), "d MMM")}
-                {tournament.end_date && tournament.end_date !== tournament.start_date &&
-                  ` – ${format(parseISO(tournament.end_date), "d MMM yyyy")}`}
-              </span>
-            </div>
-          )}
-          {tournament.area && (
-            <div className="flex items-center gap-1.5">
-              <MapPin size={12} className="text-muted-foreground" />
-              <span className="text-muted-foreground text-xs">{tournament.area}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-1.5">
-            <Users size={12} className="text-muted-foreground" />
-            <span className="text-muted-foreground text-xs">
-              {tournament.teams_count}/{tournament.max_teams} teams
-            </span>
-          </div>
-          {tournament.prize && (
-            <div className="flex items-center gap-1">
-              <Trophy size={11} className="text-draw" />
-              <span className="text-draw text-[11px] font-medium">{tournament.prize}</span>
-            </div>
-          )}
-        </div>
       </header>
 
       <main className="flex flex-col gap-6 pb-24 pt-2">
-        {tournament.description && (
-          <section className="px-5">
-            <p className="text-muted-foreground text-sm">{tournament.description}</p>
-          </section>
-        )}
+        <TournamentDetailsAccordion
+          details={{
+            organizerId: tournament.organizer_id,
+            organizer: tournament.organizer,
+            startDate: tournament.start_date,
+            endDate: tournament.end_date,
+            area: tournament.area,
+            venue: tournament.venue,
+            teamsCount: tournament.teams_count,
+            maxTeams: tournament.max_teams,
+            prize: tournament.prize,
+            description: tournament.description,
+          }}
+        />
 
         {canManageRegistrations && tournament.pending_registrations.length > 0 && (
           <TournamentPendingRegistrations
