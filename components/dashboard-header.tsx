@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Profile, Match } from "@/lib/types";
+import type { Profile, Match, Notification } from "@/lib/types";
 import { Bell } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsSheet } from "@/components/notifications-sheet";
@@ -10,15 +10,17 @@ interface DashboardHeaderProps {
   profile: Profile | null;
   upcomingMatches: Match[];
   recentResults: Match[];
+  notifications: Notification[];
 }
 
-export function DashboardHeader({ profile, upcomingMatches, recentResults }: DashboardHeaderProps) {
+export function DashboardHeader({ profile, notifications }: DashboardHeaderProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const firstName = profile ? profile.full_name.split(" ")[0] : "Player";
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const initials = profile?.avatar_initials ?? (profile?.full_name.split(" ").map((n) => n[0]).join("") ?? "?");
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <>
@@ -47,7 +49,9 @@ export function DashboardHeader({ profile, upcomingMatches, recentResults }: Das
             className="relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
           >
             <Bell size={18} className="text-muted-foreground" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-destructive" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
+            )}
           </button>
         </div>
       </header>
@@ -55,9 +59,7 @@ export function DashboardHeader({ profile, upcomingMatches, recentResults }: Das
       <NotificationsSheet
         open={notifOpen}
         onClose={() => setNotifOpen(false)}
-        upcomingMatches={upcomingMatches}
-        recentResults={recentResults}
-        teamId={profile?.team_id ?? null}
+        notifications={notifications}
       />
     </>
   );

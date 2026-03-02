@@ -137,6 +137,20 @@ export interface AreaGroup {
   areas: string[];
 }
 
+export interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  read: boolean;
+  match_id: string | null;
+  team_id: string | null;
+  tournament_id: string | null;
+  avatar_emoji: string | null;
+  avatar_color: string | null;
+  created_at: string;
+}
+
 export interface OwnerApplication {
   id: string;
   user_id: string;

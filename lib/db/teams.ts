@@ -99,6 +99,33 @@ export async function getTeamMembers(
     .from("team_members")
     .select("*, profiles(*)")
     .eq("team_id", teamId)
+    .eq("status", "active")
+    .order("joined_at", { ascending: true });
+
+  if (error || !data) return [];
+
+  return (data as Record<string, unknown>[]).map((row) => {
+    const profileRow = row.profiles as Record<string, unknown>;
+    return {
+      id: row.id as string,
+      team_id: row.team_id as string,
+      player_id: row.player_id as string,
+      role: row.role as "captain" | "player",
+      joined_at: row.joined_at as string,
+      profile: mapMemberProfile(profileRow),
+    };
+  });
+}
+
+export async function getPendingJoinRequests(
+  teamId: string
+): Promise<(TeamMember & { profile: Profile })[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("team_members")
+    .select("*, profiles(*)")
+    .eq("team_id", teamId)
+    .eq("status", "pending")
     .order("joined_at", { ascending: true });
 
   if (error || !data) return [];

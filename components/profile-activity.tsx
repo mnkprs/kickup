@@ -1,56 +1,75 @@
 "use client";
 
-import { Crosshair, Trophy, Minus, Star } from "lucide-react";
+import { Trophy, Minus, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import type { Match } from "@/lib/types";
 
-// Static placeholder — replaced with real data once match_events are wired
-const recentActivity = [
-  { id: "act_1", type: "goal" as const, description: "No recent activity yet", date: new Date().toISOString().split("T")[0] },
-];
+interface ProfileActivityProps {
+  matches: Match[];
+  teamId: string | null;
+}
 
-const activityIcons = {
-  goal: { icon: Crosshair, iconClass: "text-draw", bgClass: "bg-draw/10" },
-  win: { icon: Trophy, iconClass: "text-win", bgClass: "bg-win/10" },
-  draw: { icon: Minus, iconClass: "text-muted-foreground", bgClass: "bg-muted" },
-  motm: { icon: Star, iconClass: "text-draw", bgClass: "bg-draw/10" },
+function getResult(match: Match, teamId: string): "win" | "draw" | "loss" | null {
+  if (match.status !== "completed" || match.home_score == null || match.away_score == null) return null;
+  const isHome = match.home_team_id === teamId;
+  const myScore = isHome ? match.home_score : match.away_score;
+  const theirScore = isHome ? match.away_score : match.home_score;
+  if (myScore > theirScore) return "win";
+  if (myScore === theirScore) return "draw";
+  return "loss";
+}
+
+const RESULT_CONFIG = {
+  win:  { icon: Trophy, iconClass: "text-win",  bgClass: "bg-win/10",  label: "W" },
+  draw: { icon: Minus,  iconClass: "text-muted-foreground", bgClass: "bg-muted", label: "D" },
+  loss: { icon: X,      iconClass: "text-loss", bgClass: "bg-loss/10", label: "L" },
 };
 
-export function ProfileActivity() {
+export function ProfileActivity({ matches, teamId }: ProfileActivityProps) {
+  const completedMatches = teamId
+    ? matches
+        .filter((m) => m.status === "completed" && m.home_score != null)
+        .slice(0, 5)
+    : [];
+
   return (
     <section className="px-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-sm">
-          Recent Activity
-        </h2>
-        <button className="text-accent text-xs font-medium hover:underline">
-          See all
-        </button>
-      </div>
+      <h2 className="text-foreground font-semibold text-sm mb-3">Recent Activity</h2>
       <div className="rounded-xl bg-card border border-border p-4">
-        {recentActivity.slice(0, 5).map((activity, i) => {
-          const config = activityIcons[activity.type];
-          const Icon = config.icon;
-          return (
-            <div
-              key={activity.id}
-              className={`flex items-center gap-3 py-2.5 ${
-                i < 4 ? "border-b border-border" : ""
-              }`}
-            >
-              <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${config.bgClass}`}>
-                <Icon size={14} className={config.iconClass} />
+        {completedMatches.length === 0 ? (
+          <p className="text-muted-foreground text-sm text-center py-4">No recent activity yet</p>
+        ) : (
+          completedMatches.map((match, i) => {
+            const result = getResult(match, teamId!);
+            if (!result) return null;
+            const config = RESULT_CONFIG[result];
+            const Icon = config.icon;
+            const isHome = match.home_team_id === teamId;
+            const opponent = isHome ? match.away_team.name : match.home_team.name;
+            const score = `${match.home_score}–${match.away_score}`;
+
+            return (
+              <div
+                key={match.id}
+                className={`flex items-center gap-3 py-2.5 ${i < completedMatches.length - 1 ? "border-b border-border" : ""}`}
+              >
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${config.bgClass}`}>
+                  <Icon size={14} className={config.iconClass} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-foreground text-sm font-medium block truncate">
+                    {config.label} · {score} vs {opponent}
+                  </span>
+                  {match.date && (
+                    <span className="text-muted-foreground text-xs">
+                      {format(parseISO(match.date), "d MMM yyyy")}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-foreground text-sm font-medium block truncate">
-                  {activity.description}
-                </span>
-                <span className="text-muted-foreground text-xs">
-                  {format(parseISO(activity.date), "d MMM yyyy")}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </section>
   );

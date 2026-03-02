@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getProfile, getTopScorers } from "@/lib/db/profiles";
+import { getProfile, getTopScorers, getNotifications } from "@/lib/db/profiles";
 import { getUpcomingMatches, getRecentResults } from "@/lib/db/matches";
 import { getTeams } from "@/lib/db/teams";
 import { getTournaments } from "@/lib/db/tournaments";
@@ -15,10 +15,11 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [profile, tournaments, topScorers] = await Promise.all([
+  const [profile, tournaments, topScorers, notifications] = await Promise.all([
     user ? getProfile(user.id) : null,
     getTournaments(),
     getTopScorers(5),
+    user ? getNotifications(user.id) : [],
   ]);
 
   const [upcomingMatches, recentResults] = await Promise.all([
@@ -33,7 +34,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <DashboardHeader profile={profile} upcomingMatches={upcomingMatches} recentResults={recentResults} />
+      <DashboardHeader profile={profile} upcomingMatches={upcomingMatches} recentResults={recentResults} notifications={notifications} />
 
       <main className="flex flex-col gap-6 pb-24">
         {profile && <QuickStats profile={profile} />}

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Profile, OwnerApplication, TopScorer } from "@/lib/types";
+import type { Profile, OwnerApplication, TopScorer, Notification } from "@/lib/types";
 
 function mapProfile(row: Record<string, unknown>): Profile {
   return {
@@ -95,6 +95,18 @@ export async function getTopScorers(limit = 5): Promise<TopScorer[]> {
       assists: (p.stat_assists as number) ?? 0,
     };
   });
+}
+
+export async function getNotifications(userId: string): Promise<Notification[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  return (data ?? []) as Notification[];
 }
 
 export async function applyForFieldOwner(

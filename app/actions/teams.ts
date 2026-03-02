@@ -59,23 +59,44 @@ export async function joinTeamAction(teamId: string) {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
-  const { data: existing } = await supabase
-    .from("team_members")
-    .select("id")
-    .eq("team_id", teamId)
-    .eq("player_id", user.id)
-    .maybeSingle();
-
-  if (existing) return { error: "Already a member" };
-
-  const { error } = await supabase.from("team_members").insert({
-    team_id: teamId,
-    player_id: user.id,
-    role: "player",
-  });
-
+  const { error } = await supabase.rpc("apply_to_team", { p_team_id: teamId });
   if (error) return { error: error.message };
 
-  revalidatePath("/teams");
+  revalidatePath(`/teams/${teamId}`);
+  return { success: true };
+}
+
+export async function approveJoinRequestAction(teamId: string, playerId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("accept_team_member", {
+    p_team_id: teamId,
+    p_player_id: playerId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/teams/${teamId}`);
+  return { success: true };
+}
+
+export async function rejectJoinRequestAction(teamId: string, playerId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("team_members")
+    .delete()
+    .eq("team_id", teamId)
+    .eq("player_id", playerId)
+    .eq("status", "pending");
+  if (error) return { error: error.message };
+  revalidatePath(`/teams/${teamId}`);
+  return { success: true };
+}
+
+export async function removeMemberAction(teamId: string, playerId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("remove_team_member", {
+    p_team_id: teamId,
+    p_player_id: playerId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/teams/${teamId}`);
   return { success: true };
 }

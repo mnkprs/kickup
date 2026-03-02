@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/db/profiles";
 import { getUserTeam } from "@/lib/db/teams";
+import { getMatchesForTeam } from "@/lib/db/matches";
 import { ProfileHeader } from "@/components/profile-header";
 import { ProfileStats } from "@/components/profile-stats";
-import { ProfilePerformanceChart } from "@/components/profile-performance-chart";
 import { ProfileTeamCard } from "@/components/profile-team-card";
 import { ProfileActivity } from "@/components/profile-activity";
 import { ProfileAchievements } from "@/components/profile-achievements";
@@ -38,16 +38,17 @@ export default async function ProfilePage() {
 
   if (!profile) return <GuestProfile />;
 
+  const matches = team ? await getMatchesForTeam(team.id) : [];
+
   return (
     <>
       <ProfileHeader profile={profile} team={team} />
 
       <main className="flex flex-col gap-6 pb-24">
         <ProfileStats profile={profile} />
-        <ProfilePerformanceChart />
         <ProfileTeamCard profile={profile} team={team} />
-        <ProfileActivity />
-        <ProfileAchievements />
+        <ProfileActivity matches={matches} teamId={team?.id ?? null} />
+        <ProfileAchievements profile={profile} />
       </main>
     </>
   );

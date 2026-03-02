@@ -1,7 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import { getTeam, getTeamMembers } from "@/lib/db/teams";
+import { getTeam, getTeamMembers, getPendingJoinRequests } from "@/lib/db/teams";
 import { getMatchesForTeam } from "@/lib/db/matches";
-import type { Team, Profile, Match } from "@/lib/types";
+import {
+  approveJoinRequestAction,
+  rejectJoinRequestAction,
+  removeMemberAction,
+} from "@/app/actions/teams";
+import type { Team, Profile, Match, TeamMember } from "@/lib/types";
 import {
   ArrowLeft,
   MapPin,
@@ -21,6 +26,7 @@ import { format, parseISO } from "date-fns";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { JoinTeamButton } from "@/components/join-team-button";
 import { SearchingToggle } from "@/components/searching-toggle";
+import { TeamCaptainControlsWrapper } from "@/components/team-captain-controls-wrapper";
 
 const positionOrder: Record<string, number> = {
   GK: 0, CB: 1, LB: 2, RB: 3, CDM: 4, CM: 5, CAM: 6,
@@ -212,9 +218,10 @@ export default async function TeamDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [team, memberRows, allMatches] = await Promise.all([
+  const [team, memberRows, pendingRequests, allMatches] = await Promise.all([
     getTeam(id),
     getTeamMembers(id),
+    getPendingJoinRequests(id),
     getMatchesForTeam(id),
   ]);
 
@@ -367,6 +374,14 @@ export default async function TeamDetailPage({
       <main className="flex flex-col gap-6 pt-4 pb-24">
         <TeamStatsGrid team={team} />
         <RosterSection members={members} captainId={team.captain_id} />
+        {isCaptain && (
+          <TeamCaptainControlsWrapper
+            pendingRequests={pendingRequests}
+            activeMembers={memberRows}
+            teamId={team.id}
+            myPlayerId={user!.id}
+          />
+        )}
         <TeamMatchesSection matches={upcomingMatches} team={team} title="Upcoming Matches" />
         <TeamMatchesSection matches={completedMatches} team={team} title="Recent Results" />
       </main>

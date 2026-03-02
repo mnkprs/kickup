@@ -73,6 +73,14 @@ export async function signOutAction() {
   redirect("/auth/login");
 }
 
+export async function markNotificationsReadAction() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
+  revalidatePath("/");
+}
+
 export async function applyForFieldOwnerAction(message: string) {
   const supabase = await createClient();
   const {
