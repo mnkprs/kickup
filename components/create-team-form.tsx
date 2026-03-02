@@ -66,7 +66,7 @@ export function CreateTeamForm({ areaGroups, emojis, colors }: CreateTeamFormPro
         <div className="flex items-center gap-3">
           <Link
             href="/teams"
-            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
           >
             <ArrowLeft size={18} className="text-muted-foreground" />
           </Link>
@@ -210,7 +210,7 @@ export function CreateTeamForm({ areaGroups, emojis, colors }: CreateTeamFormPro
           type="button"
           onClick={handleSubmit}
           disabled={!canSubmit}
-          className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 pressable"
         >
           {loading ? (
             <span className="h-4 w-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />

@@ -79,7 +79,7 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
 
           if (match.status === "upcoming" || match.status === "live") {
             return (
-              <Link key={match.id} href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors block">
+              <Link key={match.id} href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors block pressable">
                 <div className="flex items-center justify-between mb-2">
                   <span className="flex items-center gap-1.5">
                     {match.status === "live" && <LiveDot className="shrink-0" />}
@@ -123,7 +123,7 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
             result === "W" ? "bg-win/15 text-win" : result === "L" ? "bg-loss/15 text-loss" : "bg-draw/15 text-draw";
 
           return (
-            <Link key={match.id} href={`/matches/${match.id}`} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border shadow-card hover:border-accent/40 transition-colors block">
+            <Link key={match.id} href={`/matches/${match.id}`} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border shadow-card hover:border-accent/40 transition-colors block pressable">
               <span className={`h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-bold ${resultColor}`}>
                 {result}
               </span>
@@ -204,7 +204,7 @@ export default async function TeamDetailPage({
           <div className="flex items-center gap-3">
             <Link
               href="/teams"
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <ArrowLeft size={18} className="text-muted-foreground" />
             </Link>

@@ -34,7 +34,7 @@ export function ThemeToggle() {
     <button
       onClick={handleClick}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+      className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
     >
       {isDark ? (
         <Sun size={18} className="text-muted-foreground" />

@@ -23,7 +23,7 @@ function CompletedMatchRow({ match, teamId }: { match: Match; teamId: string | n
   const style = result ? resultStyles[result] : null;
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors">
+    <div className="flex items-center gap-3 py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors pressable">
       {style && result && (
         <div className={`h-8 w-8 rounded-lg ${style.bg} flex items-center justify-center shrink-0`}>
           <span className={`text-xs font-bold ${style.text}`}>{result}</span>

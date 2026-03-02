@@ -74,7 +74,7 @@ function SectionHeader({
       <div className="flex items-center gap-3">
         <button
           onClick={onBack}
-          className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+          className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
         >
           <ArrowLeft size={18} className="text-muted-foreground" />
         </button>
@@ -84,7 +84,7 @@ function SectionHeader({
         <button
           onClick={onSave}
           disabled={!canSave || saving}
-          className="px-4 py-2 rounded-xl bg-accent text-accent-foreground text-xs font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center gap-1.5"
+          className="px-4 py-2 rounded-xl bg-accent text-accent-foreground text-xs font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center gap-1.5 pressable"
         >
           {saving ? (
             <span className="h-3.5 w-3.5 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
@@ -234,7 +234,7 @@ export function ProfileSettings({
           <div className="flex items-center gap-3">
             <Link
               href="/profile"
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <ArrowLeft size={18} className="text-muted-foreground" />
             </Link>
@@ -287,7 +287,7 @@ export function ProfileSettings({
           {/* Sign out */}
           <button
             onClick={() => signOutAction()}
-            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl bg-card border border-border shadow-card hover:bg-muted/50 transition-colors text-left"
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl bg-card border border-border shadow-card hover:bg-muted/50 transition-colors text-left pressable"
           >
             <div className="h-9 w-9 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
               <LogOut size={17} className="text-destructive" />
@@ -603,7 +603,7 @@ export function ProfileSettings({
             <button
               onClick={saveEmail}
               disabled={emailSaving || newEmail === email || !newEmail.includes("@")}
-              className="w-full py-3 rounded-xl bg-accent text-accent-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-accent text-accent-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-2 pressable"
             >
               {emailSaving ? (
                 <span className="h-4 w-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
@@ -640,7 +640,7 @@ export function ProfileSettings({
             <button
               onClick={savePassword}
               disabled={passwordSaving || newPassword.length < 8 || newPassword !== confirmPassword}
-              className="w-full py-3 rounded-xl bg-accent text-accent-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-accent text-accent-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-2 pressable"
             >
               {passwordSaving ? (
                 <span className="h-4 w-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
@@ -715,7 +715,7 @@ export function ProfileSettings({
               <button
                 onClick={applyForOwner}
                 disabled={applySaving}
-                className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-2 pressable"
               >
                 {applySaving ? (
                   <span className="h-4 w-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />

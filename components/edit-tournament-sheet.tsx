@@ -75,7 +75,7 @@ export function EditTournamentSheet({
           <h2 className="text-base font-semibold text-foreground">Edit tournament</h2>
           <button
             onClick={onClose}
-            className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
+            className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors pressable"
           >
             <X size={18} className="text-muted-foreground" />
           </button>
@@ -225,7 +225,7 @@ export function EditTournamentSheet({
           <button
             type="submit"
             disabled={!canSubmit}
-            className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 pressable"
           >
             {loading ? (
               <Loader2 size={16} className="animate-spin" />

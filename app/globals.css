@@ -4,6 +4,11 @@
 /*  Static tokens (shared across both themes)         */
 /* -------------------------------------------------- */
 @theme inline {
+  --color-background: #F7F8FA;
+  --color-foreground: #111111;
+  --color-card: #FFFFFF;
+  --color-border: #E5E7EB;
+  --color-surface-elevated: #FFFFFF;
   --color-muted: #F0F0F0;
   --color-muted-foreground: #6B7280;
   --color-accent: #2E7D32;
@@ -82,6 +87,49 @@ body {
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
+
+  /* Tap/click feedback for interactive elements */
+  .pressable {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition:
+      transform 0.15s ease,
+      color 0.2s ease,
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      opacity 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  .pressable:active {
+    transform: scale(0.98);
+  }
+  .pressable-subtle {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: transform 0.15s ease;
+  }
+  .pressable-subtle:active {
+    transform: scale(0.99);
+  }
+}
+
+/* Tap/click feedback for buttons and links */
+button:not([disabled]),
+a[href] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+button:not([disabled]) {
+  transition: transform 0.15s ease;
+}
+button:not([disabled]):active {
+  transform: scale(0.98);
+}
+a[href] {
+  transition: transform 0.15s ease;
+}
+a[href]:active {
+  transform: scale(0.99);
 }
 
 /* -------------------------------------------------- */

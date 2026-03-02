@@ -64,12 +64,12 @@ export function NotificationsSheet({ open, onClose, notifications, onMarkedRead 
     <>
       <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-background border-l border-border shadow-2xl flex flex-col">
+      <div className="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-background border-l border-border shadow-2xl flex flex-col" style={{ backgroundColor: 'var(--color-background)' }}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 className="text-base font-semibold text-foreground">Notifications</h2>
           <button
             onClick={onClose}
-            className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
+            className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors pressable"
           >
             <X size={18} className="text-muted-foreground" />
           </button>
@@ -119,7 +119,7 @@ export function NotificationsSheet({ open, onClose, notifications, onMarkedRead 
                   );
                   const className = `rounded-xl border p-4 flex items-start gap-3 transition-colors shadow-card ${
                     !notif.read ? "bg-card border-accent/20" : "bg-card border-border"
-                  } ${href ? "cursor-pointer hover:border-accent/40" : ""}`;
+                  } ${href ? "cursor-pointer hover:border-accent/40 pressable" : ""}`;
                   return href ? (
                     <Link
                       key={notif.id}

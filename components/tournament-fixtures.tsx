@@ -29,7 +29,7 @@ function UpcomingFixture({ match, tournamentId, canManageSchedule }: UpcomingFix
     <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">
       <Link
         href={`/matches/${match.id}`}
-        className="block p-4 hover:border-accent/40 transition-colors group"
+        className="block p-4 hover:border-accent/40 transition-colors group pressable"
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
@@ -100,7 +100,7 @@ function CompletedFixture({ match }: { match: Match }) {
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="flex items-center gap-3 py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors block"
+      className="flex items-center gap-3 py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors block pressable"
     >
       <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
         <span className="text-xs font-bold text-muted-foreground">FT</span>

@@ -53,14 +53,14 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
           {step === 0 ? (
             <Link
               href="/matches"
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <ArrowLeft size={18} className="text-muted-foreground" />
             </Link>
           ) : (
             <button
               onClick={() => setStep((s) => s - 1)}
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <ArrowLeft size={18} className="text-muted-foreground" />
             </button>
@@ -109,7 +109,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
                     setOpponent(team);
                     setStep(1);
                   }}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border shadow-card hover:border-accent/40 hover:bg-muted/30 transition-all text-left"
+                  className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border shadow-card hover:border-accent/40 hover:bg-muted/30 transition-all text-left pressable"
                 >
                   <div
                     className="h-12 w-12 rounded-full flex items-center justify-center text-xl shrink-0"
@@ -160,7 +160,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
                   <button
                     key={fmt}
                     onClick={() => setSelectedFormat(fmt)}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                    className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all pressable ${
                       selectedFormat === fmt
                         ? "bg-accent/10 border-accent text-foreground"
                         : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground"
@@ -175,7 +175,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
             <button
               onClick={() => setStep(2)}
               disabled={!selectedFormat}
-              className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm disabled:opacity-40 hover:opacity-90 transition-opacity"
+              className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm disabled:opacity-40 hover:opacity-90 transition-opacity pressable"
             >
               Continue
             </button>
@@ -202,7 +202,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
             </div>
             <button
               onClick={() => setStep(3)}
-              className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm hover:opacity-90 transition-opacity"
+              className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm hover:opacity-90 transition-opacity pressable"
             >
               Continue
             </button>

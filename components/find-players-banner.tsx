@@ -10,7 +10,7 @@ export function FindPlayersBanner({ freelancerCount }: FindPlayersBannerProps) {
     <section className="px-5">
       <Link
         href="/find-players"
-        className="rounded-xl p-4 group transition-all shadow-card block bg-card border border-border hover:border-accent/40"
+        className="rounded-xl p-4 group transition-all shadow-card block bg-card border border-border hover:border-accent/40 pressable"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

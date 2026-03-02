@@ -61,7 +61,7 @@ export function MyForm({ matches, team }: MyFormProps) {
                   team.id
                 );
                 return (
-                  <Link key={match.id} href={`/matches/${match.id}`} className="flex-1 flex flex-col items-center gap-1 rounded-lg border py-2.5 hover:bg-muted/50 transition-colors block">
+                  <Link key={match.id} href={`/matches/${match.id}`} className="flex-1 flex flex-col items-center gap-1 rounded-lg border py-2.5 hover:bg-muted/50 transition-colors block pressable">
                     <span className="text-xs font-bold">{r.label}</span>
                     <span className="text-[10px] font-medium opacity-80">{r.score}</span>
                   </Link>

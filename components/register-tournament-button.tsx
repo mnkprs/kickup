@@ -64,7 +64,7 @@ export function RegisterTournamentButton({
       <button
         onClick={handleRegister}
         disabled={loading}
-        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-accent-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity w-full"
+        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent text-accent-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity w-full pressable"
       >
         {loading ? (
           <span className="h-4 w-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />

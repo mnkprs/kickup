@@ -63,7 +63,7 @@ export function FindPlayersClient({
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <ArrowLeft size={18} className="text-muted-foreground" />
             </Link>
@@ -73,7 +73,7 @@ export function FindPlayersClient({
             <NotificationsButton />
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <Search size={18} className="text-muted-foreground" />
             </button>
@@ -167,7 +167,7 @@ export function FindPlayersClient({
                   <button
                     onClick={() => handleInvite(player.id)}
                     disabled={!!invitingId}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-accent-foreground text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-accent-foreground text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0 pressable"
                   >
                     {invitingId === player.id ? (
                       <span className="h-3.5 w-3.5 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />

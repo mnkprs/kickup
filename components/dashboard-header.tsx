@@ -54,7 +54,7 @@ export function DashboardHeader({ profile, notifications }: DashboardHeaderProps
           <ThemeToggle />
           <button
             onClick={() => setNotifOpen(true)}
-            className="relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+            className="relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
           >
             <Bell size={18} className="text-muted-foreground" />
             {unreadCount > 0 && (

@@ -134,7 +134,7 @@ function MatchRostersSection({
                 <Link
                   key={player_id}
                   href={`/profile/${player_id}`}
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors"
+                  className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors pressable"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
@@ -296,7 +296,7 @@ export function MatchDetailClient({
         <div className="flex items-center gap-3">
           <Link
             href="/matches"
-            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
           >
             <ArrowLeft size={18} className="text-muted-foreground" />
           </Link>
@@ -367,7 +367,7 @@ export function MatchDetailClient({
             {match.tournament && (
               <Link
                 href={`/tournaments/${match.tournament.id}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors pressable"
               >
                 <Trophy size={15} className="text-draw shrink-0" />
                 <span className="text-foreground text-sm font-medium">{match.tournament.name}</span>
@@ -419,7 +419,7 @@ export function MatchDetailClient({
             <button
               onClick={handleAccept}
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-2 pressable"
             >
               {loading ? (
                 <span className="h-4 w-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
@@ -433,7 +433,7 @@ export function MatchDetailClient({
             <button
               onClick={handleDecline}
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-card border border-border text-destructive text-sm font-semibold disabled:opacity-40 hover:bg-muted/50 transition-colors"
+              className="w-full py-3 rounded-xl bg-card border border-border text-destructive text-sm font-semibold disabled:opacity-40 hover:bg-muted/50 transition-colors pressable"
             >
               Decline
             </button>
@@ -502,7 +502,7 @@ export function MatchDetailClient({
           <div className="px-5">
             <button
               onClick={() => setShowResult(true)}
-              className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 pressable"
             >
               {isTournamentOrganizer && !isParticipant ? "Enter Result (Organizer)" : "Submit Result"}
               <ChevronRight size={16} />
@@ -560,7 +560,7 @@ export function MatchDetailClient({
                   <button
                     type="button"
                     onClick={() => setMvpId(null)}
-                    className={`flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${!mvpId ? "bg-accent/10" : "hover:bg-muted/50"}`}
+                    className={`flex items-center gap-3 px-4 py-2.5 text-left transition-colors pressable ${!mvpId ? "bg-accent/10" : "hover:bg-muted/50"}`}
                   >
                     <span className="text-sm text-muted-foreground">None</span>
                   </button>
@@ -569,7 +569,7 @@ export function MatchDetailClient({
                       key={m.id}
                       type="button"
                       onClick={() => setMvpId(m.id)}
-                      className={`flex items-center gap-3 px-4 py-2.5 text-left border-t border-border transition-colors ${mvpId === m.id ? "bg-accent/10" : "hover:bg-muted/50"}`}
+                      className={`flex items-center gap-3 px-4 py-2.5 text-left border-t border-border transition-colors pressable ${mvpId === m.id ? "bg-accent/10" : "hover:bg-muted/50"}`}
                     >
                       <div
                         className="h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold text-white"
@@ -603,14 +603,14 @@ export function MatchDetailClient({
             <div className="flex gap-3">
               <button
                 onClick={() => setShowResult(false)}
-                className="flex-1 py-3 rounded-xl bg-card border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors"
+                className="flex-1 py-3 rounded-xl bg-card border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors pressable"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmitResult}
                 disabled={loading}
-                className="flex-1 py-3 rounded-xl bg-accent text-accent-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center"
+                className="flex-1 py-3 rounded-xl bg-accent text-accent-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center pressable"
               >
                 {loading ? (
                   <span className="h-4 w-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />

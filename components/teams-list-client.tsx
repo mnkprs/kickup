@@ -68,7 +68,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <ArrowLeft size={18} className="text-muted-foreground" />
             </Link>
@@ -78,7 +78,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
             <NotificationsButton />
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <Search size={18} className="text-muted-foreground" />
             </button>
@@ -138,7 +138,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
           return (
             <Link key={team.id} href={`/teams/${team.id}`}>
               <div
-                className={`rounded-xl bg-card border border-border shadow-card p-4 cursor-pointer group hover:border-accent/40 transition-colors ${
+                className={`rounded-xl bg-card border border-border shadow-card p-4 cursor-pointer group hover:border-accent/40 transition-colors pressable ${
                   isMyTeam ? "border-accent/30" : "border-border"
                 }`}
               >

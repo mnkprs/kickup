@@ -27,7 +27,7 @@ export function ProfileTeamCard({ profile, team, showCaptainToggles = false }: P
       </div>
       <Link href={`/teams/${team.id}`}>
         <div
-          className="rounded-xl p-4 cursor-pointer group transition-all hover:shadow-lg bg-gradient-accent"
+          className="rounded-xl p-4 cursor-pointer group transition-all hover:shadow-lg bg-gradient-accent pressable"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">

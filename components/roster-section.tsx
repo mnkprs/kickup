@@ -61,7 +61,7 @@ export function RosterSection({
           return (
             <div
               key={player.id}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors rounded-lg"
+              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors rounded-lg pressable"
             >
               <Link
                 href={`/profile/${player.id}`}

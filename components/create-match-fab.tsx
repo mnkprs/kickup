@@ -80,12 +80,12 @@ export function CreateMatchFab() {
               className="flex items-center gap-2"
               style={{ animation: `fabItemIn 0.15s ease both`, animationDelay: `${i * 40}ms` }}
             >
-              <span className="bg-card border border-border text-foreground text-xs font-medium px-3 py-1.5 rounded-full shadow-sm whitespace-nowrap">
+              <span className="fab-option-bg bg-card border border-border text-foreground text-xs font-medium px-3 py-1.5 rounded-full shadow-sm whitespace-nowrap">
                 {action.label}
               </span>
               <button
                 onClick={() => handleAction(action.href)}
-                className="h-11 w-11 rounded-full bg-card border border-border flex items-center justify-center shadow-sm hover:bg-muted transition-colors shrink-0"
+                className="fab-option-bg h-11 w-11 rounded-full bg-card border border-border flex items-center justify-center shadow-sm hover:bg-muted transition-colors shrink-0 pressable"
               >
                 <Icon size={18} className="text-foreground" />
               </button>
@@ -97,13 +97,19 @@ export function CreateMatchFab() {
         <button
           onClick={() => setOpen((v) => !v)}
           aria-label="Quick actions"
-          className="h-14 w-14 rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/25 flex items-center justify-center hover:brightness-110 active:scale-95 transition-all"
+          className="h-14 w-14 rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/25 flex items-center justify-center hover:brightness-110 transition-all pressable"
         >
           {open ? <X size={22} strokeWidth={2.5} /> : <Plus size={24} strokeWidth={2.5} />}
         </button>
       </div>
 
       <style>{`
+        .fab-option-bg {
+          background-color: var(--color-card);
+        }
+        .fab-option-bg:hover {
+          background-color: var(--color-muted);
+        }
         @keyframes fabItemIn {
           from { opacity: 0; transform: translateY(6px) scale(0.95); }
           to   { opacity: 1; transform: translateY(0) scale(1); }

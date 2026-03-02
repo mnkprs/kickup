@@ -9,7 +9,7 @@ function BackButton() {
   return (
     <button
       onClick={() => router.back()}
-      className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+      className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
       aria-label="Go back"
     >
       <ArrowLeft size={18} className="text-muted-foreground" />
@@ -61,7 +61,7 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
                 await navigator.clipboard?.writeText(window.location.href);
               }
             }}
-            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
           >
             <Share2 size={18} className="text-muted-foreground" />
           </button>
@@ -69,7 +69,7 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
             <Link
               href="/profile/settings"
               aria-label="Settings"
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <Settings size={18} className="text-muted-foreground" />
             </Link>

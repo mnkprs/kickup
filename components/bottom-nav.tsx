@@ -28,7 +28,7 @@ export function BottomNav() {
             <Link
               key={tab.label}
               href={tab.href}
-              className="flex flex-col items-center gap-0.5 py-2 px-3 transition-colors"
+              className="flex flex-col items-center gap-0.5 py-2 px-3 transition-colors pressable"
             >
               <tab.icon
                 size={20}

@@ -22,7 +22,7 @@ export function NotificationsButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+        className="relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
         aria-label="View notifications"
       >
         <Bell size={18} className="text-muted-foreground" />

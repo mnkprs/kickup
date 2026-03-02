@@ -57,7 +57,7 @@ export function MatchesHeader({
             <NotificationsButton />
             <button
               onClick={onToggleFilters}
-              className="relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+              className="relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <SlidersHorizontal size={18} className="text-muted-foreground" />
               {activeFilterCount > 0 && (
@@ -89,7 +89,7 @@ export function MatchesHeader({
       {showFilters && (
         <>
           <div className="fixed inset-0 bg-black/50 z-40" onClick={onToggleFilters} />
-          <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-50 bg-card rounded-t-2xl border-t border-border p-5 pb-8">
+          <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-50 bg-card rounded-t-2xl border-t border-border p-5 pb-8" style={{ backgroundColor: 'var(--color-card)' }}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-foreground font-semibold text-base">Filters</h2>
               <button
@@ -219,7 +219,7 @@ export function MatchesHeader({
                 });
                 onToggleFilters();
               }}
-              className="w-full py-2.5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="w-full py-2.5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground transition-colors pressable"
             >
               Reset filters
             </button>

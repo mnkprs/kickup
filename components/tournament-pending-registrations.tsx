@@ -69,7 +69,7 @@ export function TournamentPendingRegistrations({
               <button
                 onClick={() => handleApprove(reg.id)}
                 disabled={loadingId !== null}
-                className="h-8 w-8 rounded-lg bg-win/15 text-win flex items-center justify-center hover:bg-win/25 disabled:opacity-50 transition-colors"
+                className="h-8 w-8 rounded-lg bg-win/15 text-win flex items-center justify-center hover:bg-win/25 disabled:opacity-50 transition-colors pressable"
                 aria-label="Approve"
               >
                 <Check size={16} strokeWidth={2.5} />
@@ -77,7 +77,7 @@ export function TournamentPendingRegistrations({
               <button
                 onClick={() => handleReject(reg.id)}
                 disabled={loadingId !== null}
-                className="h-8 w-8 rounded-lg bg-loss/15 text-loss flex items-center justify-center hover:bg-loss/25 disabled:opacity-50 transition-colors"
+                className="h-8 w-8 rounded-lg bg-loss/15 text-loss flex items-center justify-center hover:bg-loss/25 disabled:opacity-50 transition-colors pressable"
                 aria-label="Decline"
               >
                 <X size={16} strokeWidth={2.5} />

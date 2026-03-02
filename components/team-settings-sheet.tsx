@@ -73,7 +73,7 @@ export function TeamSettingsSheet({
           <h2 className="text-base font-semibold text-foreground">Team settings</h2>
           <button
             onClick={onClose}
-            className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
+            className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors pressable"
           >
             <X size={18} className="text-muted-foreground" />
           </button>
@@ -88,7 +88,7 @@ export function TeamSettingsSheet({
               <button
                 onClick={handleToggleOpponent}
                 disabled={loadingOpponent}
-                className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold transition-all border disabled:opacity-50 ${
+                className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold transition-all border disabled:opacity-50 pressable ${
                   searchingOpponent
                     ? "bg-accent text-accent-foreground border-accent"
                     : "bg-card text-muted-foreground border-border hover:text-foreground"
@@ -103,7 +103,7 @@ export function TeamSettingsSheet({
               <button
                 onClick={handleTogglePlayers}
                 disabled={loadingPlayers}
-                className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold transition-all border disabled:opacity-50 ${
+                className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-semibold transition-all border disabled:opacity-50 pressable ${
                   searchingPlayers
                     ? "bg-accent text-accent-foreground border-accent"
                     : "bg-card text-muted-foreground border-border hover:text-foreground"
@@ -125,7 +125,7 @@ export function TeamSettingsSheet({
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold bg-loss/10 text-loss border border-loss/20 hover:bg-loss/20 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold bg-loss/10 text-loss border border-loss/20 hover:bg-loss/20 transition-colors disabled:opacity-50 pressable"
             >
               {deleting ? (
                 <Loader2 size={16} className="animate-spin" />

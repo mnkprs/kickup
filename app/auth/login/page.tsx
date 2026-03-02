@@ -122,7 +122,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="h-11 rounded-xl bg-accent text-accent-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:bg-accent-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+            className="h-11 rounded-xl bg-accent text-accent-foreground font-semibold text-sm flex items-center justify-center gap-2 hover:bg-accent-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-1 pressable"
           >
             {isLoading ? (
               <span className="h-4 w-4 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />

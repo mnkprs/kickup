@@ -94,7 +94,7 @@ export function TournamentDetailsAccordion({ details }: TournamentDetailsAccordi
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="w-full flex items-center justify-between gap-3 py-4 px-4 hover:bg-muted/20 active:bg-muted/30 transition-colors text-left"
+          className="w-full flex items-center justify-between gap-3 py-4 px-4 hover:bg-muted/20 active:bg-muted/30 transition-colors text-left pressable"
         >
           <div className="min-w-0 flex-1">
             <span className="text-foreground font-semibold text-sm block">

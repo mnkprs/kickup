@@ -16,7 +16,7 @@ export function ColorSwatchPicker({ colors, value, onChange }: ColorSwatchPicker
           key={c}
           type="button"
           onClick={() => onChange(c)}
-          className="h-10 w-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+          className="h-10 w-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 pressable"
           style={{ backgroundColor: c }}
         >
           {value === c && <Check size={16} className="text-white" strokeWidth={3} />}

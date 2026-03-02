@@ -27,7 +27,7 @@ export function TeamSettingsButton({
       <button
         type="button"
         onClick={() => setSheetOpen(true)}
-        className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors shrink-0"
+        className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors shrink-0 pressable"
         aria-label="Team settings"
       >
         <Settings size={18} className="text-muted-foreground" />

@@ -69,7 +69,7 @@ export function TournamentsBanner({ tournaments }: TournamentsBannerProps) {
         {upcomingTournament && (
           <Link
             href={`/tournaments/${upcomingTournament.id}`}
-            className="rounded-xl bg-card border border-border shadow-card p-4 group hover:border-accent/40 transition-colors block"
+            className="rounded-xl bg-card border border-border shadow-card p-4 group hover:border-accent/40 transition-colors block pressable"
           >
             <div className="flex items-center justify-between">
               <div>

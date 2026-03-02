@@ -27,7 +27,7 @@ export default function Error({
       </div>
       <button
         onClick={reset}
-        className="px-6 py-2.5 rounded-xl bg-accent text-accent-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+        className="px-6 py-2.5 rounded-xl bg-accent text-accent-foreground text-sm font-medium hover:opacity-90 transition-opacity pressable"
       >
         Try again
       </button>
