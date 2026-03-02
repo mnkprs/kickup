@@ -42,7 +42,7 @@ export default async function DashboardPage() {
         <UpcomingMatches matches={upcomingMatches} />
         {userTeam && <MyForm matches={recentResults} team={userTeam} />}
         <RecentResults matches={recentResults} teamId={profile?.team_id} />
-        <TournamentsBanner tournaments={tournaments} />
+        <TournamentsBanner tournaments={tournaments} userTeamId={profile?.team_id ?? null} />
       </main>
     </>
   );

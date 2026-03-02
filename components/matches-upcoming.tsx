@@ -63,12 +63,12 @@ function UpcomingMatchCard({ match }: { match: Match }) {
         </div>
       </div>
       {(match.location || match.tournament) && (
-        <div className="flex flex-col gap-1.5 mt-3 pt-3 border-t border-border">
+        <div className="flex flex-col items-center gap-1.5 mt-3 pt-3 border-t border-border">
           {match.tournament && (
             <Link
               href={`/tournaments/${match.tournament.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1.5 text-draw hover:text-draw/80 transition-colors"
+              className="flex items-center justify-center gap-1.5 text-draw hover:text-draw/80 transition-colors"
             >
               <Trophy size={12} className="shrink-0" />
               <span className="text-xs font-medium truncate">{match.tournament.name}</span>

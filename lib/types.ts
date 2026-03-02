@@ -9,6 +9,10 @@ export interface Profile {
   avatar_url?: string | null;
   position: string | null;
   area: string | null;
+  nationality?: string | null;
+  date_of_birth?: string | null;
+  height?: number | null;
+  preferred_foot?: string | null;
   bio: string;
   is_freelancer: boolean;
   freelancer_until?: string | null;

@@ -73,11 +73,12 @@ export async function getTournamentsForMatches(
     .in("match_id", matchIds);
 
   const map = new Map<string, MatchTournament>();
-  for (const row of (data ?? []) as {
+  const rows = (data ?? []) as unknown as {
     match_id: string;
-    tournaments: { id: string; name: string } | null;
-  }[]) {
-    const t = row.tournaments;
+    tournaments: { id: string; name: string } | { id: string; name: string }[] | null;
+  }[];
+  for (const row of rows) {
+    const t = Array.isArray(row.tournaments) ? row.tournaments[0] : row.tournaments;
     if (t?.id && t?.name) {
       map.set(row.match_id, { id: t.id, name: t.name });
     }

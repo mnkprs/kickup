@@ -133,9 +133,6 @@ export function ProfileSettings({
 
   // Freelancer state
   const [isFreelancer, setIsFreelancer] = useState(profile.is_freelancer);
-  const [freelancerUntil, setFreelancerUntil] = useState(
-    (profile as { freelancer_until?: string | null }).freelancer_until ?? ""
-  );
   const [freelancerSaving, setFreelancerSaving] = useState(false);
   const [freelancerError, setFreelancerError] = useState("");
 
@@ -194,20 +191,20 @@ export function ProfileSettings({
     setSecurityMsg("Password updated");
   }
 
-  async function saveFreelancer() {
+  async function saveFreelancer(overrides?: { is_freelancer?: boolean; freelancer_until?: string | null }) {
     setFreelancerSaving(true);
     setFreelancerError("");
-    const result = await updateFreelancerAction({
-      is_freelancer: isFreelancer,
-      freelancer_until: freelancerUntil || null,
-    });
+    const payload = {
+      is_freelancer: overrides?.is_freelancer ?? isFreelancer,
+      freelancer_until: overrides?.freelancer_until,
+    };
+    const result = await updateFreelancerAction(payload);
     setFreelancerSaving(false);
     if (result.error) {
       setFreelancerError(result.error);
       return;
     }
     router.refresh();
-    setSection(null);
   }
 
   async function applyForOwner() {
@@ -517,35 +514,25 @@ export function ProfileSettings({
   if (section === "freelancer") {
     return (
       <>
-        <SectionHeader
-          title="Find a Team"
-          onBack={() => setSection(null)}
-          onSave={saveFreelancer}
-          saving={freelancerSaving}
-          canSave={true}
-        />
+        <SectionHeader title="Find a Team" onBack={() => setSection(null)} />
         <main className="px-5 pb-24 flex flex-col gap-5">
-          <div className="p-4 rounded-xl bg-card border border-border shadow-card">
-            <p className="text-foreground font-semibold text-sm mb-1">Available for Teams</p>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              When enabled, you appear in the Find Players section. Team captains can invite you, and you can apply to teams with open spots.
-            </p>
-          </div>
           <div className="flex items-center justify-between p-4 rounded-xl bg-card border border-border shadow-card">
             <div>
-              <p className="text-foreground font-semibold text-sm">Show as freelancer</p>
-              <p className="text-muted-foreground text-xs mt-0.5">Visible to teams looking for players</p>
+              <p className="text-foreground font-semibold text-sm mb-1">Available for Teams</p>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                When enabled, you appear in the Find Players section until 12pm today. Team captains can invite you, and you can apply to teams with open spots.
+              </p>
             </div>
             <button
               type="button"
               role="switch"
               aria-checked={isFreelancer}
+              disabled={freelancerSaving}
               onClick={() => {
-                setIsFreelancer((v) => {
-                  const next = !v;
-                  if (next) setFreelancerUntil(new Date().toISOString().split("T")[0]);
-                  return next;
-                });
+                const next = !isFreelancer;
+                const until = next ? new Date().toISOString().split("T")[0] : null;
+                setIsFreelancer(next);
+                saveFreelancer({ is_freelancer: next, freelancer_until: until });
               }}
               className={`relative h-8 w-14 rounded-full transition-colors shrink-0 ${
                 isFreelancer ? "bg-accent" : "bg-muted"
@@ -558,23 +545,6 @@ export function ProfileSettings({
               />
             </button>
           </div>
-          {isFreelancer && (
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
-                Available until
-              </label>
-              <input
-                type="date"
-                value={freelancerUntil}
-                onChange={(e) => setFreelancerUntil(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-                className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
-              />
-              <p className="text-muted-foreground text-xs mt-1">
-                Defaults to end of today. Pick a later date to stay visible longer.
-              </p>
-            </div>
-          )}
           {freelancerError && (
             <p className="text-sm text-destructive bg-destructive/10 rounded-xl px-4 py-3 text-center">
               {freelancerError}

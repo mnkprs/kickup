@@ -13,8 +13,6 @@ import {
 import Link from "next/link";
 import { NotificationsButton } from "@/components/notifications-button";
 import { invitePlayerToTeamAction } from "@/app/actions/teams";
-import { format, parseISO } from "date-fns";
-
 interface FindPlayersClientProps {
   freelancers: Profile[];
   captainTeamId: string | null;
@@ -151,11 +149,6 @@ export function FindPlayersClient({
                         </span>
                       )}
                     </div>
-                    {player.freelancer_until && (
-                      <p className="text-muted-foreground text-[11px] mt-1">
-                        Available until {format(parseISO(player.freelancer_until), "MMM d, yyyy")}
-                      </p>
-                    )}
                   </div>
                   <ChevronRight
                     size={16}

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { Profile, Team } from "@/lib/types";
 import { Settings, Share2, Crown, ArrowLeft } from "lucide-react";
+import { AvatarUpload } from "@/components/avatar-upload";
 
 function BackButton() {
   const router = useRouter();
@@ -79,21 +80,27 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
       <div className="rounded-xl bg-card border border-border shadow-card p-6 mb-2">
         <div className="flex flex-col items-center gap-3">
           <div className="relative">
-            <div
-              className="h-20 w-20 rounded-full flex items-center justify-center ring-4 ring-accent/20"
-              style={{ backgroundColor: profile.avatar_color }}
-            >
-              <span className="text-accent-foreground font-bold text-xl">
-                {profile.avatar_initials}
-              </span>
-            </div>
-            <span
-              aria-label="Online"
-              className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full bg-win border-2 border-card"
-            />
-            <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-              {winRate}%
-            </span>
+            {showSettings ? (
+              <AvatarUpload profile={profile} size="lg" editable className="ring-4 ring-accent/20">
+                <span
+                  aria-label="Online"
+                  className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full bg-win border-2 border-card"
+                />
+                <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  {winRate}%
+                </span>
+              </AvatarUpload>
+            ) : (
+              <AvatarUpload profile={profile} size="lg" editable={false} className="ring-4 ring-accent/20">
+                <span
+                  aria-label="Online"
+                  className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full bg-win border-2 border-card"
+                />
+                <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                  {winRate}%
+                </span>
+              </AvatarUpload>
+            )}
           </div>
 
           <div className="text-center">

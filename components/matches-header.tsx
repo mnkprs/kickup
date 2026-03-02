@@ -29,6 +29,7 @@ interface MatchesHeaderProps {
   teamId: string | null;
   areaGroups: AreaGroup[];
   availableTournaments: MatchTournamentFilter[];
+  filteredCounts: { upcoming: number; results: number };
 }
 
 export function MatchesHeader({
@@ -41,6 +42,7 @@ export function MatchesHeader({
   teamId,
   areaGroups,
   availableTournaments,
+  filteredCounts,
 }: MatchesHeaderProps) {
   const activeFilterCount =
     (filters.format !== "All" ? 1 : 0) +
@@ -91,7 +93,14 @@ export function MatchesHeader({
           <div className="fixed inset-0 bg-black/50 z-40" onClick={onToggleFilters} />
           <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-50 bg-card rounded-t-2xl border-t border-border p-5 pb-8" style={{ backgroundColor: 'var(--color-card)' }}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-foreground font-semibold text-base">Filters</h2>
+              <div>
+                <h2 className="text-foreground font-semibold text-base">Filters</h2>
+                <p className="text-muted-foreground text-xs mt-0.5">
+                  {activeTab === "Upcoming"
+                    ? `${filteredCounts.upcoming} match${filteredCounts.upcoming === 1 ? "" : "es"}`
+                    : `${filteredCounts.results} result${filteredCounts.results === 1 ? "" : "s"}`}
+                </p>
+              </div>
               <button
                 onClick={onToggleFilters}
                 className="h-8 w-8 rounded-full bg-muted flex items-center justify-center"

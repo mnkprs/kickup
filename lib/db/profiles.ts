@@ -10,6 +10,10 @@ function mapProfile(row: Record<string, unknown>): Profile {
     avatar_url: row.avatar_url as string | null,
     position: row.position as string | null,
     area: row.area as string | null,
+    nationality: (row.nationality as string) ?? null,
+    date_of_birth: (row.date_of_birth as string) ?? null,
+    height: (row.height as number) ?? null,
+    preferred_foot: (row.preferred_foot as string) ?? null,
     bio: (row.bio as string) ?? "",
     is_freelancer: (row.is_freelancer as boolean) ?? false,
     freelancer_until: (row.freelancer_until as string) ?? null,
@@ -99,7 +103,9 @@ export async function getTopScorers(limit = 5): Promise<TopScorer[]> {
 
 export async function getFreelancers(): Promise<Profile[]> {
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const pastNoon = now.getHours() >= 12;
 
   const { data, error } = await supabase
     .from("profiles")
@@ -109,7 +115,17 @@ export async function getFreelancers(): Promise<Profile[]> {
     .order("full_name", { ascending: true });
 
   if (error || !data) return [];
-  return (data as Record<string, unknown>[]).map((row) => mapProfile(row));
+
+  const profiles = (data as Record<string, unknown>[]).map((row) => mapProfile(row));
+
+  // Default: flag turns off at 12pm same day. Exclude if freelancer_until is today and it's past noon.
+  return profiles.filter((p) => {
+    const until = p.freelancer_until;
+    if (!until) return true;
+    if (until > today) return true;
+    if (until === today && pastNoon) return false;
+    return true;
+  });
 }
 
 export async function getNotifications(userId: string): Promise<Notification[]> {

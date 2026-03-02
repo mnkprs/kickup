@@ -169,6 +169,25 @@ export async function updateThemeAction(theme: "light" | "dark") {
   return { success: true };
 }
 
+export async function updateAvatarUrlAction(avatarUrl: string | null) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/");
+  revalidatePath("/profile");
+  return { success: true };
+}
+
 export async function applyForFieldOwnerAction(message: string) {
   const supabase = await createClient();
   const {

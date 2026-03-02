@@ -4,6 +4,8 @@ import Link from "next/link";
 
 function getResultForTeam(match: Match, teamId: string | null | undefined) {
   if (!teamId || match.home_score === null || match.away_score === null) return null;
+  const isOurMatch = match.home_team_id === teamId || match.away_team_id === teamId;
+  if (!isOurMatch) return null;
   const isHome = match.home_team_id === teamId;
   const teamScore = isHome ? match.home_score : match.away_score;
   const opponentScore = isHome ? match.away_score : match.home_score;

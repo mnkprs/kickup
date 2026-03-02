@@ -5,7 +5,9 @@ import { Trophy } from "lucide-react";
 
 function getResultForTeam(match: Match, teamId: string | null | undefined) {
   if (!teamId || match.home_score === null || match.away_score === null) return null;
-  const isHome = match.home_team.id === teamId;
+  const isOurMatch = match.home_team_id === teamId || match.away_team_id === teamId;
+  if (!isOurMatch) return null;
+  const isHome = match.home_team_id === teamId;
   const teamScore = isHome ? match.home_score : match.away_score;
   const opponentScore = isHome ? match.away_score : match.home_score;
   if (teamScore > opponentScore) return "W";
@@ -29,59 +31,60 @@ function ResultMatchCard({ match, teamId }: { match: Match; teamId?: string | nu
   const style = result ? resultStyles[result] : null;
 
   return (
-    <Link href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors cursor-pointer group block pressable">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-muted-foreground text-xs">
-          {match.date ? format(parseISO(match.date), "EEE, d MMM yyyy") : ""}
-        </span>
-        {style && result && (
-          <span
-            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${style.bg} ${style.text}`}
-          >
-            {result === "W" ? "Win" : result === "L" ? "Loss" : "Draw"}
+    <div className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors group block pressable">
+      <Link href={`/matches/${match.id}`} className="block -m-4 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-muted-foreground text-xs">
+            {match.date ? format(parseISO(match.date), "EEE, d MMM yyyy") : ""}
           </span>
-        )}
-      </div>
+          {style && result && (
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${style.bg} ${style.text}`}
+            >
+              {result === "W" ? "Win" : result === "L" ? "Loss" : "Draw"}
+            </span>
+          )}
+        </div>
 
-      <div className="flex items-center justify-center gap-4 mb-3">
-        <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
-          <span className="text-foreground text-sm font-medium truncate text-right">
-            {match.home_team.short_name}
-          </span>
-          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center border border-border shrink-0">
-            <span className="text-foreground font-bold text-[10px]">
+        <div className="flex items-center justify-center gap-4 mb-3">
+          <div className="flex items-center gap-2 flex-1 justify-end min-w-0">
+            <span className="text-foreground text-sm font-medium truncate text-right">
               {match.home_team.short_name}
             </span>
+            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center border border-border shrink-0">
+              <span className="text-foreground font-bold text-[10px]">
+                {match.home_team.short_name}
+              </span>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-foreground font-bold text-xl">
-            {match.home_score}
-          </span>
-          <span className="text-muted-foreground text-xs">-</span>
-          <span className="text-foreground font-bold text-xl">
-            {match.away_score}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center border border-border shrink-0">
-            <span className="text-foreground font-bold text-[10px]">
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-foreground font-bold text-xl">
+              {match.home_score}
+            </span>
+            <span className="text-muted-foreground text-xs">-</span>
+            <span className="text-foreground font-bold text-xl">
+              {match.away_score}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center border border-border shrink-0">
+              <span className="text-foreground font-bold text-[10px]">
+                {match.away_team.short_name}
+              </span>
+            </div>
+            <span className="text-foreground text-sm font-medium truncate">
               {match.away_team.short_name}
             </span>
           </div>
-          <span className="text-foreground text-sm font-medium truncate">
-            {match.away_team.short_name}
-          </span>
         </div>
-      </div>
+      </Link>
 
       {(match.location || match.tournament) && (
         <div className="flex flex-col items-center gap-1.5 pt-2 border-t border-border">
           {match.tournament && (
             <Link
               href={`/tournaments/${match.tournament.id}`}
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1.5 text-draw hover:text-draw/80 transition-colors"
+              className="flex items-center gap-1.5 text-draw hover:text-draw/80 transition-colors w-fit"
             >
               <Trophy size={12} className="shrink-0" />
               <span className="text-xs font-medium truncate">{match.tournament.name}</span>
@@ -94,7 +97,7 @@ function ResultMatchCard({ match, teamId }: { match: Match; teamId?: string | nu
           )}
         </div>
       )}
-    </Link>
+    </div>
   );
 }
 

@@ -55,7 +55,7 @@ function ActiveTournamentCard({
   return (
     <Link
       href={`/tournaments/${tournament.id}`}
-      className="rounded-xl p-4 cursor-pointer group transition-all hover:shadow-lg bg-gradient-accent block"
+      className="rounded-xl p-4 cursor-pointer group transition-all shadow-card-accent hover:shadow-card-accent-hover bg-gradient-accent block"
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">

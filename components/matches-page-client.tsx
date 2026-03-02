@@ -50,17 +50,22 @@ export function MatchesPageClient({
     : recentResults;
 
   const availableTournaments = useMemo(() => {
-    const all = [...baseUpcoming, ...baseResults];
+    const allMatches = [
+      ...upcomingMatches,
+      ...recentResults,
+      ...(myUpcomingMatches ?? []),
+      ...(myRecentResults ?? []),
+    ];
     const seen = new Set<string>();
     const list: { id: string; name: string }[] = [];
-    for (const m of all) {
+    for (const m of allMatches) {
       if (m.tournament && !seen.has(m.tournament.id)) {
         seen.add(m.tournament.id);
         list.push(m.tournament);
       }
     }
     return list.sort((a, b) => a.name.localeCompare(b.name));
-  }, [baseUpcoming, baseResults]);
+  }, [upcomingMatches, recentResults, myUpcomingMatches, myRecentResults]);
 
   const cityAreas = useMemo(() => {
     if (!filters.city) return null;
@@ -115,6 +120,7 @@ export function MatchesPageClient({
         teamId={teamId}
         areaGroups={areaGroups}
         availableTournaments={availableTournaments}
+        filteredCounts={{ upcoming: filteredUpcoming.length, results: filteredResults.length }}
       />
 
       <main className="flex flex-col gap-6 pb-24 pt-4">
