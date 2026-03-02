@@ -1,8 +1,11 @@
+"use client";
+
 import type { Match } from "@/lib/types";
 import { MapPin, Clock, ChevronRight, Trophy } from "lucide-react";
 import { LiveDot } from "@/components/live-dot";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 function formatMatchDate(dateStr: string | null, timeStr: string | null) {
   if (!dateStr) return "TBC";
@@ -19,8 +22,16 @@ function TeamBadge({ shortName }: { shortName: string }) {
 }
 
 function UpcomingMatchCard({ match }: { match: Match }) {
+  const router = useRouter();
+
   return (
-    <Link href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors cursor-pointer group block pressable">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => router.push(`/matches/${match.id}`)}
+      onKeyDown={(e) => e.key === "Enter" && router.push(`/matches/${match.id}`)}
+      className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors cursor-pointer group block pressable"
+    >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           {match.status === "live" && <LiveDot className="shrink-0" />}
@@ -73,7 +84,7 @@ function UpcomingMatchCard({ match }: { match: Match }) {
           )}
         </div>
       )}
-    </Link>
+    </div>
   );
 }
 
