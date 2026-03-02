@@ -20,6 +20,7 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { NotificationsButton } from "@/components/notifications-button";
 import { TeamSettingsButton } from "@/components/team-settings-button";
+import { TeamAvatar, TeamAvatarUpload } from "@/components/team-avatar";
 import { StatusBadge } from "@/components/status-badge";
 import { JoinTeamButton } from "@/components/join-team-button";
 import { TeamCaptainControlsWrapper } from "@/components/team-captain-controls-wrapper";
@@ -213,7 +214,7 @@ export default async function TeamDetailPage({
           <div className="flex items-center gap-2">
             {isCaptain && (
               <TeamSettingsButton
-                teamId={team.id}
+                team={team}
                 searchingForOpponent={team.searching_for_opponent ?? false}
                 searchingForPlayers={team.searching_for_players ?? false}
               />
@@ -231,17 +232,20 @@ export default async function TeamDetailPage({
           }`}
         >
           <div className="flex items-center gap-4 mb-4">
-            <div
-              className={`h-16 w-16 rounded-full flex items-center justify-center ${
-                isMyTeam
-                  ? "bg-accent-foreground/10 ring-2 ring-accent-foreground/20"
-                  : "bg-muted ring-2 ring-border"
-              }`}
-            >
-              <span className={`font-bold text-lg ${isMyTeam ? "text-accent-foreground" : "text-foreground"}`}>
-                {team.short_name}
-              </span>
-            </div>
+            {isCaptain ? (
+              <TeamAvatarUpload
+                team={team}
+                size="lg"
+                editable
+                className={isMyTeam ? "ring-2 ring-accent-foreground/20" : "ring-2 ring-border"}
+              />
+            ) : (
+              <TeamAvatar
+                team={team}
+                size="2xl"
+                className={isMyTeam ? "ring-2 ring-accent-foreground/20" : "ring-2 ring-border"}
+              />
+            )}
             <div className="flex-1 min-w-0">
               <h2 className={`font-bold text-xl ${isMyTeam ? "text-accent-foreground" : "text-foreground"}`}>
                 {team.name}

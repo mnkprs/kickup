@@ -9,11 +9,13 @@ import {
   deleteTeamAction,
 } from "@/app/actions/teams";
 import { LiveDot } from "@/components/live-dot";
+import { TeamAvatarUpload } from "@/components/team-avatar-upload";
+import type { Team } from "@/lib/types";
 
 interface TeamSettingsSheetProps {
   open: boolean;
   onClose: () => void;
-  teamId: string;
+  team: Team;
   searchingForOpponent: boolean;
   searchingForPlayers: boolean;
 }
@@ -21,10 +23,11 @@ interface TeamSettingsSheetProps {
 export function TeamSettingsSheet({
   open,
   onClose,
-  teamId,
+  team,
   searchingForOpponent: initialSearchingOpponent,
   searchingForPlayers: initialSearchingPlayers,
 }: TeamSettingsSheetProps) {
+  const teamId = team.id;
   const router = useRouter();
   const [searchingOpponent, setSearchingOpponent] = useState(initialSearchingOpponent);
   const [searchingPlayers, setSearchingPlayers] = useState(initialSearchingPlayers);
@@ -80,6 +83,21 @@ export function TeamSettingsSheet({
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-6">
+          <section>
+            <h3 className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">
+              Team avatar
+            </h3>
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border">
+              <TeamAvatarUpload team={team} size="lg" editable />
+              <div className="min-w-0">
+                <p className="text-foreground font-semibold text-sm truncate">{team.name}</p>
+                <p className="text-muted-foreground text-xs mt-0.5">
+                  Tap to upload a team logo. Visible everywhere in the app.
+                </p>
+              </div>
+            </div>
+          </section>
+
           <section>
             <h3 className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-3">
               Team status

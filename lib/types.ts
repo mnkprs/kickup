@@ -43,6 +43,7 @@ export interface Team {
   format: string;
   emoji: string;
   color: string;
+  avatar_url?: string | null;
   description: string;
   open_spots: number;
   // record

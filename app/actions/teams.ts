@@ -134,6 +134,39 @@ export async function removeMemberAction(teamId: string, playerId: string) {
   return { success: true };
 }
 
+export async function updateTeamAvatarUrlAction(teamId: string, avatarUrl: string | null) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  // Verify user is team captain
+  const { data: membership } = await supabase
+    .from("team_members")
+    .select("role")
+    .eq("team_id", teamId)
+    .eq("player_id", user.id)
+    .eq("status", "active")
+    .single();
+
+  if (!membership || membership.role !== "captain") {
+    return { error: "Only team captains can update the team avatar" };
+  }
+
+  const { error } = await supabase
+    .from("teams")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", teamId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/teams/${teamId}`);
+  revalidatePath("/teams");
+  revalidatePath("/");
+  return { success: true };
+}
+
 export async function deleteTeamAction(teamId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

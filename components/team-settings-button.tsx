@@ -3,6 +3,7 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Settings } from "lucide-react";
+import type { Team } from "@/lib/types";
 
 const TeamSettingsSheet = dynamic(
   () => import("@/components/team-settings-sheet").then((m) => m.TeamSettingsSheet),
@@ -10,13 +11,13 @@ const TeamSettingsSheet = dynamic(
 );
 
 interface TeamSettingsButtonProps {
-  teamId: string;
+  team: Team;
   searchingForOpponent: boolean;
   searchingForPlayers: boolean;
 }
 
 export function TeamSettingsButton({
-  teamId,
+  team,
   searchingForOpponent,
   searchingForPlayers,
 }: TeamSettingsButtonProps) {
@@ -36,7 +37,7 @@ export function TeamSettingsButton({
         <TeamSettingsSheet
           open={sheetOpen}
           onClose={() => setSheetOpen(false)}
-          teamId={teamId}
+          team={team}
           searchingForOpponent={searchingForOpponent}
           searchingForPlayers={searchingForPlayers}
         />

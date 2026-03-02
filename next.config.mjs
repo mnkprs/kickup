@@ -8,16 +8,23 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react", "date-fns"],
   },
-  ...(supabaseHost && {
-    images: {
-      remotePatterns: [
-        {
-          protocol: "https",
-          hostname: supabaseHost,
-          pathname: "/storage/v1/object/public/**",
-        },
-      ],
-    },
-  }),
+  images: {
+    remotePatterns: [
+      ...(supabaseHost
+        ? [
+            {
+              protocol: "https",
+              hostname: supabaseHost,
+              pathname: "/storage/v1/object/public/**",
+            },
+          ]
+        : []),
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 export default nextConfig;
