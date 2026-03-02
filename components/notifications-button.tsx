@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
-import { getNotificationsAction } from "@/app/actions/profile";
-import type { Notification } from "@/lib/types";
+import { useNotifications } from "@/components/notifications-provider";
 
 const NotificationsSheet = dynamic(
   () => import("@/components/notifications-sheet").then((m) => m.NotificationsSheet),
@@ -13,33 +13,15 @@ const NotificationsSheet = dynamic(
 
 export function NotificationsButton() {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchNotifications = useCallback(async () => {
-    const data = await getNotificationsAction();
-    setNotifications(data ?? []);
-  }, []);
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
-
-  const handleOpen = useCallback(async () => {
-    setOpen(true);
-    if (notifications.length === 0) {
-      setLoading(true);
-      await fetchNotifications();
-      setLoading(false);
-    }
-  }, [notifications.length, fetchNotifications]);
+  const router = useRouter();
+  const notifications = useNotifications();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <>
       <button
-        onClick={handleOpen}
+        onClick={() => setOpen(true)}
         className="relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
         aria-label="View notifications"
       >
@@ -52,12 +34,9 @@ export function NotificationsButton() {
       {open && (
         <NotificationsSheet
           open={open}
-          onClose={() => {
-            setOpen(false);
-            fetchNotifications();
-          }}
-          notifications={loading ? [] : notifications}
-          onMarkedRead={() => fetchNotifications()}
+          onClose={() => setOpen(false)}
+          notifications={notifications}
+          onMarkedRead={() => router.refresh()}
         />
       )}
     </>

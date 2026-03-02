@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { BottomNav } from "@/components/bottom-nav";
-import { CreateMatchFab } from "@/components/create-match-fab";
-import { getPreferredThemeAction } from "@/app/actions/profile";
+import { NotificationsProvider } from "@/components/notifications-provider";
+import { LayoutNav } from "@/components/layout-nav";
+import { getPreferredThemeAction, getNotificationsAction } from "@/app/actions/profile";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -30,16 +30,20 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const defaultTheme = await getPreferredThemeAction();
+  const [defaultTheme, notifications] = await Promise.all([
+    getPreferredThemeAction(),
+    getNotificationsAction(),
+  ]);
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <ThemeProvider defaultTheme={defaultTheme}>
-          <div className="min-h-dvh bg-background max-w-lg mx-auto relative">
-            {children}
-            <BottomNav />
-            <CreateMatchFab />
-          </div>
+          <NotificationsProvider notifications={notifications}>
+            <div className="min-h-dvh bg-background max-w-lg mx-auto relative">
+              {children}
+              <LayoutNav />
+            </div>
+          </NotificationsProvider>
         </ThemeProvider>
       </body>
     </html>

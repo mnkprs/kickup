@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+
+const THEME_COOKIE = "kickup-theme";
 
 export async function updateProfileAction(data: {
   full_name: string;
@@ -70,6 +73,8 @@ export async function updatePasswordAction(password: string) {
 export async function signOutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  const cookieStore = await cookies();
+  cookieStore.delete(THEME_COOKIE);
   redirect("/auth/login");
 }
 
@@ -120,6 +125,12 @@ export async function updateFreelancerAction(data: {
 }
 
 export async function getPreferredThemeAction(): Promise<"light" | "dark"> {
+  const cookieStore = await cookies();
+  const fromCookie = cookieStore.get(THEME_COOKIE)?.value;
+  if (fromCookie === "light" || fromCookie === "dark") {
+    return fromCookie;
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -149,6 +160,9 @@ export async function updateThemeAction(theme: "light" | "dark") {
     .eq("id", user.id);
 
   if (error) return { error: error.message };
+
+  const cookieStore = await cookies();
+  cookieStore.set(THEME_COOKIE, theme, { path: "/", maxAge: 60 * 60 * 24 * 365 });
 
   revalidatePath("/");
   revalidatePath("/profile");

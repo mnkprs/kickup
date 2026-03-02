@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { X, Bell, Swords, CalendarClock, Trophy, Clock, CheckCircle2, Users, UserPlus } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { Notification } from "@/lib/types";
@@ -38,16 +37,19 @@ interface NotificationsSheetProps {
 }
 
 export function NotificationsSheet({ open, onClose, notifications, onMarkedRead }: NotificationsSheetProps) {
-  const router = useRouter();
+  const hasMarkedRef = useRef(false);
 
   useEffect(() => {
-    if (!open) return;
-    const hasUnread = notifications.some((n) => !n.read);
-    if (hasUnread) {
-      onMarkedRead?.();
-      markNotificationsReadAction().then(() => router.refresh());
+    if (!open) {
+      hasMarkedRef.current = false;
+      return;
     }
-  }, [open, notifications, router, onMarkedRead]);
+    const hasUnread = notifications.some((n) => !n.read);
+    if (hasUnread && !hasMarkedRef.current) {
+      hasMarkedRef.current = true;
+      markNotificationsReadAction().then(() => onMarkedRead?.());
+    }
+  }, [open, notifications, onMarkedRead]);
 
   if (!open) return null;
 

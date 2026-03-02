@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const THEME_COOKIE = "kickup-theme";
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -38,7 +40,19 @@ export async function updateSession(request: NextRequest) {
   // IMPORTANT: If you remove getUser() and you use server-side rendering
   // with the Supabase client, your users may be randomly logged out.
   // Refresh session cookies (must call getUser — do not remove)
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Bootstrap theme cookie when missing (cookies can only be modified in middleware/route handlers)
+  if (user && !request.cookies.get(THEME_COOKIE)?.value) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("preferred_theme")
+      .eq("id", user.id)
+      .single()
+    const theme = data?.preferred_theme as "light" | "dark" | null
+    const resolved = theme === "light" || theme === "dark" ? theme : "dark"
+    supabaseResponse.cookies.set(THEME_COOKIE, resolved, { path: "/", maxAge: 60 * 60 * 24 * 365 })
+  }
 
   // No auth redirects — pages handle unauthenticated state via null profile.
 
