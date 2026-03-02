@@ -89,7 +89,10 @@ export async function getUserTeam(userId: string): Promise<Team | null> {
     .from("team_members")
     .select("teams(*)")
     .eq("player_id", userId)
-    .single();
+    .eq("status", "active")
+    .order("role", { ascending: true }) // captain first
+    .limit(1)
+    .maybeSingle();
 
   if (error || !data) return null;
   const teamData = (data as Record<string, unknown>).teams;

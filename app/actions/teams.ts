@@ -33,6 +33,8 @@ export async function createTeamAction(data: {
   if (error) return { error: error.message };
 
   revalidatePath("/teams");
+  revalidatePath("/profile");
+  revalidatePath("/");
   return { teamId: teamId as string };
 }
 

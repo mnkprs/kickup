@@ -1,12 +1,9 @@
-import type { LucideIcon } from "lucide-react";
-
 interface StatusBadgeProps {
   label: string;
   active: boolean;
-  icon: LucideIcon;
 }
 
-export function StatusBadge({ label, active, icon: Icon }: StatusBadgeProps) {
+export function StatusBadge({ label, active }: StatusBadgeProps) {
   return (
     <span
       className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium ${
@@ -21,7 +18,6 @@ export function StatusBadge({ label, active, icon: Icon }: StatusBadgeProps) {
       ) : (
         <span className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground" aria-hidden />
       )}
-      <Icon size={10} className="shrink-0" />
       {label}
     </span>
   );

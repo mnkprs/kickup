@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { UserPlus } from "lucide-react";
 import { setTeamSearchingForPlayersAction } from "@/app/actions/teams";
 import { LiveDot } from "@/components/live-dot";
 
@@ -33,7 +32,6 @@ export function LookingForPlayersToggle({ teamId, initial }: LookingForPlayersTo
       }`}
     >
       {searching && <LiveDot className="shrink-0" />}
-      <UserPlus size={15} className={searching ? "text-accent-foreground" : "text-muted-foreground"} />
       {searching ? "Looking for Players" : "Find Players"}
     </button>
   );

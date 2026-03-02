@@ -47,15 +47,16 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 
   const profile = mapProfile(data as Record<string, unknown>);
 
-  // Resolve team_id from team_members
-  const { data: membership } = await supabase
+  // Resolve team_id from team_members (prefer captain role, active only)
+  const { data: memberships } = await supabase
     .from("team_members")
-    .select("team_id")
+    .select("team_id, role")
     .eq("player_id", userId)
-    .single();
+    .eq("status", "active")
+    .order("role", { ascending: true }); // captain < player, so captain first
 
-  if (membership) {
-    profile.team_id = membership.team_id as string;
+  if (memberships && memberships.length > 0) {
+    profile.team_id = memberships[0].team_id as string;
   }
 
   return profile;
