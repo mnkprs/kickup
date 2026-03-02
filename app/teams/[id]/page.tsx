@@ -14,7 +14,6 @@ import {
   Trophy,
   ShieldAlert,
   Star,
-  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
@@ -27,7 +26,6 @@ import { JoinTeamButton } from "@/components/join-team-button";
 import { TeamCaptainControlsWrapper } from "@/components/team-captain-controls-wrapper";
 import { RosterSection } from "@/components/roster-section";
 import { LiveDot } from "@/components/live-dot";
-import { LeaveTeamButton } from "@/components/leave-team-button";
 
 function TeamStatsGrid({ team }: { team: Team }) {
   const total = team.wins + team.draws + team.losses;
@@ -210,11 +208,12 @@ export default async function TeamDetailPage({
             <h1 className="text-foreground font-semibold text-lg">Team Detail</h1>
           </div>
           <div className="flex items-center gap-2">
-            {isCaptain && (
+            {isMyTeam && (
               <TeamSettingsButton
                 team={team}
                 searchingForOpponent={team.searching_for_opponent ?? false}
                 searchingForPlayers={team.searching_for_players ?? false}
+                isCaptain={isCaptain}
               />
             )}
             <NotificationsButton />
@@ -262,12 +261,10 @@ export default async function TeamDetailPage({
               <StatusBadge
                 label="Looking for Opponents"
                 active={team.searching_for_opponent ?? false}
-                icon={Swords}
               />
               <StatusBadge
                 label="Looking for Players"
                 active={team.searching_for_players ?? false}
-                icon={UserPlus}
               />
             </div>
           )}
@@ -322,16 +319,6 @@ export default async function TeamDetailPage({
           </div>
         )}
 
-        {/* Leave team button for members */}
-        {user && isMyTeam && (
-          <div className="mt-4">
-            <LeaveTeamButton
-              teamId={team.id}
-              teamName={team.name}
-              isCaptain={isCaptain}
-            />
-          </div>
-        )}
       </header>
 
       <main className="flex flex-col gap-6 pt-4 pb-24">

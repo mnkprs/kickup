@@ -14,12 +14,14 @@ interface TeamSettingsButtonProps {
   team: Team;
   searchingForOpponent: boolean;
   searchingForPlayers: boolean;
+  isCaptain: boolean;
 }
 
 export function TeamSettingsButton({
   team,
   searchingForOpponent,
   searchingForPlayers,
+  isCaptain,
 }: TeamSettingsButtonProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -40,6 +42,7 @@ export function TeamSettingsButton({
           team={team}
           searchingForOpponent={searchingForOpponent}
           searchingForPlayers={searchingForPlayers}
+          isCaptain={isCaptain}
         />
       )}
     </>
