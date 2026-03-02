@@ -190,7 +190,7 @@ export async function getMatchRoster(
     const playerIds = (lineupData as { player_id: string }[]).map((r) => r.player_id);
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, full_name, avatar_initials, avatar_color, position")
+      .select("id, full_name, avatar_initials, avatar_color, avatar_url, position")
       .in("id", playerIds);
 
     if (!profiles) return [];
@@ -202,7 +202,7 @@ export async function getMatchRoster(
 
   const { data: members } = await supabase
     .from("team_members")
-    .select("player_id, profiles(id, full_name, avatar_initials, avatar_color, position)")
+    .select("player_id, profiles(id, full_name, avatar_initials, avatar_color, avatar_url, position)")
     .eq("team_id", teamId)
     .eq("status", "active");
 

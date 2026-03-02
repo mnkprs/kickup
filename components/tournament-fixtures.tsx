@@ -76,11 +76,16 @@ function UpcomingFixture({ match, tournamentId, canManageSchedule }: UpcomingFix
               />
             </div>
           ) : (
-            <div className="px-4 pb-4">
+            <div
+              className="px-4 pb-4"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
               <button
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   setShowScheduleForm(true);
                 }}
                 className="flex items-center gap-2 text-xs font-medium text-accent hover:text-accent/80 transition-colors"

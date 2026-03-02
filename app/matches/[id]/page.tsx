@@ -25,7 +25,13 @@ export default async function MatchDetailPage({
 
   // Determine which team the current user belongs to in this match
   let userTeamId: string | null = null;
-  let teamMembers: { id: string; full_name: string; avatar_initials: string; avatar_color: string }[] = [];
+  let teamMembers: {
+    id: string;
+    full_name: string;
+    avatar_initials: string;
+    avatar_color: string;
+    avatar_url: string | null;
+  }[] = [];
   let isTournamentOrganizer = false;
 
   if (user) {
@@ -62,11 +68,13 @@ export default async function MatchDetailPage({
         full_name: m.profile.full_name,
         avatar_initials: m.profile.avatar_initials,
         avatar_color: m.profile.avatar_color,
+        avatar_url: m.profile.avatar_url ?? null,
       }));
     }
   }
 
   // For completed matches: fetch rosters and goals per player
+  // For pre_match when user can submit: fetch rosters for goal assignment
   let homeRoster: { player_id: string; profile: Record<string, unknown> }[] = [];
   let awayRoster: { player_id: string; profile: Record<string, unknown> }[] = [];
   let goalsByPlayer: Map<string, number> = new Map();
@@ -80,6 +88,16 @@ export default async function MatchDetailPage({
     homeRoster = home;
     awayRoster = away;
     goalsByPlayer = goals;
+  } else if (
+    match.raw_status === "pre_match" &&
+    (userTeamId || isTournamentOrganizer)
+  ) {
+    const [home, away] = await Promise.all([
+      getMatchRoster(id, match.home_team_id),
+      getMatchRoster(id, match.away_team_id),
+    ]);
+    homeRoster = home;
+    awayRoster = away;
   }
 
   return (

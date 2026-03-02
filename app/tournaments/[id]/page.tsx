@@ -70,18 +70,19 @@ export default async function TournamentDetailPage({
 
   if (!tournament) notFound();
 
-  // Check user's team + registration status
+  // Check user's team + registration status (only captains can register)
   let userTeamId: string | null = null;
   let registrationStatus: "none" | "pending" | "approved" | "rejected" = "none";
 
   if (user) {
     const { data: membership } = await supabase
       .from("team_members")
-      .select("team_id")
+      .select("team_id, role")
       .eq("player_id", user.id)
+      .eq("status", "active")
       .maybeSingle();
 
-    if (membership?.team_id) {
+    if (membership?.team_id && membership?.role === "captain") {
       userTeamId = membership.team_id;
       const { data: reg } = await supabase
         .from("tournament_registrations")

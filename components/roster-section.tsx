@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Crown, Crosshair, UserMinus } from "lucide-react";
+import { Avatar } from "@/components/avatar";
 import { removeMemberAction } from "@/app/actions/teams";
 import { ConfirmModal } from "@/components/confirm-modal";
 import type { Profile } from "@/lib/types";
@@ -113,7 +114,6 @@ export function RosterSection({
                 const isPlayerCaptain = captainId === player.id;
                 const isMe = player.id === myPlayerId;
                 const canRemove = isCaptain && !isPlayerCaptain && !isMe;
-                const initials = player.avatar_initials || player.full_name.split(" ").map((n) => n[0]).join("");
                 return (
                   <div
                     key={player.id}
@@ -123,12 +123,14 @@ export function RosterSection({
                       href={`/profile/${player.id}`}
                       className="flex flex-1 items-center gap-3 min-w-0"
                     >
-                      <div
-                        className="h-9 w-9 rounded-full flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: `${player.avatar_color}20` }}
-                      >
-                        <span className="text-foreground font-semibold text-xs">{initials}</span>
-                      </div>
+                      <Avatar
+                        avatar_url={player.avatar_url}
+                        avatar_initials={player.avatar_initials}
+                        avatar_color={player.avatar_color}
+                        full_name={player.full_name}
+                        size="sm"
+                        colorOpacity="20"
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <span className="text-foreground text-sm font-medium truncate">{player.full_name}</span>

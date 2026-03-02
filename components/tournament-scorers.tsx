@@ -1,5 +1,7 @@
 import type { TopScorer } from "@/lib/types";
 import { Crown } from "lucide-react";
+import Link from "next/link";
+import { Avatar } from "@/components/avatar";
 
 interface TournamentScorersProps {
   scorers: TopScorer[];
@@ -19,17 +21,23 @@ export function TournamentScorers({ scorers, title = "Top Scorers" }: Tournament
         scorers.map((entry, i) => {
           const isTop = i === 0;
           return (
-            <div
+            <Link
               key={entry.player.id}
-              className="flex items-center gap-3 py-2.5 border-b border-border last:border-b-0"
+              href={`/profile/${entry.player.id}`}
+              className="flex items-center gap-3 py-2.5 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors -mx-2 px-2 rounded-lg cursor-pointer"
             >
               <span className={`w-5 text-xs font-bold shrink-0 ${isTop ? "text-draw" : "text-muted-foreground"}`}>
                 {i + 1}
               </span>
-              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0 border border-border relative">
-                <span className="text-foreground text-[10px] font-bold">
-                  {entry.player.avatar_initials || entry.player.full_name.split(" ").map((n) => n[0]).join("")}
-                </span>
+              <div className="relative shrink-0">
+                <Avatar
+                  avatar_url={entry.player.avatar_url}
+                  avatar_initials={entry.player.avatar_initials}
+                  avatar_color={entry.player.avatar_color}
+                  full_name={entry.player.full_name}
+                  size="2xs"
+                  className="border border-border"
+                />
                 {isTop && (
                   <Crown size={10} className="absolute -top-1.5 -right-1 text-draw" fill="currentColor" />
                 )}
@@ -46,7 +54,7 @@ export function TournamentScorers({ scorers, title = "Top Scorers" }: Tournament
                   <span className="text-muted-foreground text-[9px]">goals</span>
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })
         )}

@@ -95,6 +95,7 @@ export async function submitResultAction(data: {
   awayScore: number;
   mvpId: string | null;
   notes: string;
+  goals?: Record<string, number>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -107,10 +108,17 @@ export async function submitResultAction(data: {
     p_away_score: data.awayScore,
     p_mvp_id: data.mvpId,
     p_notes: data.notes || null,
-    p_events: [],
+    p_goals: data.goals ?? {},
   });
 
   if (error) return { error: error.message };
+
+  const { data: tm } = await supabase
+    .from("tournament_matches")
+    .select("tournament_id")
+    .eq("match_id", data.matchId)
+    .maybeSingle();
+  if (tm) revalidatePath(`/tournaments/${(tm as { tournament_id: string }).tournament_id}`);
 
   revalidatePath(`/matches/${data.matchId}`);
   revalidatePath("/matches");
@@ -124,6 +132,7 @@ export async function organizerSubmitResultAction(data: {
   awayScore: number;
   mvpId: string | null;
   notes: string;
+  goals?: { home?: Record<string, number>; away?: Record<string, number> };
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -135,9 +144,17 @@ export async function organizerSubmitResultAction(data: {
     p_away_score: data.awayScore,
     p_mvp_id: data.mvpId,
     p_notes: data.notes || null,
+    p_goals: data.goals ?? { home: {}, away: {} },
   });
 
   if (error) return { error: error.message };
+
+  const { data: tm } = await supabase
+    .from("tournament_matches")
+    .select("tournament_id")
+    .eq("match_id", data.matchId)
+    .maybeSingle();
+  if (tm) revalidatePath(`/tournaments/${(tm as { tournament_id: string }).tournament_id}`);
 
   revalidatePath(`/matches/${data.matchId}`);
   revalidatePath("/matches");

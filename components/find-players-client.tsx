@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { NotificationsButton } from "@/components/notifications-button";
+import { Avatar } from "@/components/avatar";
 import { invitePlayerToTeamAction } from "@/app/actions/teams";
 interface FindPlayersClientProps {
   freelancers: Profile[];
@@ -104,7 +105,6 @@ export function FindPlayersClient({
         )}
 
         {filtered.map((player) => {
-          const initials = player.avatar_initials || player.full_name.split(" ").map((n) => n[0]).join("");
           const isSelf = player.id === currentUserId;
 
           return (
@@ -117,14 +117,14 @@ export function FindPlayersClient({
                   href={`/profile/${player.id}`}
                   className="flex items-center gap-3 flex-1 min-w-0"
                 >
-                  <div
-                    className="h-12 w-12 rounded-full flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${player.avatar_color}30` }}
-                  >
-                    <span className="text-foreground font-bold text-sm">
-                      {initials}
-                    </span>
-                  </div>
+                  <Avatar
+                    avatar_url={player.avatar_url}
+                    avatar_initials={player.avatar_initials}
+                    avatar_color={player.avatar_color}
+                    full_name={player.full_name}
+                    size="lg"
+                    colorOpacity="30"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-foreground font-semibold text-sm truncate">

@@ -1,6 +1,7 @@
 "use client";
 
 import { X, Check } from "lucide-react";
+import { Avatar } from "@/components/avatar";
 import type { TeamMember, Profile } from "@/lib/types";
 
 interface TeamCaptainControlsProps {
@@ -25,15 +26,16 @@ export function TeamCaptainControls({
           {pendingRequests.length > 0 ? (
             pendingRequests.map((request) => {
               const player = request.profile;
-              const initials = player.avatar_initials || player.full_name.split(" ").map((n) => n[0]).join("");
               return (
                 <div key={request.id} className="flex items-center gap-3 px-4 py-3">
-                  <div
-                    className="h-9 w-9 rounded-full flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${player.avatar_color}20` }}
-                  >
-                    <span className="text-foreground font-semibold text-xs">{initials}</span>
-                  </div>
+                  <Avatar
+                    avatar_url={player.avatar_url}
+                    avatar_initials={player.avatar_initials}
+                    avatar_color={player.avatar_color}
+                    full_name={player.full_name}
+                    size="sm"
+                    colorOpacity="20"
+                  />
                   <div className="flex-1 min-w-0">
                     <span className="text-foreground text-sm font-medium block truncate">
                       {player.full_name}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MapPin, Clock, Calendar, Check, ChevronRight, Trophy } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Calendar, Check, ChevronRight, Trophy, Minus, Plus } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { NotificationsButton } from "@/components/notifications-button";
@@ -15,12 +15,14 @@ import {
   organizerSubmitResultAction,
 } from "@/app/actions/matches";
 import { LiveDot } from "@/components/live-dot";
+import { Avatar } from "@/components/avatar";
 
 interface TeamMemberMin {
   id: string;
   full_name: string;
   avatar_initials: string;
   avatar_color: string;
+  avatar_url: string | null;
 }
 
 interface RosterPlayer {
@@ -90,6 +92,75 @@ function TeamBlock({
   );
 }
 
+function GoalsRosterSection({
+  roster,
+  team,
+  goals,
+  onUpdate,
+}: {
+  roster: RosterPlayer[];
+  team: Match["home_team"];
+  goals: Record<string, number>;
+  onUpdate: (playerId: string, delta: number) => void;
+}) {
+  return (
+    <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-muted/30">
+        <div
+          className="h-6 w-6 rounded-full flex items-center justify-center border border-border text-xs font-bold"
+          style={team.color ? { backgroundColor: team.color + "33" } : undefined}
+        >
+          {team.emoji || team.short_name}
+        </div>
+        <span className="text-xs font-semibold text-foreground">{team.name}</span>
+      </div>
+      <div className="divide-y divide-border">
+        {roster.map(({ player_id, profile }) => {
+          const count = goals[player_id] ?? 0;
+          const name = (profile.full_name as string) ?? "Unknown";
+          return (
+            <div
+              key={player_id}
+              className="flex items-center gap-2 px-4 py-2.5"
+            >
+              <button
+                type="button"
+                onClick={() => onUpdate(player_id, -1)}
+                disabled={count <= 0}
+                className="h-8 w-8 rounded-full flex items-center justify-center border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors pressable shrink-0"
+                aria-label={`Remove goal from ${name}`}
+              >
+                <Minus size={14} strokeWidth={2.5} />
+              </button>
+              <Avatar
+                avatar_url={profile.avatar_url as string | null}
+                avatar_initials={(profile.avatar_initials as string) || name.split(" ").map((n) => n[0]).join("")}
+                avatar_color={(profile.avatar_color as string) ?? "#2E7D32"}
+                full_name={name}
+                size="2xs"
+              />
+              <span className="text-sm font-medium text-foreground truncate flex-1 min-w-0">
+                {name}
+              </span>
+              <span className="text-sm font-bold text-draw tabular-nums w-6 text-center shrink-0">
+                {count}
+              </span>
+              <button
+                type="button"
+                onClick={() => onUpdate(player_id, 1)}
+                className="h-8 w-8 rounded-full flex items-center justify-center border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-colors pressable shrink-0"
+                aria-label={`Add goal for ${name}`}
+              >
+                <Plus size={14} strokeWidth={2.5} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function MatchRostersSection({
   homeRoster,
   awayRoster,
@@ -128,8 +199,6 @@ function MatchRostersSection({
             roster.map(({ player_id, profile }) => {
               const goals = goalsByPlayer[player_id] ?? 0;
               const name = (profile.full_name as string) ?? "Unknown";
-              const initials = (profile.avatar_initials as string) || name.split(" ").map((n) => n[0]).join("");
-              const color = (profile.avatar_color as string) ?? "#2E7D32";
               return (
                 <Link
                   key={player_id}
@@ -137,12 +206,13 @@ function MatchRostersSection({
                   className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors pressable"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className="h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white"
-                      style={{ backgroundColor: color }}
-                    >
-                      {initials}
-                    </div>
+                    <Avatar
+                      avatar_url={profile.avatar_url as string | null}
+                      avatar_initials={(profile.avatar_initials as string) || name.split(" ").map((n) => n[0]).join("")}
+                      avatar_color={(profile.avatar_color as string) ?? "#2E7D32"}
+                      full_name={name}
+                      size="2xs"
+                    />
                     <span className="text-sm font-medium text-foreground truncate">{name}</span>
                   </div>
                   {goals > 0 && (
@@ -192,6 +262,7 @@ export function MatchDetailClient({
   const [mvpId, setMvpId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [showResult, setShowResult] = useState(false);
+  const [formGoalsByPlayer, setFormGoalsByPlayer] = useState<Record<string, number>>({});
 
   const rawStatus = match.raw_status;
   const isCompleted = rawStatus === "completed";
@@ -268,6 +339,32 @@ export function MatchDetailClient({
     setError("");
     const h = parseInt(homeScore) || 0;
     const a = parseInt(awayScore) || 0;
+
+    const goalsPayload = isTournamentOrganizer && !isParticipant
+      ? {
+          home: Object.fromEntries(
+            homeRoster
+              .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
+              .filter(([, c]) => c > 0)
+          ),
+          away: Object.fromEntries(
+            awayRoster
+              .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
+              .filter(([, c]) => c > 0)
+          ),
+        }
+      : userTeamId === match.home_team_id
+        ? Object.fromEntries(
+            homeRoster
+              .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
+              .filter(([, c]) => c > 0)
+          )
+        : Object.fromEntries(
+            awayRoster
+              .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
+              .filter(([, c]) => c > 0)
+          );
+
     const result = isTournamentOrganizer && !isParticipant
       ? await organizerSubmitResultAction({
           matchId: match.id,
@@ -275,6 +372,7 @@ export function MatchDetailClient({
           awayScore: a,
           mvpId,
           notes,
+          goals: goalsPayload,
         })
       : await submitResultAction({
           matchId: match.id,
@@ -283,6 +381,7 @@ export function MatchDetailClient({
           awayScore: a,
           mvpId,
           notes,
+          goals: goalsPayload,
         });
     setLoading(false);
     if (result.error) { setError(result.error); return; }
@@ -550,6 +649,61 @@ export function MatchDetailClient({
               </div>
             </div>
 
+            {/* Goals per player */}
+            {(homeRoster.length > 0 || awayRoster.length > 0) && (
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                  Goals per player (optional)
+                </label>
+                <div className="flex flex-col gap-3">
+                  {isTournamentOrganizer && !isParticipant ? (
+                    <>
+                      <GoalsRosterSection
+                        roster={homeRoster}
+                        team={match.home_team}
+                        goals={formGoalsByPlayer}
+                        onUpdate={(playerId, delta) =>
+                          setFormGoalsByPlayer((prev) => ({
+                            ...prev,
+                            [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                          }))
+                        }
+                      />
+                      <GoalsRosterSection
+                        roster={awayRoster}
+                        team={match.away_team}
+                        goals={formGoalsByPlayer}
+                        onUpdate={(playerId, delta) =>
+                          setFormGoalsByPlayer((prev) => ({
+                            ...prev,
+                            [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                          }))
+                        }
+                      />
+                    </>
+                  ) : userTeamId ? (
+                    <GoalsRosterSection
+                      roster={
+                        userTeamId === match.home_team_id ? homeRoster : awayRoster
+                      }
+                      team={
+                        userTeamId === match.home_team_id
+                          ? match.home_team
+                          : match.away_team
+                      }
+                      goals={formGoalsByPlayer}
+                      onUpdate={(playerId, delta) =>
+                        setFormGoalsByPlayer((prev) => ({
+                          ...prev,
+                          [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                        }))
+                      }
+                    />
+                  ) : null}
+                </div>
+              </div>
+            )}
+
             {/* MVP selection */}
             {teamMembers.length > 0 && (
               <div>
@@ -571,12 +725,13 @@ export function MatchDetailClient({
                       onClick={() => setMvpId(m.id)}
                       className={`flex items-center gap-3 px-4 py-2.5 text-left border-t border-border transition-colors pressable ${mvpId === m.id ? "bg-accent/10" : "hover:bg-muted/50"}`}
                     >
-                      <div
-                        className="h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold text-white"
-                        style={{ backgroundColor: m.avatar_color }}
-                      >
-                        {m.avatar_initials}
-                      </div>
+                      <Avatar
+                        avatar_url={m.avatar_url}
+                        avatar_initials={m.avatar_initials}
+                        avatar_color={m.avatar_color}
+                        full_name={m.full_name}
+                        size="xs"
+                      />
                       <span className="text-sm text-foreground">{m.full_name}</span>
                       {mvpId === m.id && <Check size={14} className="text-accent ml-auto" />}
                     </button>
