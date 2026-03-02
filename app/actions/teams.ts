@@ -123,6 +123,23 @@ export async function invitePlayerToTeamAction(playerId: string) {
   return { success: true };
 }
 
+export async function leaveTeamAction(teamId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase.rpc("leave_team", { p_team_id: teamId });
+  if (error) return { error: error.message };
+
+  revalidatePath(`/teams/${teamId}`);
+  revalidatePath("/teams");
+  revalidatePath("/");
+  revalidatePath("/profile");
+  redirect("/teams");
+}
+
 export async function removeMemberAction(teamId: string, playerId: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("remove_team_member", {

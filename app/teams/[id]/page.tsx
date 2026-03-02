@@ -27,6 +27,7 @@ import { JoinTeamButton } from "@/components/join-team-button";
 import { TeamCaptainControlsWrapper } from "@/components/team-captain-controls-wrapper";
 import { RosterSection } from "@/components/roster-section";
 import { LiveDot } from "@/components/live-dot";
+import { LeaveTeamButton } from "@/components/leave-team-button";
 
 function TeamStatsGrid({ team }: { team: Team }) {
   const total = team.wins + team.draws + team.losses;
@@ -317,6 +318,17 @@ export default async function TeamDetailPage({
               teamId={team.id}
               hasPendingRequest={hasPendingRequest}
               isAlreadyMember={false}
+            />
+          </div>
+        )}
+
+        {/* Leave team button for members */}
+        {user && isMyTeam && (
+          <div className="mt-4">
+            <LeaveTeamButton
+              teamId={team.id}
+              teamName={team.name}
+              isCaptain={isCaptain}
             />
           </div>
         )}
