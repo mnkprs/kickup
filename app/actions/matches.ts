@@ -13,7 +13,7 @@ export async function sendChallengeAction(data: {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
-  const { data: matchId, error } = await supabase.rpc("send_challenge", {
+  const { data: match, error } = await supabase.rpc("send_challenge", {
     p_home_team_id: data.homeTeamId,
     p_away_team_id: data.awayTeamId,
     p_format: data.format,
@@ -21,6 +21,12 @@ export async function sendChallengeAction(data: {
   });
 
   if (error) return { error: error.message };
+
+  // RPC returns the full match row; extract id for redirect
+  const matchId =
+    typeof match === "object" && match !== null && "id" in match
+      ? (match as { id: string }).id
+      : match;
 
   revalidatePath("/matches");
   return { matchId: matchId as string };
