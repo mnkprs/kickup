@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import type { Team, Profile, TeamMember } from "@/lib/types";
 
 function mapTeam(row: Record<string, unknown>): Team {
+  const w = (row.record_w as number) ?? 0;
+  const d = (row.record_d as number) ?? 0;
   return {
     id: row.id as string,
     name: row.name as string,
@@ -12,12 +14,12 @@ function mapTeam(row: Record<string, unknown>): Team {
     color: (row.color as string) ?? "#2E7D32",
     description: (row.description as string) ?? "",
     open_spots: (row.open_spots as number) ?? 0,
-    wins: (row.record_w as number) ?? 0,
-    draws: (row.record_d as number) ?? 0,
+    wins: w,
+    draws: d,
     losses: (row.record_l as number) ?? 0,
     goals_for: (row.record_gf as number) ?? 0,
     goals_against: (row.record_ga as number) ?? 0,
-    points: (row.points as number) ?? 0,
+    points: (row.points as number) ?? w * 3 + d,
     captain_id: row.captain_id as string | null,
     home_ground: row.home_ground as string | null,
     searching_for_opponent: (row.searching_for_opponent as boolean) ?? false,
@@ -59,7 +61,9 @@ export async function getTeams(): Promise<Team[]> {
   const { data, error } = await supabase
     .from("teams")
     .select("*")
-    .order("points", { ascending: false });
+    .order("record_w", { ascending: false })
+    .order("record_d", { ascending: false })
+    .order("name", { ascending: true });
 
   if (error || !data) return [];
   return (data as Record<string, unknown>[]).map(mapTeam);

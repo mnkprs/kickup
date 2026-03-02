@@ -12,9 +12,10 @@ export default async function MatchesPage() {
 
   const profile = user ? await getProfile(user.id) : null;
 
+  // Matches page shows all matches (global feed); teamId kept for highlighting user's team in results
   const [upcomingMatches, recentResults] = await Promise.all([
-    getUpcomingMatches(profile?.team_id),
-    getRecentResults(profile?.team_id),
+    getUpcomingMatches(null),
+    getRecentResults(null),
   ]);
 
   return (
