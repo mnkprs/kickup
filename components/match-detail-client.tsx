@@ -21,13 +21,22 @@ interface TeamMemberMin {
   avatar_color: string;
 }
 
+interface RosterPlayer {
+  player_id: string;
+  profile: Record<string, unknown>;
+}
+
 interface MatchDetailClientProps {
   match: Match;
   userTeamId: string | null;
   teamMembers: TeamMemberMin[];
+  homeRoster?: RosterPlayer[];
+  awayRoster?: RosterPlayer[];
+  goalsByPlayer?: Record<string, number>;
 }
 
 function TeamBlock({
+  teamId,
   emoji,
   color,
   shortName,
@@ -35,6 +44,7 @@ function TeamBlock({
   score,
   isWinner,
 }: {
+  teamId: string;
   emoji?: string;
   color?: string;
   shortName: string;
@@ -43,7 +53,10 @@ function TeamBlock({
   isWinner: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 flex-1">
+    <Link
+      href={`/teams/${teamId}`}
+      className="flex flex-col items-center gap-2 flex-1 hover:opacity-90 transition-opacity"
+    >
       <div
         className="h-16 w-16 rounded-full flex items-center justify-center border border-border text-2xl"
         style={color ? { backgroundColor: color + "33" } : undefined}
@@ -70,7 +83,85 @@ function TeamBlock({
           {score}
         </span>
       )}
-    </div>
+    </Link>
+  );
+}
+
+function MatchRostersSection({
+  homeRoster,
+  awayRoster,
+  homeTeam,
+  awayTeam,
+  goalsByPlayer,
+}: {
+  homeRoster: RosterPlayer[];
+  awayRoster: RosterPlayer[];
+  homeTeam: Match["home_team"];
+  awayTeam: Match["away_team"];
+  goalsByPlayer: Record<string, number>;
+}) {
+  function RosterColumn({
+    roster,
+    team,
+  }: {
+    roster: RosterPlayer[];
+    team: Match["home_team"];
+  }) {
+    return (
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-2">
+          <div
+            className="h-8 w-8 rounded-full flex items-center justify-center border border-border text-xs font-bold"
+            style={team.color ? { backgroundColor: team.color + "33" } : undefined}
+          >
+            {team.emoji || team.short_name}
+          </div>
+          <span className="text-sm font-semibold text-foreground truncate">{team.name}</span>
+        </div>
+        <div className="rounded-xl bg-card border border-border divide-y divide-border overflow-hidden">
+          {roster.length === 0 ? (
+            <div className="px-4 py-3 text-muted-foreground text-xs">No roster data</div>
+          ) : (
+            roster.map(({ player_id, profile }) => {
+              const goals = goalsByPlayer[player_id] ?? 0;
+              const name = (profile.full_name as string) ?? "Unknown";
+              const initials = (profile.avatar_initials as string) || name.split(" ").map((n) => n[0]).join("");
+              const color = (profile.avatar_color as string) ?? "#2E7D32";
+              return (
+                <Link
+                  key={player_id}
+                  href={`/profile/${player_id}`}
+                  className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className="h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white"
+                      style={{ backgroundColor: color }}
+                    >
+                      {initials}
+                    </div>
+                    <span className="text-sm font-medium text-foreground truncate">{name}</span>
+                  </div>
+                  {goals > 0 && (
+                    <span className="text-draw font-bold text-sm shrink-0">{goals} ⚽</span>
+                  )}
+                </Link>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <section className="px-5">
+      <h2 className="text-foreground font-semibold text-sm mb-3">Team Rosters</h2>
+      <div className="flex gap-4">
+        <RosterColumn roster={homeRoster} team={homeTeam} />
+        <RosterColumn roster={awayRoster} team={awayTeam} />
+      </div>
+    </section>
   );
 }
 
@@ -78,6 +169,9 @@ export function MatchDetailClient({
   match,
   userTeamId,
   teamMembers,
+  homeRoster = [],
+  awayRoster = [],
+  goalsByPlayer = {},
 }: MatchDetailClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -205,6 +299,7 @@ export function MatchDetailClient({
           <div className="rounded-xl bg-card border border-border p-6">
             <div className="flex items-center gap-4">
               <TeamBlock
+                teamId={match.home_team_id}
                 emoji={match.home_team.emoji}
                 color={match.home_team.color}
                 shortName={match.home_team.short_name}
@@ -225,6 +320,7 @@ export function MatchDetailClient({
               </div>
 
               <TeamBlock
+                teamId={match.away_team_id}
                 emoji={match.away_team.emoji}
                 color={match.away_team.color}
                 shortName={match.away_team.short_name}
@@ -235,6 +331,17 @@ export function MatchDetailClient({
             </div>
           </div>
         </div>
+
+        {/* Match rosters (completed only) */}
+        {isCompleted && homeRoster.length + awayRoster.length > 0 && (
+          <MatchRostersSection
+            homeRoster={homeRoster}
+            awayRoster={awayRoster}
+            homeTeam={match.home_team}
+            awayTeam={match.away_team}
+            goalsByPlayer={goalsByPlayer}
+          />
+        )}
 
         {/* Match info */}
         <div className="px-5">

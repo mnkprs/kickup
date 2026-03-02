@@ -8,6 +8,7 @@ const formatOptions = ["All", "5v5", "7v7", "11v11"];
 
 export interface MatchFilters {
   format: string;
+  myMatchesOnly: boolean;
 }
 
 interface MatchesHeaderProps {
@@ -17,6 +18,7 @@ interface MatchesHeaderProps {
   onFiltersChange: (f: MatchFilters) => void;
   showFilters: boolean;
   onToggleFilters: () => void;
+  teamId: string | null;
 }
 
 export function MatchesHeader({
@@ -26,8 +28,9 @@ export function MatchesHeader({
   onFiltersChange,
   showFilters,
   onToggleFilters,
+  teamId,
 }: MatchesHeaderProps) {
-  const activeFilterCount = filters.format !== "All" ? 1 : 0;
+  const activeFilterCount = (filters.format !== "All" ? 1 : 0) + (filters.myMatchesOnly ? 1 : 0);
 
   return (
     <>
@@ -81,6 +84,34 @@ export function MatchesHeader({
               </button>
             </div>
 
+            {teamId && (
+              <div className="mb-5">
+                <p className="text-muted-foreground text-xs font-medium mb-2 uppercase tracking-wider">Scope</p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => onFiltersChange({ ...filters, myMatchesOnly: false })}
+                    className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      !filters.myMatchesOnly
+                        ? "bg-accent text-accent-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    All matches
+                  </button>
+                  <button
+                    onClick={() => onFiltersChange({ ...filters, myMatchesOnly: true })}
+                    className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      filters.myMatchesOnly
+                        ? "bg-accent text-accent-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    My team only
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="mb-5">
               <p className="text-muted-foreground text-xs font-medium mb-2 uppercase tracking-wider">Format</p>
               <div className="flex flex-wrap gap-2">
@@ -101,7 +132,7 @@ export function MatchesHeader({
             </div>
 
             <button
-              onClick={() => { onFiltersChange({ format: "All" }); onToggleFilters(); }}
+              onClick={() => { onFiltersChange({ format: "All", myMatchesOnly: false }); onToggleFilters(); }}
               className="w-full py-2.5 rounded-xl border border-border text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Reset filters

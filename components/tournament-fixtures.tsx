@@ -1,4 +1,5 @@
 import type { Match } from "@/lib/types";
+import Link from "next/link";
 import { MapPin, ChevronRight, Clock } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
@@ -12,7 +13,10 @@ function TeamBadge({ shortName }: { shortName: string }) {
 
 function UpcomingFixture({ match }: { match: Match }) {
   return (
-    <div className="rounded-xl bg-card border border-border p-4 hover:border-accent/40 transition-colors cursor-pointer group">
+    <Link
+      href={`/matches/${match.id}`}
+      className="rounded-xl bg-card border border-border p-4 hover:border-accent/40 transition-colors cursor-pointer group block"
+    >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           <Clock size={12} className="text-accent" />
@@ -43,7 +47,7 @@ function UpcomingFixture({ match }: { match: Match }) {
           <span className="text-muted-foreground text-xs truncate">{match.location}</span>
         </div>
       )}
-    </div>
+    </Link>
   );
 }
 
@@ -55,7 +59,10 @@ function CompletedFixture({ match }: { match: Match }) {
   };
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors">
+    <Link
+      href={`/matches/${match.id}`}
+      className="flex items-center gap-3 py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors block"
+    >
       <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
         <span className="text-xs font-bold text-muted-foreground">-</span>
       </div>
@@ -71,7 +78,7 @@ function CompletedFixture({ match }: { match: Match }) {
           {match.date ? format(parseISO(match.date), "d MMM yyyy") : ""}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
 

@@ -1,7 +1,21 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import type { Profile, Team } from "@/lib/types";
-import { Settings, Share2, MapPin, Calendar, Crown } from "lucide-react";
+import { Settings, Share2, MapPin, Calendar, Crown, ArrowLeft } from "lucide-react";
+
+function BackButton() {
+  const router = useRouter();
+  return (
+    <button
+      onClick={() => router.back()}
+      className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+      aria-label="Go back"
+    >
+      <ArrowLeft size={18} className="text-muted-foreground" />
+    </button>
+  );
+}
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -9,9 +23,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 interface ProfileHeaderProps {
   profile: Profile;
   team: Team | null;
+  showSettings?: boolean;
 }
 
-export function ProfileHeader({ profile, team }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, team, showSettings = true }: ProfileHeaderProps) {
   const winRate =
     profile.matches_played > 0
       ? Math.round((profile.wins / profile.matches_played) * 100)
@@ -21,22 +36,44 @@ export function ProfileHeader({ profile, team }: ProfileHeaderProps) {
   return (
     <header className="px-5 pt-12 pb-2">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-foreground font-semibold text-base">Profile</h1>
+        <div className="flex items-center gap-3">
+          {!showSettings && (
+            <BackButton />
+          )}
+          <h1 className="text-foreground font-semibold text-base">Profile</h1>
+        </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <button
             aria-label="Share profile"
+            onClick={async () => {
+              if (typeof navigator !== "undefined" && navigator.share) {
+                try {
+                  await navigator.share({
+                    title: `${profile.full_name} - Kickup Profile`,
+                    text: `Check out ${profile.full_name}'s football stats on Kickup`,
+                    url: window.location.href,
+                  });
+                } catch {
+                  await navigator.clipboard?.writeText(window.location.href);
+                }
+              } else {
+                await navigator.clipboard?.writeText(window.location.href);
+              }
+            }}
             className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
           >
             <Share2 size={18} className="text-muted-foreground" />
           </button>
-          <Link
-            href="/profile/settings"
-            aria-label="Settings"
-            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
-          >
-            <Settings size={18} className="text-muted-foreground" />
-          </Link>
+          {showSettings && (
+            <Link
+              href="/profile/settings"
+              aria-label="Settings"
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+            >
+              <Settings size={18} className="text-muted-foreground" />
+            </Link>
+          )}
         </div>
       </div>
 

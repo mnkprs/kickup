@@ -201,9 +201,6 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
                   <span className="text-xs text-muted-foreground">
                     <span className="font-bold text-loss">{team.losses}</span>L
                   </span>
-                  <span className="ml-auto text-foreground font-bold text-xs">
-                    {team.points} pts
-                  </span>
                 </div>
 
                 <div className="h-1.5 rounded-full bg-muted overflow-hidden mb-2.5">

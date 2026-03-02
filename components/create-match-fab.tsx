@@ -49,7 +49,7 @@ export function CreateMatchFab() {
     { label: "Challenge a team", icon: Swords, href: "/matches/challenge" },
     ...(isFieldOwner ? [{ label: "Create league", icon: Trophy, href: "/tournaments/create" }] : []),
     { label: "Create a team", icon: Users, href: "/teams/create" },
-    { label: "Find players", icon: UserSearch, href: "/teams" },
+    { label: "Browse teams", icon: UserSearch, href: "/teams" },
   ];
 
   function handleAction(href: string) {

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getProfile, getTopScorers, getNotifications } from "@/lib/db/profiles";
+import { getProfile, getNotifications } from "@/lib/db/profiles";
 import { getUpcomingMatches, getRecentResults } from "@/lib/db/matches";
 import { getTeams } from "@/lib/db/teams";
 import { getTournaments } from "@/lib/db/tournaments";
@@ -8,17 +8,15 @@ import { QuickStats } from "@/components/quick-stats";
 import { UpcomingMatches } from "@/components/upcoming-matches";
 import { MyForm } from "@/components/my-form";
 import { RecentResults } from "@/components/recent-results";
-import { TopScorers } from "@/components/top-scorers";
 import { TournamentsBanner } from "@/components/tournaments-banner";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [profile, tournaments, topScorers, notifications] = await Promise.all([
+  const [profile, tournaments, notifications] = await Promise.all([
     user ? getProfile(user.id) : null,
     getTournaments(),
-    getTopScorers(5),
     user ? getNotifications(user.id) : [],
   ]);
 
@@ -41,7 +39,6 @@ export default async function DashboardPage() {
         <UpcomingMatches matches={upcomingMatches} />
         {userTeam && <MyForm matches={recentResults} team={userTeam} />}
         <RecentResults matches={recentResults} teamId={profile?.team_id} />
-        <TopScorers scorers={topScorers} />
         <TournamentsBanner tournaments={tournaments} />
       </main>
     </>

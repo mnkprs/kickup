@@ -1,10 +1,18 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { X, Bell, Swords, CalendarClock, Trophy, Clock, CheckCircle2, Users } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { Notification } from "@/lib/types";
 import { markNotificationsReadAction } from "@/app/actions/profile";
+
+function getNotificationHref(notif: Notification): string | null {
+  if (notif.match_id) return `/matches/${notif.match_id}`;
+  if (notif.team_id) return `/teams/${notif.team_id}`;
+  if (notif.tournament_id) return `/tournaments/${notif.tournament_id}`;
+  return null;
+}
 
 const TYPE_CONFIG: Record<string, { icon: typeof Bell; iconClass: string; bgClass: string }> = {
   challenge:       { icon: Swords,        iconClass: "text-accent",     bgClass: "bg-accent/15" },
@@ -79,13 +87,9 @@ export function NotificationsSheet({ open, onClose, notifications }: Notificatio
               <div className="flex flex-col gap-2">
                 {items.map((notif) => {
                   const { icon: Icon, iconClass, bgClass } = getConfig(notif.type);
-                  return (
-                    <div
-                      key={notif.id}
-                      className={`rounded-xl border p-4 flex items-start gap-3 transition-colors ${
-                        !notif.read ? "bg-card border-accent/20" : "bg-card border-border"
-                      }`}
-                    >
+                  const href = getNotificationHref(notif);
+                  const content = (
+                    <>
                       <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${bgClass}`}
                         style={notif.avatar_color ? { backgroundColor: notif.avatar_color + "33" } : undefined}
                       >
@@ -107,6 +111,23 @@ export function NotificationsSheet({ open, onClose, notifications }: Notificatio
                       {!notif.read && (
                         <span className="h-2 w-2 rounded-full bg-accent shrink-0 mt-1.5" />
                       )}
+                    </>
+                  );
+                  const className = `rounded-xl border p-4 flex items-start gap-3 transition-colors ${
+                    !notif.read ? "bg-card border-accent/20" : "bg-card border-border"
+                  } ${href ? "cursor-pointer hover:border-accent/40" : ""}`;
+                  return href ? (
+                    <Link
+                      key={notif.id}
+                      href={href}
+                      onClick={onClose}
+                      className={className}
+                    >
+                      {content}
+                    </Link>
+                  ) : (
+                    <div key={notif.id} className={className}>
+                      {content}
                     </div>
                   );
                 })}

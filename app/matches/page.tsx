@@ -11,19 +11,30 @@ export default async function MatchesPage() {
   } = await supabase.auth.getUser();
 
   const profile = user ? await getProfile(user.id) : null;
+  const teamId = profile?.team_id ?? null;
 
-  // Matches page shows all matches (global feed); teamId kept for highlighting user's team in results
+  // Fetch all matches (global feed)
   const [upcomingMatches, recentResults] = await Promise.all([
     getUpcomingMatches(null),
     getRecentResults(null),
   ]);
+
+  // When user has a team, also fetch team-filtered matches for "My team only" filter
+  const [myUpcomingMatches, myRecentResults] = teamId
+    ? await Promise.all([
+        getUpcomingMatches(teamId),
+        getRecentResults(teamId),
+      ])
+    : [null, null];
 
   return (
     <Suspense>
       <MatchesPageClient
         upcomingMatches={upcomingMatches}
         recentResults={recentResults}
-        teamId={profile?.team_id ?? null}
+        myUpcomingMatches={myUpcomingMatches}
+        myRecentResults={myRecentResults}
+        teamId={teamId}
       />
     </Suspense>
   );

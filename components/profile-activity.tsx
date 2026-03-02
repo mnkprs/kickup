@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Trophy, Minus, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { Match } from "@/lib/types";
@@ -49,9 +50,10 @@ export function ProfileActivity({ matches, teamId }: ProfileActivityProps) {
             const score = `${match.home_score}–${match.away_score}`;
 
             return (
-              <div
+              <Link
                 key={match.id}
-                className={`flex items-center gap-3 py-2.5 ${i < completedMatches.length - 1 ? "border-b border-border" : ""}`}
+                href={`/matches/${match.id}`}
+                className={`flex items-center gap-3 py-2.5 hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors ${i < completedMatches.length - 1 ? "border-b border-border" : ""}`}
               >
                 <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${config.bgClass}`}>
                   <Icon size={14} className={config.iconClass} />
@@ -66,7 +68,7 @@ export function ProfileActivity({ matches, teamId }: ProfileActivityProps) {
                     </span>
                   )}
                 </div>
-              </div>
+              </Link>
             );
           })
         )}

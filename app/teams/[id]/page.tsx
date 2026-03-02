@@ -49,7 +49,6 @@ function TeamStatsGrid({ team }: { team: Team }) {
     { label: "Goals", value: team.goals_for, icon: Crosshair, iconClass: "text-draw", bgClass: "bg-draw/10" },
     { label: "Win %", value: `${winRate}`, icon: Shield, iconClass: "text-info", bgClass: "bg-info/10" },
     { label: "GD", value: gd > 0 ? `+${gd}` : `${gd}`, icon: Star, iconClass: gd >= 0 ? "text-win" : "text-loss", bgClass: gd >= 0 ? "bg-win/10" : "bg-loss/10" },
-    { label: "Points", value: team.points, icon: Trophy, iconClass: "text-draw", bgClass: "bg-draw/10" },
   ];
 
   return (
@@ -91,7 +90,11 @@ function RosterSection({ members, captainId }: { members: Profile[]; captainId: 
           const isCaptain = captainId === player.id;
           const initials = player.avatar_initials || player.full_name.split(" ").map((n) => n[0]).join("");
           return (
-            <div key={player.id} className="flex items-center gap-3 px-4 py-3">
+            <Link
+              key={player.id}
+              href={`/profile/${player.id}`}
+              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors rounded-lg"
+            >
               <div
                 className="h-9 w-9 rounded-full flex items-center justify-center shrink-0"
                 style={{ backgroundColor: `${player.avatar_color}20` }}
@@ -121,7 +124,7 @@ function RosterSection({ members, captainId }: { members: Profile[]; captainId: 
                   {player.yellow_cards + player.red_cards}
                 </span>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
@@ -145,7 +148,7 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
 
           if (match.status === "upcoming") {
             return (
-              <div key={match.id} className="rounded-xl bg-card border border-border p-4">
+              <Link key={match.id} href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border p-4 hover:border-accent/40 transition-colors block">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     {isHome ? "Home" : "Away"}
@@ -174,7 +177,7 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
                     <span className="text-muted-foreground text-xs">{match.location}</span>
                   </div>
                 )}
-              </div>
+              </Link>
             );
           }
 
@@ -186,7 +189,7 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
             result === "W" ? "bg-win/15 text-win" : result === "L" ? "bg-loss/15 text-loss" : "bg-draw/15 text-draw";
 
           return (
-            <div key={match.id} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border">
+            <Link key={match.id} href={`/matches/${match.id}`} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border hover:border-accent/40 transition-colors block">
               <span className={`h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-bold ${resultColor}`}>
                 {result}
               </span>
@@ -199,7 +202,7 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
                 </span>
               </div>
               <span className="text-foreground font-bold text-sm shrink-0">{ours}-{theirs}</span>
-            </div>
+            </Link>
           );
         })}
       </div>

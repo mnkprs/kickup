@@ -1,4 +1,4 @@
-import { getMatch } from "@/lib/db/matches";
+import { getMatch, getMatchGoalsByPlayer, getMatchRoster } from "@/lib/db/matches";
 import { createClient } from "@/lib/supabase/server";
 import { getTeamMembers } from "@/lib/db/teams";
 import { MatchDetailClient } from "@/components/match-detail-client";
@@ -49,11 +49,30 @@ export default async function MatchDetailPage({
     }
   }
 
+  // For completed matches: fetch rosters and goals per player
+  let homeRoster: { player_id: string; profile: Record<string, unknown> }[] = [];
+  let awayRoster: { player_id: string; profile: Record<string, unknown> }[] = [];
+  let goalsByPlayer: Map<string, number> = new Map();
+
+  if (match.raw_status === "completed") {
+    const [home, away, goals] = await Promise.all([
+      getMatchRoster(id, match.home_team_id),
+      getMatchRoster(id, match.away_team_id),
+      getMatchGoalsByPlayer(id),
+    ]);
+    homeRoster = home;
+    awayRoster = away;
+    goalsByPlayer = goals;
+  }
+
   return (
     <MatchDetailClient
       match={match}
       userTeamId={userTeamId}
       teamMembers={teamMembers}
+      homeRoster={homeRoster}
+      awayRoster={awayRoster}
+      goalsByPlayer={Object.fromEntries(goalsByPlayer)}
     />
   );
 }

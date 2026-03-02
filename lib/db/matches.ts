@@ -120,3 +120,60 @@ export async function getRecentResults(teamId?: string | null): Promise<Match[]>
   if (error || !data) return [];
   return (data as Record<string, unknown>[]).map(mapMatch);
 }
+
+/** Goals per player (scorer_id) for a specific match */
+export async function getMatchGoalsByPlayer(matchId: string): Promise<Map<string, number>> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("match_events")
+    .select("scorer_id")
+    .eq("match_id", matchId);
+
+  const map = new Map<string, number>();
+  for (const row of (data ?? []) as { scorer_id: string }[]) {
+    map.set(row.scorer_id, (map.get(row.scorer_id) ?? 0) + 1);
+  }
+  return map;
+}
+
+/** Roster for a team in a match: from match_lineups if available, else team_members */
+export async function getMatchRoster(
+  matchId: string,
+  teamId: string
+): Promise<{ player_id: string; profile: Record<string, unknown> }[]> {
+  const supabase = await createClient();
+
+  const { data: lineupData } = await supabase
+    .from("match_lineups")
+    .select("player_id")
+    .eq("match_id", matchId)
+    .eq("team_id", teamId);
+
+  if (lineupData && lineupData.length > 0) {
+    const playerIds = (lineupData as { player_id: string }[]).map((r) => r.player_id);
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, avatar_initials, avatar_color, position")
+      .in("id", playerIds);
+
+    if (!profiles) return [];
+    return (profiles as Record<string, unknown>[]).map((p) => ({
+      player_id: p.id as string,
+      profile: p,
+    }));
+  }
+
+  const { data: members } = await supabase
+    .from("team_members")
+    .select("player_id, profiles(id, full_name, avatar_initials, avatar_color, position)")
+    .eq("team_id", teamId)
+    .eq("status", "active");
+
+  if (!members) return [];
+  return (members as Record<string, unknown>[])
+    .filter((row) => row.profiles)
+    .map((row) => ({
+      player_id: row.player_id as string,
+      profile: (row.profiles as Record<string, unknown>) ?? {},
+    }));
+}
