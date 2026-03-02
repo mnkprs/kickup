@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Tournament, TournamentStanding, Match, Team, TopScorer } from "@/lib/types";
+import type { Tournament, TournamentStanding, TournamentStandingsGroup, Match, Team, TopScorer } from "@/lib/types";
 
 function mapTournamentStatus(
   dbStatus: string
@@ -165,7 +165,7 @@ export async function getTournament(id: string): Promise<Tournament | null> {
 
 export async function getTournamentStandings(
   tournamentId: string
-): Promise<TournamentStanding[]> {
+): Promise<TournamentStandingsGroup[]> {
   const supabase = await createClient();
 
   // Get group labels for this tournament (group stage has started)
@@ -175,58 +175,66 @@ export async function getTournamentStandings(
     .eq("tournament_id", tournamentId);
 
   if (groups && groups.length > 0) {
-    const labels = [...new Set((groups as { group_label: string }[]).map((g) => g.group_label))];
+    const labels = [...new Set((groups as { group_label: string }[]).map((g) => g.group_label))].sort();
 
-    const { data, error } = await supabase.rpc("get_tournament_standings", {
-      p_tournament_id: tournamentId,
-      p_group_label: labels[0],
-    });
+    const result: TournamentStandingsGroup[] = [];
 
-    if (error || !data) return [];
+    for (const label of labels) {
+      const { data, error } = await supabase.rpc("get_tournament_standings", {
+        p_tournament_id: tournamentId,
+        p_group_label: label,
+      });
 
-    const teamIds = (data as Record<string, unknown>[]).map((row) => row.team_id as string);
-    const { data: teamsData } = await supabase
-      .from("teams")
-      .select("*")
-      .in("id", teamIds);
+      if (error || !data || (data as unknown[]).length === 0) continue;
 
-    const teamsMap = new Map<string, Team>(
-      ((teamsData as Record<string, unknown>[]) ?? []).map((t) => [
-        t.id as string,
-        mapTeam(t),
-      ])
-    );
+      const teamIds = (data as Record<string, unknown>[]).map((row) => row.team_id as string);
+      const { data: teamsData } = await supabase
+        .from("teams")
+        .select("*")
+        .in("id", teamIds);
 
-    return (data as Record<string, unknown>[]).map((row) => ({
-      rank: row.rank as number,
-      team_id: row.team_id as string,
-      team: teamsMap.get(row.team_id as string) ?? {
-        id: row.team_id as string,
-        name: row.name as string,
-        short_name: (row.name as string).substring(0, 3).toUpperCase(),
-        area: "",
-        format: "",
-        emoji: "⚽",
-        color: "#2E7D32",
-        description: "",
-        open_spots: 0,
-        wins: 0,
-        draws: 0,
-        losses: 0,
-        goals_for: 0,
-        goals_against: 0,
-        points: 0,
-        created_at: "",
-      },
-      played: row.played as number,
-      won: row.w as number,
-      drawn: row.d as number,
-      lost: row.l as number,
-      goals_for: row.gf as number,
-      goals_against: row.ga as number,
-      goal_diff: row.gd as number,
-      points: row.pts as number,
-    }));
+      const teamsMap = new Map<string, Team>(
+        ((teamsData as Record<string, unknown>[]) ?? []).map((t) => [
+          t.id as string,
+          mapTeam(t),
+        ])
+      );
+
+      const standings: TournamentStanding[] = (data as Record<string, unknown>[]).map((row) => ({
+        rank: row.rank as number,
+        team_id: row.team_id as string,
+        team: teamsMap.get(row.team_id as string) ?? {
+          id: row.team_id as string,
+          name: row.name as string,
+          short_name: (row.name as string).substring(0, 3).toUpperCase(),
+          area: "",
+          format: "",
+          emoji: "⚽",
+          color: "#2E7D32",
+          description: "",
+          open_spots: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          goals_for: 0,
+          goals_against: 0,
+          points: 0,
+          created_at: "",
+        },
+        played: row.played as number,
+        won: row.w as number,
+        drawn: row.d as number,
+        lost: row.l as number,
+        goals_for: row.gf as number,
+        goals_against: row.ga as number,
+        goal_diff: row.gd as number,
+        points: row.pts as number,
+      }));
+
+      result.push({ groupLabel: `Group ${label}`, standings });
+    }
+
+    return result;
   }
 
   // Registration phase: show enrolled teams as standings (0 stats until tournament starts)
@@ -247,7 +255,7 @@ export async function getTournamentStandings(
 
   const teams = ((teamsData as Record<string, unknown>[]) ?? []).map(mapTeam);
 
-  return teams.map((team, i) => ({
+  const standings: TournamentStanding[] = teams.map((team, i) => ({
     rank: i + 1,
     team_id: team.id,
     team,
@@ -260,6 +268,8 @@ export async function getTournamentStandings(
     goal_diff: 0,
     points: 0,
   }));
+
+  return [{ groupLabel: "", standings }];
 }
 
 export async function getTournamentMatches(

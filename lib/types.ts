@@ -141,6 +141,11 @@ export interface TournamentStanding {
   points: number;
 }
 
+export interface TournamentStandingsGroup {
+  groupLabel: string;
+  standings: TournamentStanding[];
+}
+
 export interface AreaGroup {
   city: string;
   areas: string[];

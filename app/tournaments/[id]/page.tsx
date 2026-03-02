@@ -175,7 +175,7 @@ export default async function TournamentDetailPage({
         )}
 
         <TournamentStandings
-          standings={standings}
+          standingsGroups={standings}
           title={tournament.status === "upcoming" ? "Enrolled Teams" : "Standings"}
         />
         <TournamentFixtures
@@ -185,7 +185,7 @@ export default async function TournamentDetailPage({
         />
         <TournamentScorers scorers={scorers} />
 
-        {standings.length === 0 && matches.length === 0 && scorers.length === 0 && (
+        {standings.every((g) => g.standings.length === 0) && matches.length === 0 && scorers.length === 0 && (
           <section className="px-5 py-8 flex flex-col items-center gap-3 text-center">
             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
               <Trophy size={20} className="text-muted-foreground" />
