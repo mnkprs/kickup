@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Match, Team } from "@/lib/types";
+import type { Match, MatchTournament, Team } from "@/lib/types";
 
 // DB match statuses that map to "upcoming" in the UI
 const UPCOMING_STATUSES = ["pending_challenge", "scheduling", "pre_match"];
@@ -34,7 +34,10 @@ function mapTeam(row: Record<string, unknown>): Team {
   };
 }
 
-function mapMatch(row: Record<string, unknown>): Match {
+function mapMatch(
+  row: Record<string, unknown>,
+  tournament?: MatchTournament | null
+): Match {
   const homeTeamRow = row.home_team as Record<string, unknown>;
   const awayTeamRow = row.away_team as Record<string, unknown>;
   const dbStatus = row.status as string;
@@ -54,7 +57,32 @@ function mapMatch(row: Record<string, unknown>): Match {
     home_score: row.home_score as number | null,
     away_score: row.away_score as number | null,
     created_at: row.created_at as string,
+    tournament: tournament ?? null,
   };
+}
+
+/** Fetch tournament info for matches that belong to a registered tournament */
+export async function getTournamentsForMatches(
+  matchIds: string[]
+): Promise<Map<string, MatchTournament>> {
+  if (matchIds.length === 0) return new Map();
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("tournament_matches")
+    .select("match_id, tournaments(id, name)")
+    .in("match_id", matchIds);
+
+  const map = new Map<string, MatchTournament>();
+  for (const row of (data ?? []) as {
+    match_id: string;
+    tournaments: { id: string; name: string } | null;
+  }[]) {
+    const t = row.tournaments;
+    if (t?.id && t?.name) {
+      map.set(row.match_id, { id: t.id, name: t.name });
+    }
+  }
+  return map;
 }
 
 const MATCH_SELECT = `
@@ -72,7 +100,9 @@ export async function getMatch(id: string): Promise<Match | null> {
     .single();
 
   if (error || !data) return null;
-  return mapMatch(data as Record<string, unknown>);
+  const tournamentMap = await getTournamentsForMatches([id]);
+  const tournament = tournamentMap.get(id) ?? null;
+  return mapMatch(data as Record<string, unknown>, tournament);
 }
 
 export async function getMatchesForTeam(teamId: string): Promise<Match[]> {
@@ -84,7 +114,9 @@ export async function getMatchesForTeam(teamId: string): Promise<Match[]> {
     .order("match_date", { ascending: false });
 
   if (error || !data) return [];
-  return (data as Record<string, unknown>[]).map(mapMatch);
+  const rows = data as Record<string, unknown>[];
+  const tournamentMap = await getTournamentsForMatches(rows.map((r) => r.id as string));
+  return rows.map((r) => mapMatch(r, tournamentMap.get(r.id as string) ?? null));
 }
 
 export async function getUpcomingMatches(teamId?: string | null): Promise<Match[]> {
@@ -101,7 +133,9 @@ export async function getUpcomingMatches(teamId?: string | null): Promise<Match[
 
   const { data, error } = await query.limit(5);
   if (error || !data) return [];
-  return (data as Record<string, unknown>[]).map(mapMatch);
+  const rows = data as Record<string, unknown>[];
+  const tournamentMap = await getTournamentsForMatches(rows.map((r) => r.id as string));
+  return rows.map((r) => mapMatch(r, tournamentMap.get(r.id as string) ?? null));
 }
 
 export async function getRecentResults(teamId?: string | null): Promise<Match[]> {
@@ -118,7 +152,9 @@ export async function getRecentResults(teamId?: string | null): Promise<Match[]>
 
   const { data, error } = await query.limit(10);
   if (error || !data) return [];
-  return (data as Record<string, unknown>[]).map(mapMatch);
+  const rows = data as Record<string, unknown>[];
+  const tournamentMap = await getTournamentsForMatches(rows.map((r) => r.id as string));
+  return rows.map((r) => mapMatch(r, tournamentMap.get(r.id as string) ?? null));
 }
 
 /** Goals per player (scorer_id) for a specific match */

@@ -1,5 +1,5 @@
 import type { Match } from "@/lib/types";
-import { MapPin, Clock, ChevronRight } from "lucide-react";
+import { MapPin, Clock, ChevronRight, Trophy } from "lucide-react";
 import { LiveDot } from "@/components/live-dot";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
@@ -51,12 +51,26 @@ function UpcomingMatchCard({ match }: { match: Match }) {
           <TeamBadge shortName={match.away_team.short_name} />
         </div>
       </div>
-      {match.location && (
-        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border">
-          <MapPin size={12} className="text-muted-foreground shrink-0" />
-          <span className="text-muted-foreground text-xs truncate">
-            {match.location}
-          </span>
+      {(match.location || match.tournament) && (
+        <div className="flex flex-col gap-1.5 mt-3 pt-3 border-t border-border">
+          {match.tournament && (
+            <Link
+              href={`/tournaments/${match.tournament.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1.5 text-draw hover:text-draw/80 transition-colors"
+            >
+              <Trophy size={12} className="shrink-0" />
+              <span className="text-xs font-medium truncate">{match.tournament.name}</span>
+            </Link>
+          )}
+          {match.location && (
+            <div className="flex items-center gap-1.5">
+              <MapPin size={12} className="text-muted-foreground shrink-0" />
+              <span className="text-muted-foreground text-xs truncate">
+                {match.location}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </Link>

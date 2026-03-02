@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MapPin, Clock, Calendar, Check, ChevronRight } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Calendar, Check, ChevronRight, Trophy } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { NotificationsButton } from "@/components/notifications-button";
@@ -364,6 +364,16 @@ export function MatchDetailClient({
         {/* Match info */}
         <div className="px-5">
           <div className="rounded-xl bg-card border border-border shadow-card divide-y divide-border">
+            {match.tournament && (
+              <Link
+                href={`/tournaments/${match.tournament.id}`}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+              >
+                <Trophy size={15} className="text-draw shrink-0" />
+                <span className="text-foreground text-sm font-medium">{match.tournament.name}</span>
+                <ChevronRight size={14} className="text-muted-foreground ml-auto shrink-0" />
+              </Link>
+            )}
             <div className="flex items-center gap-3 px-4 py-3">
               <span className="text-muted-foreground text-xs font-medium w-[15px] text-center shrink-0">⚽</span>
               <span className="text-foreground text-sm">{match.format}</span>

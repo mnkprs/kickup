@@ -7,6 +7,7 @@ import type { Match } from "@/lib/types";
 import { MatchesHeader, type MatchFilters } from "@/components/matches-header";
 import { MatchesUpcoming } from "@/components/matches-upcoming";
 import { MatchesResults } from "@/components/matches-results";
+import type { AreaGroup } from "@/lib/types";
 
 interface MatchesPageClientProps {
   upcomingMatches: Match[];
@@ -14,6 +15,7 @@ interface MatchesPageClientProps {
   myUpcomingMatches: Match[] | null;
   myRecentResults: Match[] | null;
   teamId: string | null;
+  areaGroups: AreaGroup[];
 }
 
 export function MatchesPageClient({
@@ -22,6 +24,7 @@ export function MatchesPageClient({
   myUpcomingMatches,
   myRecentResults,
   teamId,
+  areaGroups,
 }: MatchesPageClientProps) {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
@@ -31,6 +34,8 @@ export function MatchesPageClient({
   const [filters, setFilters] = useState<MatchFilters>({
     format: "All",
     myMatchesOnly: myTeamParam === "1" && !!teamId,
+    tournamentId: "",
+    city: "",
   });
 
   useEffect(() => {
@@ -44,19 +49,59 @@ export function MatchesPageClient({
     ? myRecentResults
     : recentResults;
 
-  const filteredUpcoming = useMemo(() =>
-    filters.format === "All"
-      ? baseUpcoming
-      : baseUpcoming.filter((m) => m.format === filters.format),
-    [baseUpcoming, filters.format]
-  );
+  const availableTournaments = useMemo(() => {
+    const all = [...baseUpcoming, ...baseResults];
+    const seen = new Set<string>();
+    const list: { id: string; name: string }[] = [];
+    for (const m of all) {
+      if (m.tournament && !seen.has(m.tournament.id)) {
+        seen.add(m.tournament.id);
+        list.push(m.tournament);
+      }
+    }
+    return list.sort((a, b) => a.name.localeCompare(b.name));
+  }, [baseUpcoming, baseResults]);
 
-  const filteredResults = useMemo(() =>
-    filters.format === "All"
-      ? baseResults
-      : baseResults.filter((m) => m.format === filters.format),
-    [baseResults, filters.format]
-  );
+  const cityAreas = useMemo(() => {
+    if (!filters.city) return null;
+    return areaGroups.find((g) => g.city === filters.city)?.areas ?? null;
+  }, [areaGroups, filters.city]);
+
+  const filteredUpcoming = useMemo(() => {
+    let list = baseUpcoming;
+    if (filters.format !== "All") {
+      list = list.filter((m) => m.format === filters.format);
+    }
+    if (filters.tournamentId) {
+      list = list.filter((m) => m.tournament?.id === filters.tournamentId);
+    }
+    if (cityAreas) {
+      list = list.filter(
+        (m) =>
+          (m.home_team.area && cityAreas.includes(m.home_team.area)) ||
+          (m.away_team.area && cityAreas.includes(m.away_team.area))
+      );
+    }
+    return list;
+  }, [baseUpcoming, filters.format, filters.tournamentId, cityAreas]);
+
+  const filteredResults = useMemo(() => {
+    let list = baseResults;
+    if (filters.format !== "All") {
+      list = list.filter((m) => m.format === filters.format);
+    }
+    if (filters.tournamentId) {
+      list = list.filter((m) => m.tournament?.id === filters.tournamentId);
+    }
+    if (cityAreas) {
+      list = list.filter(
+        (m) =>
+          (m.home_team.area && cityAreas.includes(m.home_team.area)) ||
+          (m.away_team.area && cityAreas.includes(m.away_team.area))
+      );
+    }
+    return list;
+  }, [baseResults, filters.format, filters.tournamentId, cityAreas]);
 
   return (
     <>
@@ -68,6 +113,8 @@ export function MatchesPageClient({
         showFilters={showFilters}
         onToggleFilters={() => setShowFilters((v) => !v)}
         teamId={teamId}
+        areaGroups={areaGroups}
+        availableTournaments={availableTournaments}
       />
 
       <main className="flex flex-col gap-6 pb-24 pt-4">

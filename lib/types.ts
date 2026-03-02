@@ -65,6 +65,11 @@ export interface TeamMember {
   profile?: Profile;
 }
 
+export interface MatchTournament {
+  id: string;
+  name: string;
+}
+
 export interface Match {
   id: string;
   home_team_id: string;
@@ -82,6 +87,8 @@ export interface Match {
   home_score: number | null;
   away_score: number | null;
   created_at: string;
+  /** When the match belongs to a registered tournament */
+  tournament?: MatchTournament | null;
 }
 
 export interface MatchEvent {

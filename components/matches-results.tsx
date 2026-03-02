@@ -1,6 +1,7 @@
 import type { Match } from "@/lib/types";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
+import { Trophy } from "lucide-react";
 
 function getResultForTeam(match: Match, teamId: string | null | undefined) {
   if (!teamId || match.home_score === null || match.away_score === null) return null;
@@ -74,11 +75,23 @@ function ResultMatchCard({ match, teamId }: { match: Match; teamId?: string | nu
         </div>
       </div>
 
-      {match.location && (
-        <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border">
-          <span className="text-muted-foreground text-xs truncate">
-            {match.location}
-          </span>
+      {(match.location || match.tournament) && (
+        <div className="flex flex-col items-center gap-1.5 pt-2 border-t border-border">
+          {match.tournament && (
+            <Link
+              href={`/tournaments/${match.tournament.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1.5 text-draw hover:text-draw/80 transition-colors"
+            >
+              <Trophy size={12} className="shrink-0" />
+              <span className="text-xs font-medium truncate">{match.tournament.name}</span>
+            </Link>
+          )}
+          {match.location && (
+            <span className="text-muted-foreground text-xs truncate">
+              {match.location}
+            </span>
+          )}
         </div>
       )}
     </Link>
