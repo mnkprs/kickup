@@ -36,7 +36,7 @@ export function ProfileActivity({ matches, teamId }: ProfileActivityProps) {
   return (
     <section className="px-5">
       <h2 className="text-foreground font-semibold text-sm mb-3">Recent Activity</h2>
-      <div className="rounded-xl bg-card border border-border p-4">
+      <div className="rounded-xl bg-card border border-border shadow-card p-4">
         {completedMatches.length === 0 ? (
           <p className="text-muted-foreground text-sm text-center py-4">No recent activity yet</p>
         ) : (

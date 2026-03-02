@@ -5,6 +5,7 @@ import {
   getTournamentMatches,
   getTournamentTopScorers,
 } from "@/lib/db/tournaments";
+import { getProfile } from "@/lib/db/profiles";
 import { ArrowLeft, Trophy, Calendar, Users, MapPin } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
@@ -12,6 +13,9 @@ import { createClient } from "@/lib/supabase/server";
 import { TournamentStandings } from "@/components/tournament-standings";
 import { TournamentFixtures } from "@/components/tournament-fixtures";
 import { TournamentScorers } from "@/components/tournament-scorers";
+import { TournamentPendingRegistrations } from "@/components/tournament-pending-registrations";
+import { TournamentOrganizerControls } from "@/components/tournament-organizer-controls";
+import { TournamentEditButton } from "@/components/tournament-edit-button";
 import { RegisterTournamentButton } from "@/components/register-tournament-button";
 
 function getStatusStyle(status: string) {
@@ -46,12 +50,22 @@ export default async function TournamentDetailPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [tournament, standings, matches, scorers] = await Promise.all([
+  const [tournament, standings, matches, scorers, profile, areasRes] = await Promise.all([
     getTournament(id),
     getTournamentStandings(id),
     getTournamentMatches(id),
     getTournamentTopScorers(id),
+    user ? getProfile(user.id) : null,
+    supabase.from("areas").select("name, city").order("city").order("sort"),
   ]);
+  const areasData = areasRes.data;
+
+  const cityMap: Record<string, string[]> = {};
+  for (const row of areasData ?? []) {
+    if (!cityMap[row.city]) cityMap[row.city] = [];
+    cityMap[row.city].push(row.name);
+  }
+  const areaGroups = Object.entries(cityMap).map(([city, areas]) => ({ city, areas }));
 
   if (!tournament) notFound();
 
@@ -79,6 +93,9 @@ export default async function TournamentDetailPage({
   }
 
   const statusStyle = getStatusStyle(tournament.status);
+  const isOrganizer = user?.id === tournament.organizer_id;
+  const isAdmin = profile?.is_admin === true;
+  const canManageRegistrations = isOrganizer || isAdmin;
 
   return (
     <>
@@ -105,6 +122,9 @@ export default async function TournamentDetailPage({
               {tournament.name}
             </h1>
           </div>
+          {canManageRegistrations && (
+            <TournamentEditButton tournament={tournament} areaGroups={areaGroups} />
+          )}
         </div>
 
         {/* Register button (upcoming only, user has a team) */}
@@ -158,16 +178,42 @@ export default async function TournamentDetailPage({
           </section>
         )}
 
-        {standings.length > 0 && <TournamentStandings standings={standings} />}
-        {matches.length > 0 && <TournamentFixtures matches={matches} />}
-        {scorers.length > 0 && <TournamentScorers scorers={scorers} />}
+        {canManageRegistrations && tournament.pending_registrations.length > 0 && (
+          <TournamentPendingRegistrations
+            registrations={tournament.pending_registrations}
+            tournamentId={id}
+          />
+        )}
 
-        {standings.length === 0 && matches.length === 0 && (
-          <section className="px-5 py-12 flex flex-col items-center gap-3 text-center">
+        {canManageRegistrations && tournament.raw_status && tournament.raw_status !== "completed" && (
+          <TournamentOrganizerControls
+            tournamentId={id}
+            rawStatus={tournament.raw_status}
+            teamsCount={tournament.teams_count}
+          />
+        )}
+
+        <TournamentStandings
+          standings={standings}
+          title={tournament.status === "upcoming" ? "Enrolled Teams" : "Standings"}
+        />
+        <TournamentFixtures
+          matches={matches}
+          tournamentId={id}
+          canManageSchedule={canManageRegistrations && tournament.status === "in_progress"}
+        />
+        <TournamentScorers scorers={scorers} />
+
+        {standings.length === 0 && matches.length === 0 && scorers.length === 0 && (
+          <section className="px-5 py-8 flex flex-col items-center gap-3 text-center">
             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
               <Trophy size={20} className="text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground text-sm">No data available yet</p>
+            <p className="text-muted-foreground text-sm">
+              {tournament.status === "upcoming"
+                ? "Waiting for teams to join. Start the tournament when ready."
+                : "No data available yet"}
+            </p>
           </section>
         )}
       </main>

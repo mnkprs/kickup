@@ -13,7 +13,7 @@ import {
   Swords,
 } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationsButton } from "@/components/notifications-button";
 
 const filters = ["All", "My Team", "Open", "vs Ready"];
 
@@ -75,7 +75,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
             <h1 className="text-foreground font-semibold text-lg">Teams</h1>
           </div>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
+            <NotificationsButton />
             <button
               onClick={() => setShowSearch(!showSearch)}
               className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
@@ -138,7 +138,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
           return (
             <Link key={team.id} href={`/teams/${team.id}`}>
               <div
-                className={`rounded-xl bg-card border p-4 cursor-pointer group hover:border-accent/40 transition-colors ${
+                className={`rounded-xl bg-card border border-border shadow-card p-4 cursor-pointer group hover:border-accent/40 transition-colors ${
                   isMyTeam ? "border-accent/30" : "border-border"
                 }`}
               >

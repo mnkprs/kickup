@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Plus, X, Swords, Trophy, Users, UserSearch } from "lucide-react";
+import { Plus, X, Swords, Trophy, Users, UserSearch, List } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const HIDDEN_ON = ["/auth"];
@@ -11,7 +11,7 @@ export function CreateMatchFab() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [isFieldOwner, setIsFieldOwner] = useState(false);
+  const [canCreateTournament, setCanCreateTournament] = useState(false);
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
 
@@ -21,10 +21,12 @@ export function CreateMatchFab() {
       if (!user) return;
       supabase
         .from("profiles")
-        .select("is_field_owner")
+        .select("is_field_owner, is_admin")
         .eq("id", user.id)
         .single()
-        .then(({ data }) => setIsFieldOwner(data?.is_field_owner ?? false));
+        .then(({ data }) =>
+          setCanCreateTournament(data?.is_field_owner ?? data?.is_admin ?? false)
+        );
     });
   }, []);
 
@@ -47,9 +49,10 @@ export function CreateMatchFab() {
 
   const actions = [
     { label: "Challenge a team", icon: Swords, href: "/matches/challenge" },
-    ...(isFieldOwner ? [{ label: "Create league", icon: Trophy, href: "/tournaments/create" }] : []),
+    { label: "Find players", icon: UserSearch, href: "/find-players" },
+    ...(canCreateTournament ? [{ label: "Create league", icon: Trophy, href: "/tournaments/create" }] : []),
     { label: "Create a team", icon: Users, href: "/teams/create" },
-    { label: "Browse teams", icon: UserSearch, href: "/teams" },
+    { label: "Browse teams", icon: List, href: "/teams" },
   ];
 
   function handleAction(href: string) {

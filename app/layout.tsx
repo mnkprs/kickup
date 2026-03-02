@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { BottomNav } from "@/components/bottom-nav";
 import { CreateMatchFab } from "@/components/create-match-fab";
+import { getPreferredThemeAction } from "@/app/actions/profile";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F7F8FA" },
-    { media: "(prefers-color-scheme: dark)", color: "#111111" },
+    { media: "(prefers-color-scheme: dark)", color: "#171717" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -24,15 +25,16 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const defaultTheme = await getPreferredThemeAction();
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
-        <ThemeProvider>
+        <ThemeProvider defaultTheme={defaultTheme}>
           <div className="min-h-dvh bg-background max-w-lg mx-auto relative">
             {children}
             <BottomNav />

@@ -73,12 +73,86 @@ export async function signOutAction() {
   redirect("/auth/login");
 }
 
+export async function getNotificationsAction() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  return (data ?? []) as import("@/lib/types").Notification[];
+}
+
 export async function markNotificationsReadAction() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
   await supabase.from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
   revalidatePath("/");
+}
+
+export async function updateFreelancerAction(data: {
+  is_freelancer: boolean;
+  freelancer_until?: string | null;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      is_freelancer: data.is_freelancer,
+      freelancer_until: data.freelancer_until || null,
+    })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/profile");
+  revalidatePath("/find-players");
+  return { success: true };
+}
+
+export async function getPreferredThemeAction(): Promise<"light" | "dark"> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return "dark";
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("preferred_theme")
+    .eq("id", user.id)
+    .single();
+
+  const theme = data?.preferred_theme as "light" | "dark" | null;
+  return theme === "light" || theme === "dark" ? theme : "dark";
+}
+
+export async function updateThemeAction(theme: "light" | "dark") {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ preferred_theme: theme })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/");
+  revalidatePath("/profile");
+  return { success: true };
 }
 
 export async function applyForFieldOwnerAction(message: string) {

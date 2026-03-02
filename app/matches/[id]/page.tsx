@@ -26,20 +26,36 @@ export default async function MatchDetailPage({
   // Determine which team the current user belongs to in this match
   let userTeamId: string | null = null;
   let teamMembers: { id: string; full_name: string; avatar_initials: string; avatar_color: string }[] = [];
+  let isTournamentOrganizer = false;
 
   if (user) {
-    const { data: membership } = await supabase
-      .from("team_members")
-      .select("team_id")
-      .eq("player_id", user.id)
-      .in("team_id", [match.home_team_id, match.away_team_id])
-      .maybeSingle();
+    const [membershipRes, tmRes, profileRes] = await Promise.all([
+      supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("player_id", user.id)
+        .in("team_id", [match.home_team_id, match.away_team_id])
+        .maybeSingle(),
+      supabase
+        .from("tournament_matches")
+        .select("tournament_id, tournaments(organizer_id)")
+        .eq("match_id", id)
+        .maybeSingle(),
+      supabase.from("profiles").select("is_admin").eq("id", user.id).single(),
+    ]);
 
-    userTeamId = membership?.team_id ?? null;
+    userTeamId = membershipRes.data?.team_id ?? null;
 
-    // Load team members for MVP selection when submitting result
-    if (userTeamId && match.raw_status === "pre_match") {
-      const members = await getTeamMembers(userTeamId);
+    if (tmRes.data) {
+      const tournament = (tmRes.data as { tournaments: { organizer_id: string } | null }).tournaments;
+      isTournamentOrganizer =
+        (tournament?.organizer_id === user.id) || (profileRes.data?.is_admin === true);
+    }
+
+    // Load team members for MVP selection when submitting result (captain or organizer)
+    if ((userTeamId || isTournamentOrganizer) && match.raw_status === "pre_match") {
+      const teamIdForMembers = userTeamId ?? match.home_team_id;
+      const members = await getTeamMembers(teamIdForMembers);
       teamMembers = members.map((m) => ({
         id: m.profile.id,
         full_name: m.profile.full_name,
@@ -73,6 +89,7 @@ export default async function MatchDetailPage({
       homeRoster={homeRoster}
       awayRoster={awayRoster}
       goalsByPlayer={Object.fromEntries(goalsByPlayer)}
+      isTournamentOrganizer={isTournamentOrganizer}
     />
   );
 }

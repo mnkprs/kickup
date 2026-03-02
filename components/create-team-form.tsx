@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Users } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationsButton } from "@/components/notifications-button";
 import { ColorSwatchPicker } from "@/components/color-swatch-picker";
 import { AreaGroupSelect } from "@/components/area-group-select";
 import { createTeamAction } from "@/app/actions/teams";
@@ -72,12 +72,12 @@ export function CreateTeamForm({ areaGroups, emojis, colors }: CreateTeamFormPro
           </Link>
           <h1 className="text-foreground font-semibold text-lg">Create Team</h1>
         </div>
-        <ThemeToggle />
+        <NotificationsButton />
       </header>
 
       <main className="px-5 pb-24 flex flex-col gap-6">
         {/* Live preview badge */}
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border">
+        <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border shadow-card">
           <div
             className="h-14 w-14 rounded-full flex items-center justify-center text-2xl shrink-0"
             style={{ backgroundColor: color + "33" }}

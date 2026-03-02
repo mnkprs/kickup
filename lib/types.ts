@@ -11,12 +11,12 @@ export interface Profile {
   area: string | null;
   bio: string;
   is_freelancer: boolean;
+  freelancer_until?: string | null;
   is_field_owner: boolean;
   is_admin: boolean;
   // aggregate stats
   matches_played: number;
   goals: number;
-  assists: number;
   wins: number;
   draws: number;
   losses: number;
@@ -28,6 +28,7 @@ export interface Profile {
   team_id?: string | null;
   joined_date?: string | null;
   created_at: string;
+  preferred_theme?: "light" | "dark";
 }
 
 export interface Team {
@@ -51,6 +52,7 @@ export interface Team {
   captain_id?: string | null;
   home_ground?: string | null;
   searching_for_opponent?: boolean;
+  searching_for_players?: boolean;
   created_at: string;
 }
 
@@ -88,10 +90,14 @@ export interface MatchEvent {
   team_id: string;
   scorer_id: string;
   scorer?: Profile;
-  assist_id?: string | null;
-  assister?: Profile | null;
   minute: number | null;
   created_at: string;
+}
+
+export interface TournamentPendingRegistration {
+  id: string;
+  team_id: string;
+  team: Team;
 }
 
 export interface Tournament {
@@ -111,10 +117,13 @@ export interface Tournament {
   end_date: string | null;
   // normalized status: 'upcoming' | 'in_progress' | 'completed'
   status: "upcoming" | "in_progress" | "completed";
+  // raw DB status for organizer controls: 'registration' | 'group_stage' | 'knockout_stage' | 'completed'
+  raw_status?: string;
   teams_count: number;
   matches_played: number;
   total_matches: number;
   enrolled_teams: Team[];
+  pending_registrations: TournamentPendingRegistration[];
   created_at: string;
 }
 
@@ -163,5 +172,4 @@ export interface TopScorer {
   player: Profile;
   team_short_name: string;
   goals: number;
-  assists: number;
 }

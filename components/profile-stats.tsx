@@ -1,5 +1,5 @@
 import type { Profile } from "@/lib/types";
-import { Crosshair, Handshake, Swords, Trophy, ShieldAlert, Star } from "lucide-react";
+import { Crosshair, Swords, Trophy, ShieldAlert, Star } from "lucide-react";
 
 interface ProfileStatsProps {
   profile: Profile;
@@ -8,7 +8,6 @@ interface ProfileStatsProps {
 export function ProfileStats({ profile }: ProfileStatsProps) {
   const stats = [
     { label: "Goals", value: profile.goals, icon: Crosshair, iconClass: "text-draw", bgClass: "bg-draw/10" },
-    { label: "Assists", value: profile.assists, icon: Handshake, iconClass: "text-info", bgClass: "bg-info/10" },
     { label: "Matches", value: profile.matches_played, icon: Swords, iconClass: "text-muted-foreground", bgClass: "bg-muted" },
     { label: "Wins", value: profile.wins, icon: Trophy, iconClass: "text-win", bgClass: "bg-win/10" },
     { label: "Cards", value: profile.yellow_cards + profile.red_cards, icon: ShieldAlert, iconClass: "text-warning", bgClass: "bg-warning/10" },
@@ -22,7 +21,7 @@ export function ProfileStats({ profile }: ProfileStatsProps) {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border px-2 py-3"
+            className="flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border shadow-card px-2 py-3"
           >
             <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${stat.bgClass}`}>
               <stat.icon size={16} className={stat.iconClass} />

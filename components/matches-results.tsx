@@ -28,7 +28,7 @@ function ResultMatchCard({ match, teamId }: { match: Match; teamId?: string | nu
   const style = result ? resultStyles[result] : null;
 
   return (
-    <Link href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border p-4 hover:border-accent/40 transition-colors cursor-pointer group block">
+    <Link href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors cursor-pointer group block">
       <div className="flex items-center justify-between mb-3">
         <span className="text-muted-foreground text-xs">
           {match.date ? format(parseISO(match.date), "EEE, d MMM yyyy") : ""}

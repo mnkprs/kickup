@@ -113,7 +113,7 @@ function TournamentCard({
   const spotsLeft = tournament.max_teams - tournament.teams_count;
 
   return (
-    <Link href={`/tournaments/${tournament.id}`} className="rounded-xl bg-card border border-border p-4 cursor-pointer group hover:border-accent/40 transition-colors block">
+    <Link href={`/tournaments/${tournament.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 cursor-pointer group hover:border-accent/40 transition-colors block">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span

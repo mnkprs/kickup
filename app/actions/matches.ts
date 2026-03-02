@@ -117,3 +117,30 @@ export async function submitResultAction(data: {
   revalidatePath("/");
   return { success: true };
 }
+
+export async function organizerSubmitResultAction(data: {
+  matchId: string;
+  homeScore: number;
+  awayScore: number;
+  mvpId: string | null;
+  notes: string;
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase.rpc("organizer_submit_result", {
+    p_match_id: data.matchId,
+    p_home_score: data.homeScore,
+    p_away_score: data.awayScore,
+    p_mvp_id: data.mvpId,
+    p_notes: data.notes || null,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/matches/${data.matchId}`);
+  revalidatePath("/matches");
+  revalidatePath("/");
+  return { success: true };
+}

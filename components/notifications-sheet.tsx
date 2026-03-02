@@ -1,8 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
-import { X, Bell, Swords, CalendarClock, Trophy, Clock, CheckCircle2, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { X, Bell, Swords, CalendarClock, Trophy, Clock, CheckCircle2, Users, UserPlus } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { Notification } from "@/lib/types";
 import { markNotificationsReadAction } from "@/app/actions/profile";
@@ -15,13 +16,14 @@ function getNotificationHref(notif: Notification): string | null {
 }
 
 const TYPE_CONFIG: Record<string, { icon: typeof Bell; iconClass: string; bgClass: string }> = {
-  challenge:       { icon: Swords,        iconClass: "text-accent",     bgClass: "bg-accent/15" },
-  scheduling:      { icon: CalendarClock, iconClass: "text-draw",       bgClass: "bg-draw/15" },
-  result_confirmed:{ icon: CheckCircle2,  iconClass: "text-win",        bgClass: "bg-win/15" },
-  match_reminder:  { icon: Clock,         iconClass: "text-info",       bgClass: "bg-info/15" },
-  tournament_approved:{ icon: Trophy,     iconClass: "text-draw",       bgClass: "bg-draw/15" },
-  team_invite:     { icon: Users,         iconClass: "text-accent",     bgClass: "bg-accent/15" },
-  spot_applied:    { icon: Users,         iconClass: "text-muted-foreground", bgClass: "bg-muted" },
+  challenge:           { icon: Swords,        iconClass: "text-accent",     bgClass: "bg-accent/15" },
+  scheduling:          { icon: CalendarClock, iconClass: "text-draw",       bgClass: "bg-draw/15" },
+  result_confirmed:    { icon: CheckCircle2,  iconClass: "text-win",        bgClass: "bg-win/15" },
+  match_reminder:      { icon: Clock,         iconClass: "text-info",       bgClass: "bg-info/15" },
+  tournament_approved: { icon: Trophy,        iconClass: "text-draw",       bgClass: "bg-draw/15" },
+  team_invite:         { icon: Users,         iconClass: "text-accent",     bgClass: "bg-accent/15" },
+  team_seeking_players:{ icon: UserPlus,      iconClass: "text-accent",     bgClass: "bg-accent/15" },
+  spot_applied:        { icon: Users,         iconClass: "text-muted-foreground", bgClass: "bg-muted" },
 };
 
 function getConfig(type: string) {
@@ -32,22 +34,22 @@ interface NotificationsSheetProps {
   open: boolean;
   onClose: () => void;
   notifications: Notification[];
+  onMarkedRead?: () => void;
 }
 
-export function NotificationsSheet({ open, onClose, notifications }: NotificationsSheetProps) {
-  const [, startTransition] = useTransition();
+export function NotificationsSheet({ open, onClose, notifications, onMarkedRead }: NotificationsSheetProps) {
+  const router = useRouter();
 
-  function handleOpen() {
+  useEffect(() => {
+    if (!open) return;
     const hasUnread = notifications.some((n) => !n.read);
     if (hasUnread) {
-      startTransition(() => { markNotificationsReadAction(); });
+      onMarkedRead?.();
+      markNotificationsReadAction().then(() => router.refresh());
     }
-  }
+  }, [open, notifications, router, onMarkedRead]);
 
   if (!open) return null;
-
-  // Mark read on open
-  handleOpen();
 
   const unread = notifications.filter((n) => !n.read);
   const read = notifications.filter((n) => n.read);
@@ -113,7 +115,7 @@ export function NotificationsSheet({ open, onClose, notifications }: Notificatio
                       )}
                     </>
                   );
-                  const className = `rounded-xl border p-4 flex items-start gap-3 transition-colors ${
+                  const className = `rounded-xl border p-4 flex items-start gap-3 transition-colors shadow-card ${
                     !notif.read ? "bg-card border-accent/20" : "bg-card border-border"
                   } ${href ? "cursor-pointer hover:border-accent/40" : ""}`;
                   return href ? (

@@ -2,12 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, Swords, Trophy, Users, User } from "lucide-react";
+import { Home, Swords, Trophy, Users, User, UserSearch } from "lucide-react";
 
 const tabs = [
   { label: "Home", icon: Home, href: "/", match: "/" },
   { label: "Matches", icon: Swords, href: "/matches", match: "/matches" },
   { label: "Teams", icon: Users, href: "/teams", match: "/teams" },
+  { label: "Players", icon: UserSearch, href: "/find-players", match: "/find-players" },
   { label: "Leagues", icon: Trophy, href: "/tournaments", match: "/tournaments" },
   { label: "Profile", icon: User, href: "/profile", match: "/profile" },
 ];

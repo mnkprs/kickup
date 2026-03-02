@@ -9,7 +9,7 @@
   ├────────────────────┼─────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┤
   │ Propose Time/Venue │ Match detail        │ Captain sets date/time/location on a scheduling match                                          │
   ├────────────────────┼─────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ Submit Result      │ /matches/:id/result │ Score entry, MVP pick, goal/assist tracking per player                                         │
+  │ Submit Result      │ /matches/:id/result │ Score entry, MVP pick, goal tracking per player                                                 │
   ├────────────────────┼─────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┤
   │ Create Tournament  │ /tournaments/create │ Form for field owners only: name, format, max teams, dates, area, prize                        │
   ├────────────────────┼─────────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────┤

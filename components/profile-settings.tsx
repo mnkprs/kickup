@@ -14,21 +14,27 @@ import {
   Clock,
   XCircle,
   CheckCircle2,
+  UserPlus,
+  Sun,
+  Moon,
 } from "lucide-react";
 import Link from "next/link";
 import type { Profile, AreaGroup } from "@/lib/types";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationsButton } from "@/components/notifications-button";
 import { ColorSwatchPicker } from "@/components/color-swatch-picker";
 import { AreaGroupSelect } from "@/components/area-group-select";
 import {
   updateProfileAction,
+  updateFreelancerAction,
   updateEmailAction,
   updatePasswordAction,
   signOutAction,
   applyForFieldOwnerAction,
+  updateThemeAction,
 } from "@/app/actions/profile";
+import { useTheme } from "next-themes";
 
-type Section = null | "player" | "security" | "field-owner" | "account";
+type Section = null | "player" | "freelancer" | "security" | "field-owner" | "account" | "appearance";
 
 interface ProfileExtra {
   nationality: string | null;
@@ -125,11 +131,23 @@ export function ProfileSettings({
   const [securityMsg, setSecurityMsg] = useState("");
   const [securityError, setSecurityError] = useState("");
 
+  // Freelancer state
+  const [isFreelancer, setIsFreelancer] = useState(profile.is_freelancer);
+  const [freelancerUntil, setFreelancerUntil] = useState(
+    (profile as { freelancer_until?: string | null }).freelancer_until ?? ""
+  );
+  const [freelancerSaving, setFreelancerSaving] = useState(false);
+  const [freelancerError, setFreelancerError] = useState("");
+
   // Field owner state
   const [applyMessage, setApplyMessage] = useState("");
   const [applySaving, setApplySaving] = useState(false);
   const [applyError, setApplyError] = useState("");
   const [application, setApplication] = useState(ownerApplication);
+
+  // Appearance state
+  const { setTheme } = useTheme();
+  const preferredTheme = (profile.preferred_theme ?? "dark") as "light" | "dark";
 
   async function savePlayer() {
     setPlayerSaving(true);
@@ -176,6 +194,22 @@ export function ProfileSettings({
     setSecurityMsg("Password updated");
   }
 
+  async function saveFreelancer() {
+    setFreelancerSaving(true);
+    setFreelancerError("");
+    const result = await updateFreelancerAction({
+      is_freelancer: isFreelancer,
+      freelancer_until: freelancerUntil || null,
+    });
+    setFreelancerSaving(false);
+    if (result.error) {
+      setFreelancerError(result.error);
+      return;
+    }
+    router.refresh();
+    setSection(null);
+  }
+
   async function applyForOwner() {
     setApplySaving(true);
     setApplyError("");
@@ -206,12 +240,12 @@ export function ProfileSettings({
             </Link>
             <h1 className="text-foreground font-semibold text-lg">Settings</h1>
           </div>
-          <ThemeToggle />
+          <NotificationsButton />
         </header>
 
         <main className="px-5 pb-24 flex flex-col gap-4">
           {/* Avatar preview */}
-          <div className="flex items-center gap-4 py-4 px-4 rounded-xl bg-card border border-border">
+          <div className="flex items-center gap-4 py-4 px-4 rounded-xl bg-card border border-border shadow-card">
             <div
               className="h-14 w-14 rounded-full flex items-center justify-center shrink-0 ring-2 ring-accent/20"
               style={{ backgroundColor: avatarColor }}
@@ -225,9 +259,11 @@ export function ProfileSettings({
           </div>
 
           {/* Menu */}
-          <div className="rounded-xl bg-card border border-border overflow-hidden">
+          <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">
             {[
               { key: "player", icon: User, label: "Player Info", desc: "Name, position, area, bio" },
+              { key: "appearance", icon: Sun, label: "Appearance", desc: preferredTheme === "dark" ? "Dark mode" : "Light mode" },
+              { key: "freelancer", icon: UserPlus, label: "Find a Team", desc: profile.is_freelancer ? "Available for teams" : "Flag yourself as looking for a team" },
               { key: "security", icon: Shield, label: "Security", desc: "Email and password" },
               { key: "field-owner", icon: Trophy, label: "Field Owner", desc: profile.is_field_owner ? "Active" : application ? "Application pending" : "Apply to become a field owner" },
             ].map(({ key, icon: Icon, label, desc }, i, arr) => (
@@ -251,7 +287,7 @@ export function ProfileSettings({
           {/* Sign out */}
           <button
             onClick={() => signOutAction()}
-            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl bg-card border border-border hover:bg-muted/50 transition-colors text-left"
+            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl bg-card border border-border shadow-card hover:bg-muted/50 transition-colors text-left"
           >
             <div className="h-9 w-9 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
               <LogOut size={17} className="text-destructive" />
@@ -260,6 +296,56 @@ export function ProfileSettings({
               <p className="text-destructive text-sm font-medium">Sign Out</p>
             </div>
           </button>
+        </main>
+      </>
+    );
+  }
+
+  // ─── Appearance ─────────────────────────────────────────────────────────────
+  if (section === "appearance") {
+    async function handleThemeChange(theme: "light" | "dark") {
+      setTheme(theme);
+      await updateThemeAction(theme);
+      router.refresh();
+    }
+    return (
+      <>
+        <SectionHeader
+          title="Appearance"
+          onBack={() => setSection(null)}
+        />
+        <main className="px-5 pb-24 flex flex-col gap-5">
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 block">
+              Theme
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => handleThemeChange("light")}
+                className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all border flex items-center justify-center gap-2 ${
+                  preferredTheme === "light"
+                    ? "bg-accent text-accent-foreground border-accent"
+                    : "bg-card text-muted-foreground border-border hover:text-foreground"
+                }`}
+              >
+                <Sun size={18} />
+                Light
+              </button>
+              <button
+                type="button"
+                onClick={() => handleThemeChange("dark")}
+                className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all border flex items-center justify-center gap-2 ${
+                  preferredTheme === "dark"
+                    ? "bg-accent text-accent-foreground border-accent"
+                    : "bg-card text-muted-foreground border-border hover:text-foreground"
+                }`}
+              >
+                <Moon size={18} />
+                Dark
+              </button>
+            </div>
+          </div>
         </main>
       </>
     );
@@ -427,6 +513,78 @@ export function ProfileSettings({
     );
   }
 
+  // ─── Freelancer ─────────────────────────────────────────────────────────────
+  if (section === "freelancer") {
+    return (
+      <>
+        <SectionHeader
+          title="Find a Team"
+          onBack={() => setSection(null)}
+          onSave={saveFreelancer}
+          saving={freelancerSaving}
+          canSave={true}
+        />
+        <main className="px-5 pb-24 flex flex-col gap-5">
+          <div className="p-4 rounded-xl bg-card border border-border shadow-card">
+            <p className="text-foreground font-semibold text-sm mb-1">Available for Teams</p>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              When enabled, you appear in the Find Players section. Team captains can invite you, and you can apply to teams with open spots.
+            </p>
+          </div>
+          <div className="flex items-center justify-between p-4 rounded-xl bg-card border border-border shadow-card">
+            <div>
+              <p className="text-foreground font-semibold text-sm">Show as freelancer</p>
+              <p className="text-muted-foreground text-xs mt-0.5">Visible to teams looking for players</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isFreelancer}
+              onClick={() => {
+                setIsFreelancer((v) => {
+                  const next = !v;
+                  if (next) setFreelancerUntil(new Date().toISOString().split("T")[0]);
+                  return next;
+                });
+              }}
+              className={`relative h-8 w-14 rounded-full transition-colors shrink-0 ${
+                isFreelancer ? "bg-accent" : "bg-muted"
+              }`}
+            >
+              <span
+                className={`absolute top-1 w-6 h-6 rounded-full bg-background border border-border transition-transform ${
+                  isFreelancer ? "left-7" : "left-1"
+                }`}
+              />
+            </button>
+          </div>
+          {isFreelancer && (
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                Available until
+              </label>
+              <input
+                type="date"
+                value={freelancerUntil}
+                onChange={(e) => setFreelancerUntil(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+                className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+              />
+              <p className="text-muted-foreground text-xs mt-1">
+                Defaults to end of today. Pick a later date to stay visible longer.
+              </p>
+            </div>
+          )}
+          {freelancerError && (
+            <p className="text-sm text-destructive bg-destructive/10 rounded-xl px-4 py-3 text-center">
+              {freelancerError}
+            </p>
+          )}
+        </main>
+      </>
+    );
+  }
+
   // ─── Security ────────────────────────────────────────────────────────────────
   if (section === "security") {
     return (
@@ -434,7 +592,7 @@ export function ProfileSettings({
         <SectionHeader title="Security" onBack={() => { setSecurityMsg(""); setSecurityError(""); setSection(null); }} />
         <main className="px-5 pb-24 flex flex-col gap-6">
           {/* Email */}
-          <div className="rounded-xl bg-card border border-border p-4 flex flex-col gap-4">
+          <div className="rounded-xl bg-card border border-border shadow-card p-4 flex flex-col gap-4">
             <p className="text-foreground font-semibold text-sm">Email Address</p>
             <input
               type="email"
@@ -454,7 +612,7 @@ export function ProfileSettings({
           </div>
 
           {/* Password */}
-          <div className="rounded-xl bg-card border border-border p-4 flex flex-col gap-4">
+          <div className="rounded-xl bg-card border border-border shadow-card p-4 flex flex-col gap-4">
             <p className="text-foreground font-semibold text-sm">Change Password</p>
             <div className="relative">
               <input
@@ -533,7 +691,7 @@ export function ProfileSettings({
             </div>
           ) : (
             <>
-              <div className="p-4 rounded-xl bg-card border border-border">
+              <div className="p-4 rounded-xl bg-card border border-border shadow-card">
                 <p className="text-foreground font-semibold text-sm mb-1">Become a Field Owner</p>
                 <p className="text-muted-foreground text-xs leading-relaxed">
                   Field owners can create and manage leagues. Tell us about your field and why you'd like to join.

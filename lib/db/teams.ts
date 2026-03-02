@@ -23,6 +23,7 @@ function mapTeam(row: Record<string, unknown>): Team {
     captain_id: row.captain_id as string | null,
     home_ground: row.home_ground as string | null,
     searching_for_opponent: (row.searching_for_opponent as boolean) ?? false,
+    searching_for_players: (row.searching_for_players as boolean) ?? false,
     created_at: row.created_at as string,
   };
 }
@@ -38,11 +39,11 @@ function mapMemberProfile(row: Record<string, unknown>): Profile {
     area: row.area as string | null,
     bio: (row.bio as string) ?? "",
     is_freelancer: (row.is_freelancer as boolean) ?? false,
+    freelancer_until: (row.freelancer_until as string) ?? null,
     is_field_owner: (row.is_field_owner as boolean) ?? false,
     is_admin: (row.is_admin as boolean) ?? false,
     matches_played: (row.stat_matches as number) ?? 0,
     goals: (row.stat_goals as number) ?? 0,
-    assists: (row.stat_assists as number) ?? 0,
     wins: (row.stat_wins as number) ?? 0,
     draws: (row.stat_draws as number) ?? 0,
     losses: (row.stat_losses as number) ?? 0,
@@ -119,6 +120,23 @@ export async function getTeamMembers(
       profile: mapMemberProfile(profileRow),
     };
   });
+}
+
+export async function getCaptainTeam(userId: string): Promise<Team | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("team_members")
+    .select("teams(*)")
+    .eq("player_id", userId)
+    .eq("role", "captain")
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  const teamData = (data as Record<string, unknown>).teams;
+  if (!teamData) return null;
+  return mapTeam(teamData as Record<string, unknown>);
 }
 
 export async function getPendingJoinRequests(

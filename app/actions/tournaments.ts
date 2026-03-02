@@ -8,17 +8,42 @@ export async function registerForTournamentAction(tournamentId: string, teamId: 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
+  const { data: tournament, error: tournamentError } = await supabase
+    .from("tournaments")
+    .select("organizer_id")
+    .eq("id", tournamentId)
+    .single();
+
+  if (tournamentError || !tournament) return { error: "Tournament not found" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  const isOrganizer = tournament.organizer_id === user.id;
+  const isAdmin = profile?.is_admin === true;
+  const status = isOrganizer || isAdmin ? "approved" : "pending";
+
   const { error } = await supabase
     .from("tournament_registrations")
     .upsert(
-      { tournament_id: tournamentId, team_id: teamId, status: "pending" },
+      { tournament_id: tournamentId, team_id: teamId, status },
       { onConflict: "tournament_id,team_id" }
     );
 
   if (error) return { error: error.message };
 
+  if (status === "pending") {
+    await supabase.rpc("notify_organizer_tournament_application", {
+      p_tournament_id: tournamentId,
+      p_team_id: teamId,
+    });
+  }
+
   revalidatePath(`/tournaments/${tournamentId}`);
-  return { success: true };
+  return { success: true, status };
 }
 
 export async function createTournamentAction(data: {
@@ -57,4 +82,119 @@ export async function createTournamentAction(data: {
 
   revalidatePath("/tournaments");
   return { tournamentId: (inserted as { id: string }).id };
+}
+
+export async function approveTournamentRegistrationAction(
+  registrationId: string,
+  tournamentId?: string
+) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("approve_tournament_registration", {
+    p_registration_id: registrationId,
+  });
+  if (error) return { error: error.message };
+  const reg = data as { tournament_id: string } | null;
+  const id = tournamentId ?? reg?.tournament_id;
+  if (id) revalidatePath(`/tournaments/${id}`);
+  return { success: true };
+}
+
+export async function rejectTournamentRegistrationAction(
+  registrationId: string,
+  tournamentId?: string
+) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("reject_tournament_registration", {
+    p_registration_id: registrationId,
+  });
+  if (error) return { error: error.message };
+  const reg = data as { tournament_id: string } | null;
+  const id = tournamentId ?? reg?.tournament_id;
+  if (id) revalidatePath(`/tournaments/${id}`);
+  return { success: true };
+}
+
+export async function startGroupStageAction(tournamentId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("start_group_stage", {
+    p_tournament_id: tournamentId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/tournaments/${tournamentId}`);
+  return { success: true };
+}
+
+export async function advanceToKnockoutsAction(tournamentId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("advance_to_knockouts", {
+    p_tournament_id: tournamentId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/tournaments/${tournamentId}`);
+  return { success: true };
+}
+
+export async function completeTournamentAction(tournamentId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("complete_tournament", {
+    p_tournament_id: tournamentId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/tournaments/${tournamentId}`);
+  return { success: true };
+}
+
+export async function setTournamentMatchScheduleAction(data: {
+  matchId: string;
+  tournamentId: string;
+  date: string;
+  time: string;
+}) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_tournament_match_schedule", {
+    p_match_id: data.matchId,
+    p_date: data.date,
+    p_time: data.time || null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/tournaments/${data.tournamentId}`);
+  revalidatePath(`/tournaments`);
+  return { success: true };
+}
+
+export async function updateTournamentAction(
+  tournamentId: string,
+  data: {
+    name: string;
+    description: string;
+    match_format: string;
+    max_teams: number;
+    venue: string;
+    area: string;
+    start_date: string;
+    end_date: string;
+    prize: string;
+  }
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("tournaments")
+    .update({
+      name: data.name.trim(),
+      description: data.description.trim(),
+      match_format: data.match_format,
+      max_teams: data.max_teams,
+      venue: data.venue.trim(),
+      area: data.area,
+      start_date: data.start_date || null,
+      end_date: data.end_date || null,
+      prize: data.prize.trim(),
+    })
+    .eq("id", tournamentId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/tournaments/${tournamentId}`);
+  revalidatePath("/tournaments");
+  return { success: true };
 }

@@ -19,7 +19,7 @@ export default function Loading() {
 
       <div className="flex flex-col gap-6 px-5 pt-2">
         {/* Standings */}
-        <div className="rounded-xl bg-card border border-border overflow-hidden">
+        <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-10 border-b border-border last:border-b-0 bg-muted/30" />
           ))}
@@ -28,7 +28,7 @@ export default function Loading() {
         {/* Fixtures */}
         <div className="flex flex-col gap-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="rounded-xl bg-card border border-border h-24" />
+            <div key={i} className="rounded-xl bg-card border border-border shadow-card h-24" />
           ))}
         </div>
       </div>

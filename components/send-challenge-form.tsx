@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Swords, Search, Check } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationsButton } from "@/components/notifications-button";
 import type { Team } from "@/lib/types";
 import { sendChallengeAction } from "@/app/actions/matches";
 
@@ -70,7 +70,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
             <p className="text-muted-foreground text-xs">Step {step + 1} of {STEPS.length} · {STEPS[step]}</p>
           </div>
         </div>
-        <ThemeToggle />
+        <NotificationsButton />
       </header>
 
       {/* Progress dots */}
@@ -109,7 +109,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
                     setOpponent(team);
                     setStep(1);
                   }}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-accent/40 hover:bg-muted/30 transition-all text-left"
+                  className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border shadow-card hover:border-accent/40 hover:bg-muted/30 transition-all text-left"
                 >
                   <div
                     className="h-12 w-12 rounded-full flex items-center justify-center text-xl shrink-0"
@@ -138,7 +138,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
         {step === 1 && (
           <>
             {opponent && (
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border">
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border shadow-card">
                 <div
                   className="h-12 w-12 rounded-full flex items-center justify-center text-xl shrink-0"
                   style={{ backgroundColor: opponent.color + "33" }}
@@ -212,7 +212,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
         {/* Step 3: Confirm */}
         {step === 3 && (
           <>
-            <div className="rounded-xl bg-card border border-border divide-y divide-border">
+            <div className="rounded-xl bg-card border border-border shadow-card divide-y divide-border">
               <div className="flex items-center gap-4 px-4 py-4">
                 <div
                   className="h-12 w-12 rounded-full flex items-center justify-center text-xl shrink-0"
@@ -242,13 +242,13 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
               </div>
             </div>
 
-            <div className="rounded-xl bg-card border border-border px-4 py-3 flex items-center justify-between">
+            <div className="rounded-xl bg-card border border-border shadow-card px-4 py-3 flex items-center justify-between">
               <span className="text-muted-foreground text-sm">Format</span>
               <span className="text-foreground font-semibold text-sm">{selectedFormat}</span>
             </div>
 
             {message && (
-              <div className="rounded-xl bg-card border border-border px-4 py-3">
+              <div className="rounded-xl bg-card border border-border shadow-card px-4 py-3">
                 <p className="text-muted-foreground text-xs mb-1">Your message</p>
                 <p className="text-foreground text-sm">{message}</p>
               </div>

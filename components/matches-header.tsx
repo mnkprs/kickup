@@ -1,7 +1,7 @@
 "use client";
 
 import { SlidersHorizontal, X } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationsButton } from "@/components/notifications-button";
 
 const tabs = ["Upcoming", "Results"];
 const formatOptions = ["All", "5v5", "7v7", "11v11"];
@@ -38,7 +38,7 @@ export function MatchesHeader({
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-foreground font-semibold text-base">Matches</h1>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
+            <NotificationsButton />
             <button
               onClick={onToggleFilters}
               className="relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
@@ -53,7 +53,7 @@ export function MatchesHeader({
           </div>
         </div>
 
-        <div className="flex gap-1 p-1 rounded-xl bg-card border border-border">
+        <div className="flex gap-1 p-1 rounded-xl bg-card border border-border shadow-card">
           {tabs.map((tab) => (
             <button
               key={tab}

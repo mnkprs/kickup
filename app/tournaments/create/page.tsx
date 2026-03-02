@@ -13,7 +13,7 @@ export default async function CreateTournamentPage() {
     supabase.from("areas").select("name, city").order("city").order("sort"),
   ]);
 
-  if (!profile || !profile.is_field_owner) redirect("/tournaments");
+  if (!profile || (!profile.is_field_owner && !profile.is_admin)) redirect("/tournaments");
 
   const cityMap: Record<string, string[]> = {};
   for (const row of areasData ?? []) {

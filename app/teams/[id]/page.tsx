@@ -1,11 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getTeam, getTeamMembers, getPendingJoinRequests } from "@/lib/db/teams";
 import { getMatchesForTeam } from "@/lib/db/matches";
-import {
-  approveJoinRequestAction,
-  rejectJoinRequestAction,
-  removeMemberAction,
-} from "@/app/actions/teams";
 import type { Team, Profile, Match, TeamMember } from "@/lib/types";
 import {
   ArrowLeft,
@@ -15,7 +10,6 @@ import {
   ChevronRight,
   Shield,
   Crosshair,
-  Handshake,
   Swords,
   Trophy,
   ShieldAlert,
@@ -23,21 +17,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationsButton } from "@/components/notifications-button";
 import { JoinTeamButton } from "@/components/join-team-button";
 import { SearchingToggle } from "@/components/searching-toggle";
+import { LookingForPlayersToggle } from "@/components/looking-for-players-toggle";
 import { TeamCaptainControlsWrapper } from "@/components/team-captain-controls-wrapper";
-
-const positionOrder: Record<string, number> = {
-  GK: 0, CB: 1, LB: 2, RB: 3, CDM: 4, CM: 5, CAM: 6,
-  LW: 7, RW: 8, LM: 9, RM: 10, CF: 11, ST: 12,
-};
-
-function posSort(a: Profile, b: Profile) {
-  const pa = positionOrder[a.position ?? ""] ?? 99;
-  const pb = positionOrder[b.position ?? ""] ?? 99;
-  return pa - pb;
-}
+import { RosterSection } from "@/components/roster-section";
 
 function TeamStatsGrid({ team }: { team: Team }) {
   const total = team.wins + team.draws + team.losses;
@@ -58,7 +43,7 @@ function TeamStatsGrid({ team }: { team: Team }) {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border px-2 py-3"
+            className="flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border shadow-card px-2 py-3"
           >
             <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${stat.bgClass}`}>
               <stat.icon size={16} className={stat.iconClass} />
@@ -71,62 +56,6 @@ function TeamStatsGrid({ team }: { team: Team }) {
             </span>
           </div>
         ))}
-      </div>
-    </section>
-  );
-}
-
-function RosterSection({ members, captainId }: { members: Profile[]; captainId: string | null | undefined }) {
-  const roster = [...members].sort(posSort);
-
-  return (
-    <section className="px-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-sm">Roster</h2>
-        <span className="text-muted-foreground text-xs">{roster.length} players</span>
-      </div>
-      <div className="rounded-xl bg-card border border-border divide-y divide-border">
-        {roster.map((player) => {
-          const isCaptain = captainId === player.id;
-          const initials = player.avatar_initials || player.full_name.split(" ").map((n) => n[0]).join("");
-          return (
-            <Link
-              key={player.id}
-              href={`/profile/${player.id}`}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors rounded-lg"
-            >
-              <div
-                className="h-9 w-9 rounded-full flex items-center justify-center shrink-0"
-                style={{ backgroundColor: `${player.avatar_color}20` }}
-              >
-                <span className="text-foreground font-semibold text-xs">{initials}</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-foreground text-sm font-medium truncate">{player.full_name}</span>
-                  {isCaptain && (
-                    <Crown size={11} className="text-draw shrink-0" fill="currentColor" />
-                  )}
-                </div>
-                <span className="text-muted-foreground text-xs">{player.position ?? "N/A"}</span>
-              </div>
-              <div className="flex items-center gap-3 shrink-0 text-xs text-muted-foreground">
-                <span title="Goals">
-                  <Crosshair size={11} className="inline mr-0.5 text-draw" />
-                  {player.goals}
-                </span>
-                <span title="Assists">
-                  <Handshake size={11} className="inline mr-0.5 text-info" />
-                  {player.assists}
-                </span>
-                <span title="Cards">
-                  <ShieldAlert size={11} className="inline mr-0.5 text-warning" />
-                  {player.yellow_cards + player.red_cards}
-                </span>
-              </div>
-            </Link>
-          );
-        })}
       </div>
     </section>
   );
@@ -148,7 +77,7 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
 
           if (match.status === "upcoming") {
             return (
-              <Link key={match.id} href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border p-4 hover:border-accent/40 transition-colors block">
+              <Link key={match.id} href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors block">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                     {isHome ? "Home" : "Away"}
@@ -189,7 +118,7 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
             result === "W" ? "bg-win/15 text-win" : result === "L" ? "bg-loss/15 text-loss" : "bg-draw/15 text-draw";
 
           return (
-            <Link key={match.id} href={`/matches/${match.id}`} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border hover:border-accent/40 transition-colors block">
+            <Link key={match.id} href={`/matches/${match.id}`} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-card border border-border shadow-card hover:border-accent/40 transition-colors block">
               <span className={`h-7 w-7 rounded-lg flex items-center justify-center text-[11px] font-bold ${resultColor}`}>
                 {result}
               </span>
@@ -241,7 +170,10 @@ export default async function TeamDetailPage({
   const completedMatches = allMatches.filter((m) => m.status === "completed");
 
   const isMyTeam = memberRows.some((m) => m.player_id === user?.id);
-  const isCaptain = team.captain_id === user?.id;
+  // Use team_members as source of truth; teams.captain_id may be null for older teams
+  const captainFromMembers = memberRows.find((m) => m.role === "captain")?.player_id ?? null;
+  const captainId = team.captain_id ?? captainFromMembers;
+  const isCaptain = captainId === user?.id;
 
   // Check if user already has a pending join request
   let hasPendingRequest = false;
@@ -272,7 +204,7 @@ export default async function TeamDetailPage({
             </Link>
             <h1 className="text-foreground font-semibold text-lg">Team Detail</h1>
           </div>
-          <ThemeToggle />
+          <NotificationsButton />
         </div>
 
         {/* Team hero card */}
@@ -358,10 +290,16 @@ export default async function TeamDetailPage({
         {user && (
           <div className="flex items-center gap-3 mt-4 flex-wrap">
             {isCaptain && (
-              <SearchingToggle
-                teamId={team.id}
-                initial={team.searching_for_opponent ?? false}
-              />
+              <>
+                <SearchingToggle
+                  teamId={team.id}
+                  initial={team.searching_for_opponent ?? false}
+                />
+                <LookingForPlayersToggle
+                  teamId={team.id}
+                  initial={team.searching_for_players ?? false}
+                />
+              </>
             )}
             {!isMyTeam && !userHasAnyTeam && team.open_spots > 0 && (
               <JoinTeamButton
@@ -376,13 +314,17 @@ export default async function TeamDetailPage({
 
       <main className="flex flex-col gap-6 pt-4 pb-24">
         <TeamStatsGrid team={team} />
-        <RosterSection members={members} captainId={team.captain_id} />
+        <RosterSection
+          members={members}
+          captainId={captainId}
+          isCaptain={isCaptain}
+          myPlayerId={user?.id}
+          teamId={team.id}
+        />
         {isCaptain && (
           <TeamCaptainControlsWrapper
             pendingRequests={pendingRequests}
-            activeMembers={memberRows}
             teamId={team.id}
-            myPlayerId={user!.id}
           />
         )}
         <TeamMatchesSection matches={upcomingMatches} team={team} title="Upcoming Matches" />

@@ -1,0 +1,243 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { X, Trophy, Loader2 } from "lucide-react";
+import { AreaGroupSelect } from "@/components/area-group-select";
+import type { AreaGroup } from "@/lib/types";
+import type { Tournament } from "@/lib/types";
+import { updateTournamentAction } from "@/app/actions/tournaments";
+
+const FORMAT_OPTIONS = ["5v5", "6v6", "7v7", "8v8", "11v11"];
+const MAX_TEAMS_OPTIONS = [4, 8, 16, 32];
+
+interface EditTournamentSheetProps {
+  open: boolean;
+  onClose: () => void;
+  tournament: Tournament;
+  areaGroups: AreaGroup[];
+}
+
+export function EditTournamentSheet({
+  open,
+  onClose,
+  tournament,
+  areaGroups,
+}: EditTournamentSheetProps) {
+  const router = useRouter();
+  const [name, setName] = useState(tournament.name);
+  const [description, setDescription] = useState(tournament.description);
+  const [matchFormat, setMatchFormat] = useState(tournament.match_format);
+  const [maxTeams, setMaxTeams] = useState(tournament.max_teams);
+  const [venue, setVenue] = useState(tournament.venue);
+  const [area, setArea] = useState(tournament.area);
+  const [startDate, setStartDate] = useState(tournament.start_date ?? "");
+  const [endDate, setEndDate] = useState(tournament.end_date ?? "");
+  const [prize, setPrize] = useState(tournament.prize);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const canSubmit = name.trim().length > 0 && matchFormat && !loading;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setLoading(true);
+    setError("");
+    const result = await updateTournamentAction(tournament.id, {
+      name,
+      description,
+      match_format: matchFormat,
+      max_teams: maxTeams,
+      venue,
+      area,
+      start_date: startDate,
+      end_date: endDate,
+      prize,
+    });
+    setLoading(false);
+    if ("error" in result && result.error) {
+      setError(result.error);
+      return;
+    }
+    onClose();
+    router.refresh();
+  }
+
+  if (!open) return null;
+
+  return (
+    <>
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+
+      <div className="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-background border-l border-border shadow-2xl flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+          <h2 className="text-base font-semibold text-foreground">Edit tournament</h2>
+          <button
+            onClick={onClose}
+            className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
+          >
+            <X size={18} className="text-muted-foreground" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+              Name <span className="text-destructive">*</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+              className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+              Match Format <span className="text-destructive">*</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {FORMAT_OPTIONS.map((fmt) => (
+                <button
+                  key={fmt}
+                  type="button"
+                  onClick={() => setMatchFormat(fmt)}
+                  className={`px-5 py-2 rounded-xl text-xs font-semibold transition-all border ${
+                    matchFormat === fmt
+                      ? "bg-accent text-accent-foreground border-accent"
+                      : "bg-card text-muted-foreground border-border hover:text-foreground"
+                  }`}
+                >
+                  {fmt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+              Max Teams
+            </label>
+            <div className="flex gap-2">
+              {MAX_TEAMS_OPTIONS.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setMaxTeams(n)}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all border ${
+                    maxTeams === n
+                      ? "bg-accent text-accent-foreground border-accent"
+                      : "bg-card text-muted-foreground border-border hover:text-foreground"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+              Venue
+            </label>
+            <input
+              type="text"
+              value={venue}
+              onChange={(e) => setVenue(e.target.value)}
+              maxLength={100}
+              className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+              Area
+            </label>
+            <AreaGroupSelect
+              areaGroups={areaGroups}
+              value={area}
+              onChange={setArea}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                End Date
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate}
+                className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+              Prize
+            </label>
+            <input
+              type="text"
+              value={prize}
+              onChange={(e) => setPrize(e.target.value)}
+              maxLength={100}
+              className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={400}
+              rows={3}
+              className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors resize-none"
+            />
+            <p className="text-muted-foreground text-xs mt-1 text-right">{description.length}/400</p>
+          </div>
+
+          {error && (
+            <p className="text-sm text-destructive text-center bg-destructive/10 rounded-xl px-4 py-3">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={!canSubmit}
+            className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <>
+                <Trophy size={16} />
+                Save changes
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+    </>
+  );
+}

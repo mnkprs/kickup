@@ -24,7 +24,7 @@ export function QuickStats({ profile }: QuickStatsProps) {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border px-2 py-3"
+            className="flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border shadow-card px-2 py-3"
           >
             <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${stat.bgClass}`}>
               <stat.icon size={16} className={stat.iconClass} />

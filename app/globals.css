@@ -34,21 +34,23 @@
   --color-border: #E5E7EB;
   --color-surface-elevated: #FFFFFF;
   --color-surface-overlay: rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 /* -------------------------------------------------- */
 /*  Dark theme                                        */
 /* -------------------------------------------------- */
 .dark {
-  --color-background: #111111;
-  --color-foreground: #F5F5F5;
-  --color-card: #1A1A1A;
-  --color-card-foreground: #F5F5F5;
-  --color-muted: #262626;
+  --color-background: #171717;
+  --color-foreground: #FAFAFA;
+  --color-card: #262626;
+  --color-card-foreground: #FAFAFA;
+  --color-muted: #333333;
   --color-muted-foreground: #A3A3A3;
-  --color-border: #2A2A2A;
-  --color-surface-elevated: #1F1F1F;
-  --color-surface-overlay: rgba(0, 0, 0, 0.7);
+  --color-border: #525252;
+  --color-surface-elevated: #333333;
+  --color-surface-overlay: rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 /* -------------------------------------------------- */
@@ -72,6 +74,12 @@ body {
 /* -------------------------------------------------- */
 .bg-gradient-accent {
   background: linear-gradient(135deg, #1B5E20, var(--color-accent));
+}
+
+@layer utilities {
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
 }
 
 /* -------------------------------------------------- */

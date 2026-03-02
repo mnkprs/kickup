@@ -12,7 +12,8 @@
 insert into auth.users (
   id, instance_id, email, encrypted_password, email_confirmed_at,
   created_at, updated_at, raw_app_meta_data, raw_user_meta_data,
-  is_super_admin, role, aud
+  is_super_admin, role, aud,
+  confirmation_token, email_change, email_change_token_new, recovery_token
 ) values
   (
     '11111111-0001-0001-0001-000000000001',
@@ -22,7 +23,8 @@ insert into auth.users (
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Nikos Papadopoulos","position":"FWD","area":"Kolonaki","avatar_color":"#2E7D32"}',
-    false, 'authenticated', 'authenticated'
+    false, 'authenticated', 'authenticated',
+    '', '', '', ''
   ),
   (
     '11111111-0002-0002-0002-000000000002',
@@ -32,7 +34,8 @@ insert into auth.users (
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Giorgos Stavros","position":"GK","area":"Piraeus","avatar_color":"#1565C0"}',
-    false, 'authenticated', 'authenticated'
+    false, 'authenticated', 'authenticated',
+    '', '', '', ''
   ),
   (
     '11111111-0003-0003-0003-000000000003',
@@ -42,7 +45,8 @@ insert into auth.users (
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Alexis Dimos","position":"MID","area":"Exarcheia","avatar_color":"#6A1B9A"}',
-    false, 'authenticated', 'authenticated'
+    false, 'authenticated', 'authenticated',
+    '', '', '', ''
   ),
   (
     '11111111-0004-0004-0004-000000000004',
@@ -52,7 +56,8 @@ insert into auth.users (
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Kostas Nikolaou","position":"DEF","area":"Glyfada","avatar_color":"#BF360C"}',
-    false, 'authenticated', 'authenticated'
+    false, 'authenticated', 'authenticated',
+    '', '', '', ''
   ),
   (
     '11111111-0005-0005-0005-000000000005',
@@ -62,7 +67,8 @@ insert into auth.users (
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Yiannis Tzanakis","position":"MID","area":"Kifisia","avatar_color":"#E65100"}',
-    false, 'authenticated', 'authenticated'
+    false, 'authenticated', 'authenticated',
+    '', '', '', ''
   ),
   (
     '11111111-0006-0006-0006-000000000006',
@@ -72,7 +78,8 @@ insert into auth.users (
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Spyros Athanasiou","position":"FWD","area":"Pangrati","avatar_color":"#00695C"}',
-    false, 'authenticated', 'authenticated'
+    false, 'authenticated', 'authenticated',
+    '', '', '', ''
   ),
   (
     '11111111-0007-0007-0007-000000000007',
@@ -82,7 +89,8 @@ insert into auth.users (
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Christos Melas","position":"GK","area":"Nea Smyrni","avatar_color":"#37474F"}',
-    false, 'authenticated', 'authenticated'
+    false, 'authenticated', 'authenticated',
+    '', '', '', ''
   ),
   (
     '11111111-0008-0008-0008-000000000008',
@@ -92,7 +100,8 @@ insert into auth.users (
     now(), now(), now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Petros Katsaros","position":"DEF","area":"Chalandri","avatar_color":"#558B2F"}',
-    false, 'authenticated', 'authenticated'
+    false, 'authenticated', 'authenticated',
+    '', '', '', ''
   )
 on conflict (id) do nothing;
 
@@ -100,47 +109,47 @@ on conflict (id) do nothing;
 -- But since we're seeding, we also set extra fields the trigger doesn't handle.
 update profiles set
   bio           = 'Striker with a nose for goal. Left foot wizard. Free on weekends.',
-  stat_matches  = 42, stat_goals = 28, stat_assists = 11, stat_wins = 24, stat_mvp = 5
+  stat_matches  = 42, stat_goals = 28, stat_wins = 24, stat_mvp = 5
 where id = '11111111-0001-0001-0001-000000000001';
 
 update profiles set
   bio           = 'Shot-stopper since 2012. Captain of Piraeus Pirates. Organizer.',
-  stat_matches  = 55, stat_goals = 0, stat_assists = 2, stat_wins = 30, stat_mvp = 8
+  stat_matches  = 55, stat_goals = 0, stat_wins = 30, stat_mvp = 8
 where id = '11111111-0002-0002-0002-000000000002';
 
 update profiles set
   bio           = 'Box-to-box midfielder. Vision and stamina. Weekly 5-a-side veteran.',
-  stat_matches  = 38, stat_goals = 9, stat_assists = 22, stat_wins = 18, stat_mvp = 4
+  stat_matches  = 38, stat_goals = 9, stat_wins = 18, stat_mvp = 4
 where id = '11111111-0003-0003-0003-000000000003';
 
 update profiles set
   bio           = 'Centre-back. Reads the game well. Tall and aggressive in the air.',
-  stat_matches  = 29, stat_goals = 3, stat_assists = 5, stat_wins = 17, stat_mvp = 2
+  stat_matches  = 29, stat_goals = 3, stat_wins = 17, stat_mvp = 2
 where id = '11111111-0004-0004-0004-000000000004';
 
 update profiles set
   bio              = 'Freelancer. Available every Saturday. Quick with good technique.',
   is_freelancer    = true,
   freelancer_until = '2026-03-01',
-  stat_matches     = 61, stat_goals = 14, stat_assists = 31, stat_wins = 35, stat_mvp = 7
+  stat_matches     = 61, stat_goals = 14, stat_wins = 35, stat_mvp = 7
 where id = '11111111-0005-0005-0005-000000000005';
 
 update profiles set
   bio              = 'Tricky winger. Fast and direct. Looking for a 5v5 team.',
   is_freelancer    = true,
   freelancer_until = '2026-03-02',
-  stat_matches     = 22, stat_goals = 18, stat_assists = 8, stat_wins = 12, stat_mvp = 3
+  stat_matches     = 22, stat_goals = 18, stat_wins = 12, stat_mvp = 3
 where id = '11111111-0006-0006-0006-000000000006';
 
 update profiles set
   bio              = 'Experienced keeper. Good with feet too. Free agent since Jan.',
   is_freelancer    = true,
-  stat_matches     = 47, stat_goals = 0, stat_assists = 1, stat_wins = 28, stat_mvp = 9
+  stat_matches     = 47, stat_goals = 0, stat_wins = 28, stat_mvp = 9
 where id = '11111111-0007-0007-0007-000000000007';
 
 update profiles set
   bio           = 'Solid left back. Set-piece delivery specialist.',
-  stat_matches  = 33, stat_goals = 4, stat_assists = 9, stat_wins = 20, stat_mvp = 1
+  stat_matches  = 33, stat_goals = 4, stat_wins = 20, stat_mvp = 1
 where id = '11111111-0008-0008-0008-000000000008';
 
 -- ─── TEAMS ────────────────────────────────────────────────────────

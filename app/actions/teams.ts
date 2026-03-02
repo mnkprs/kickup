@@ -35,6 +35,22 @@ export async function createTeamAction(data: {
   return { teamId: teamId as string };
 }
 
+export async function setTeamSearchingForPlayersAction(teamId: string, value: boolean) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase.rpc("set_team_searching_for_players", {
+    p_team_id: teamId,
+    p_value: value,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath(`/teams/${teamId}`);
+  revalidatePath("/find-players");
+  return { success: true };
+}
+
 export async function toggleSearchingForOpponentAction(teamId: string, value: boolean) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -87,6 +103,22 @@ export async function rejectJoinRequestAction(teamId: string, playerId: string) 
     .eq("status", "pending");
   if (error) return { error: error.message };
   revalidatePath(`/teams/${teamId}`);
+  return { success: true };
+}
+
+export async function invitePlayerToTeamAction(playerId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase.rpc("invite_player_to_team", {
+    p_player_id: playerId,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/find-players");
   return { success: true };
 }
 

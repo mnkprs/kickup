@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import type { Profile, Match, Notification } from "@/lib/types";
 import { Bell } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { NotificationsSheet } from "@/components/notifications-sheet";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface DashboardHeaderProps {
   profile: Profile | null;
@@ -15,12 +15,20 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ profile, notifications }: DashboardHeaderProps) {
   const [notifOpen, setNotifOpen] = useState(false);
+  const [markedRead, setMarkedRead] = useState(false);
   const firstName = profile ? profile.full_name.split(" ")[0] : "Player";
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const initials = profile?.avatar_initials ?? (profile?.full_name.split(" ").map((n) => n[0]).join("") ?? "?");
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadFromProps = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
+  const unreadCount = markedRead ? 0 : unreadFromProps;
+
+  useEffect(() => {
+    if (unreadFromProps > 0) setMarkedRead(false);
+  }, [unreadFromProps]);
+
+  const handleMarkedRead = useCallback(() => setMarkedRead(true), []);
 
   return (
     <>
@@ -60,6 +68,7 @@ export function DashboardHeader({ profile, notifications }: DashboardHeaderProps
         open={notifOpen}
         onClose={() => setNotifOpen(false)}
         notifications={notifications}
+        onMarkedRead={handleMarkedRead}
       />
     </>
   );

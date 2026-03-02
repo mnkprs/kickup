@@ -13,8 +13,14 @@ export function TournamentStandings({ standings, title = "Standings" }: Tourname
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-foreground font-semibold text-base">{title}</h2>
       </div>
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
-        <div className="grid grid-cols-[2rem_1fr_2rem_2rem_2rem_2rem_2.5rem_2.5rem] gap-1 px-4 py-2.5 border-b border-border">
+      <div className="rounded-lg bg-card border border-border shadow-card overflow-hidden">
+        {sorted.length === 0 ? (
+          <div className="px-3 py-6 text-center">
+            <p className="text-muted-foreground text-sm">No teams enrolled yet</p>
+          </div>
+        ) : (
+          <>
+        <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem] gap-0.5 px-2 py-1.5 border-b border-border">
           <span className="text-muted-foreground text-[10px] font-medium">#</span>
           <span className="text-muted-foreground text-[10px] font-medium">Team</span>
           <span className="text-muted-foreground text-[10px] font-medium text-center">P</span>
@@ -30,16 +36,16 @@ export function TournamentStandings({ standings, title = "Standings" }: Tourname
           return (
             <div
               key={row.team_id}
-              className="grid grid-cols-[2rem_1fr_2rem_2rem_2rem_2rem_2.5rem_2.5rem] gap-1 px-4 py-2.5 items-center border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
+              className="grid grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem] gap-0.5 px-2 py-1.5 items-center border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
             >
               <span className={`text-xs font-medium ${i < 2 ? "text-accent" : "text-muted-foreground"}`}>
                 {i + 1}
               </span>
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0 border border-border">
-                  <span className="text-foreground text-[8px] font-bold">{row.team.short_name}</span>
+              <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center shrink-0 border border-border">
+                  <span className="text-foreground text-[7px] font-bold">{row.team.short_name}</span>
                 </div>
-                <span className="text-sm truncate text-foreground font-medium">{row.team.name}</span>
+                <span className="text-xs truncate text-foreground font-medium">{row.team.name}</span>
               </div>
               <span className="text-foreground text-xs text-center">{row.played}</span>
               <span className="text-foreground text-xs text-center">{row.won}</span>
@@ -52,6 +58,8 @@ export function TournamentStandings({ standings, title = "Standings" }: Tourname
             </div>
           );
         })}
+          </>
+        )}
       </div>
     </section>
   );

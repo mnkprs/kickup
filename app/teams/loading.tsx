@@ -18,7 +18,7 @@ export default function Loading() {
       {/* Team cards */}
       <div className="px-5 flex flex-col gap-3">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="rounded-xl bg-card border border-border p-4 h-24" />
+          <div key={i} className="rounded-xl bg-card border border-border shadow-card p-4 h-24" />
         ))}
       </div>
     </div>

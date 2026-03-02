@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trophy } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationsButton } from "@/components/notifications-button";
 import { AreaGroupSelect } from "@/components/area-group-select";
 import type { AreaGroup } from "@/lib/types";
 import { createTournamentAction } from "@/app/actions/tournaments";
@@ -70,7 +70,7 @@ export function CreateTournamentForm({ areaGroups }: CreateTournamentFormProps) 
           </Link>
           <h1 className="text-foreground font-semibold text-lg">Create League</h1>
         </div>
-        <ThemeToggle />
+        <NotificationsButton />
       </header>
 
       <main className="px-5 pb-24 flex flex-col gap-6">

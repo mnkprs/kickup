@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationsButton } from "@/components/notifications-button";
 
 interface TournamentHeaderProps {
   onFilterChange: (filter: string) => void;
@@ -24,7 +24,7 @@ export function TournamentHeader({
           <h1 className="text-foreground font-semibold text-lg">Leagues</h1>
         </div>
         <div className="flex items-center gap-2">
-          <ThemeToggle />
+          <NotificationsButton />
           {canCreate && (
             <Link
               href="/tournaments/create"

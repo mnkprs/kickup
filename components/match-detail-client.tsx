@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Clock, Calendar, Check, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationsButton } from "@/components/notifications-button";
 import type { Match } from "@/lib/types";
 import {
   acceptChallengeAction,
   declineChallengeAction,
   setMatchTimeAction,
   submitResultAction,
+  organizerSubmitResultAction,
 } from "@/app/actions/matches";
 
 interface TeamMemberMin {
@@ -33,6 +34,7 @@ interface MatchDetailClientProps {
   homeRoster?: RosterPlayer[];
   awayRoster?: RosterPlayer[];
   goalsByPlayer?: Record<string, number>;
+  isTournamentOrganizer?: boolean;
 }
 
 function TeamBlock({
@@ -118,7 +120,7 @@ function MatchRostersSection({
           </div>
           <span className="text-sm font-semibold text-foreground truncate">{team.name}</span>
         </div>
-        <div className="rounded-xl bg-card border border-border divide-y divide-border overflow-hidden">
+        <div className="rounded-xl bg-card border border-border shadow-card divide-y divide-border overflow-hidden">
           {roster.length === 0 ? (
             <div className="px-4 py-3 text-muted-foreground text-xs">No roster data</div>
           ) : (
@@ -172,6 +174,7 @@ export function MatchDetailClient({
   homeRoster = [],
   awayRoster = [],
   goalsByPlayer = {},
+  isTournamentOrganizer = false,
 }: MatchDetailClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -197,6 +200,7 @@ export function MatchDetailClient({
 
   const isAwayTeam = userTeamId === match.away_team_id;
   const isParticipant = userTeamId !== null;
+  const canSubmitResult = isParticipant || isTournamentOrganizer;
 
   const homeWin = isCompleted && match.home_score! > match.away_score!;
   const awayWin = isCompleted && match.away_score! > match.home_score!;
@@ -254,17 +258,26 @@ export function MatchDetailClient({
   }
 
   async function handleSubmitResult() {
-    if (!userTeamId) return;
     setLoading(true);
     setError("");
-    const result = await submitResultAction({
-      matchId: match.id,
-      teamId: userTeamId,
-      homeScore: parseInt(homeScore) || 0,
-      awayScore: parseInt(awayScore) || 0,
-      mvpId,
-      notes,
-    });
+    const h = parseInt(homeScore) || 0;
+    const a = parseInt(awayScore) || 0;
+    const result = isTournamentOrganizer && !isParticipant
+      ? await organizerSubmitResultAction({
+          matchId: match.id,
+          homeScore: h,
+          awayScore: a,
+          mvpId,
+          notes,
+        })
+      : await submitResultAction({
+          matchId: match.id,
+          teamId: userTeamId!,
+          homeScore: h,
+          awayScore: a,
+          mvpId,
+          notes,
+        });
     setLoading(false);
     if (result.error) { setError(result.error); return; }
     router.refresh();
@@ -283,7 +296,7 @@ export function MatchDetailClient({
           </Link>
           <h1 className="text-foreground font-semibold text-lg">Match</h1>
         </div>
-        <ThemeToggle />
+        <NotificationsButton />
       </header>
 
       <main className="flex flex-col gap-6 pb-24 pt-2">
@@ -296,7 +309,7 @@ export function MatchDetailClient({
 
         {/* Scoreline */}
         <div className="px-5">
-          <div className="rounded-xl bg-card border border-border p-6">
+          <div className="rounded-xl bg-card border border-border shadow-card p-6">
             <div className="flex items-center gap-4">
               <TeamBlock
                 teamId={match.home_team_id}
@@ -309,9 +322,7 @@ export function MatchDetailClient({
               />
 
               <div className="flex flex-col items-center gap-1 shrink-0">
-                {!isCompleted && (
-                  <span className="text-muted-foreground text-xs font-bold">VS</span>
-                )}
+                <span className="text-muted-foreground text-xs font-bold">VS</span>
                 {isCompleted && match.home_score === match.away_score && (
                   <span className="text-draw text-xs font-bold px-2 py-0.5 bg-draw/10 rounded-full">
                     Draw
@@ -345,7 +356,7 @@ export function MatchDetailClient({
 
         {/* Match info */}
         <div className="px-5">
-          <div className="rounded-xl bg-card border border-border divide-y divide-border">
+          <div className="rounded-xl bg-card border border-border shadow-card divide-y divide-border">
             <div className="flex items-center gap-3 px-4 py-3">
               <span className="text-muted-foreground text-xs font-medium w-[15px] text-center shrink-0">⚽</span>
               <span className="text-foreground text-sm">{match.format}</span>
@@ -415,7 +426,7 @@ export function MatchDetailClient({
         {/* Scheduling: set date/time/location */}
         {isScheduling && isParticipant && (
           <div className="px-5 flex flex-col gap-4">
-            <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="p-4 rounded-xl bg-card border border-border shadow-card">
               <p className="text-foreground font-semibold text-sm mb-1">Set Match Details</p>
               <p className="text-muted-foreground text-xs">Agree on a date, time, and location with your opponent.</p>
             </div>
@@ -469,22 +480,22 @@ export function MatchDetailClient({
           </div>
         )}
 
-        {/* Pre-match: submit result */}
-        {isPreMatch && isParticipant && !showResult && (
+        {/* Pre-match: submit result (captain or tournament organizer) */}
+        {isPreMatch && canSubmitResult && !showResult && (
           <div className="px-5">
             <button
               onClick={() => setShowResult(true)}
               className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
             >
-              Submit Result
+              {isTournamentOrganizer && !isParticipant ? "Enter Result (Organizer)" : "Submit Result"}
               <ChevronRight size={16} />
             </button>
           </div>
         )}
 
-        {isPreMatch && isParticipant && showResult && (
+        {isPreMatch && canSubmitResult && showResult && (
           <div className="px-5 flex flex-col gap-4">
-            <div className="p-4 rounded-xl bg-card border border-border">
+            <div className="p-4 rounded-xl bg-card border border-border shadow-card">
               <p className="text-foreground font-semibold text-sm mb-1">Submit Result</p>
               <p className="text-muted-foreground text-xs">Enter the final score for this match.</p>
             </div>
@@ -528,7 +539,7 @@ export function MatchDetailClient({
                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
                   Man of the Match (optional)
                 </label>
-                <div className="flex flex-col gap-1 rounded-xl bg-card border border-border overflow-hidden">
+                <div className="flex flex-col gap-1 rounded-xl bg-card border border-border shadow-card overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setMvpId(null)}

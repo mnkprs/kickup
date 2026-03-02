@@ -18,7 +18,7 @@ function BackButton() {
 }
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationsButton } from "@/components/notifications-button";
 
 interface ProfileHeaderProps {
   profile: Profile;
@@ -43,7 +43,7 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
           <h1 className="text-foreground font-semibold text-base">Profile</h1>
         </div>
         <div className="flex items-center gap-2">
-          <ThemeToggle />
+          <NotificationsButton />
           <button
             aria-label="Share profile"
             onClick={async () => {
@@ -104,6 +104,11 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
                 {profile.position}
               </span>
             )}
+            {profile.is_freelancer && (
+              <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                Looking for team
+              </span>
+            )}
             {isCaptain && (
               <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-draw">
                 <Crown size={10} fill="currentColor" />
@@ -139,7 +144,7 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
         )}
       </div>
 
-      <div className="rounded-xl bg-card border border-border p-4">
+      <div className="rounded-xl bg-card border border-border shadow-card p-4">
         <div className="flex items-center justify-between mb-2.5">
           <span className="text-muted-foreground text-xs font-medium">Win Rate</span>
           <span className="text-foreground font-bold text-sm">{winRate}%</span>

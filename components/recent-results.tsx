@@ -70,7 +70,7 @@ export function RecentResults({ matches, teamId }: RecentResultsProps) {
           See all
         </Link>
       </div>
-      <div className="rounded-xl bg-card border border-border p-4">
+      <div className="rounded-xl bg-card border border-border shadow-card p-4">
         {completedMatches.length === 0 ? (
           <p className="text-muted-foreground text-sm text-center py-4">No recent results</p>
         ) : (

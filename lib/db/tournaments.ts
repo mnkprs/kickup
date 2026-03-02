@@ -91,6 +91,7 @@ export async function getTournaments(): Promise<Tournament[]> {
       matches_played: completedMatches.length,
       total_matches: tournamentMatches.length,
       enrolled_teams: enrolledTeams,
+      pending_registrations: [],
       created_at: row.created_at as string,
     };
   });
@@ -104,7 +105,7 @@ export async function getTournament(id: string): Promise<Tournament | null> {
     .select(`
       *,
       organizer:profiles!organizer_id(full_name),
-      tournament_registrations(team_id, status, teams(*)),
+      tournament_registrations(id, team_id, status, teams(*)),
       tournament_matches(id, match_id, matches(status))
     `)
     .eq("id", id)
@@ -115,10 +116,19 @@ export async function getTournament(id: string): Promise<Tournament | null> {
   const row = data as Record<string, unknown>;
   const registrations = (row.tournament_registrations as Record<string, unknown>[]) ?? [];
   const approvedRegs = registrations.filter((r) => r.status === "approved");
+  const pendingRegs = registrations.filter((r) => r.status === "pending");
   const enrolledTeams: Team[] = approvedRegs
     .map((r) => r.teams as Record<string, unknown>)
     .filter(Boolean)
     .map(mapTeam);
+  const pendingRegistrations = pendingRegs
+    .map((r) => r.teams as Record<string, unknown>)
+    .filter(Boolean)
+    .map((teams, i) => ({
+      id: (pendingRegs[i] as { id: string }).id,
+      team_id: (pendingRegs[i] as { team_id: string }).team_id,
+      team: mapTeam(teams),
+    }));
 
   const tournamentMatches = (row.tournament_matches as Record<string, unknown>[]) ?? [];
   const completedMatches = tournamentMatches.filter(
@@ -143,10 +153,12 @@ export async function getTournament(id: string): Promise<Tournament | null> {
     start_date: row.start_date as string | null,
     end_date: row.end_date as string | null,
     status: mapTournamentStatus(row.status as string),
+    raw_status: row.status as string,
     teams_count: approvedRegs.length,
     matches_played: completedMatches.length,
     total_matches: tournamentMatches.length,
     enrolled_teams: enrolledTeams,
+    pending_registrations: pendingRegistrations,
     created_at: row.created_at as string,
   };
 }
@@ -156,67 +168,97 @@ export async function getTournamentStandings(
 ): Promise<TournamentStanding[]> {
   const supabase = await createClient();
 
-  // Get group labels for this tournament
+  // Get group labels for this tournament (group stage has started)
   const { data: groups } = await supabase
     .from("tournament_groups")
     .select("group_label")
     .eq("tournament_id", tournamentId);
 
-  if (!groups || groups.length === 0) return [];
+  if (groups && groups.length > 0) {
+    const labels = [...new Set((groups as { group_label: string }[]).map((g) => g.group_label))];
 
-  const labels = [...new Set((groups as { group_label: string }[]).map((g) => g.group_label))];
+    const { data, error } = await supabase.rpc("get_tournament_standings", {
+      p_tournament_id: tournamentId,
+      p_group_label: labels[0],
+    });
 
-  // Fetch standings for first group (default display)
-  const { data, error } = await supabase.rpc("get_tournament_standings", {
-    p_tournament_id: tournamentId,
-    p_group_label: labels[0],
-  });
+    if (error || !data) return [];
 
-  if (error || !data) return [];
+    const teamIds = (data as Record<string, unknown>[]).map((row) => row.team_id as string);
+    const { data: teamsData } = await supabase
+      .from("teams")
+      .select("*")
+      .in("id", teamIds);
 
-  // Fetch team details for enrichment
-  const teamIds = (data as Record<string, unknown>[]).map((row) => row.team_id as string);
+    const teamsMap = new Map<string, Team>(
+      ((teamsData as Record<string, unknown>[]) ?? []).map((t) => [
+        t.id as string,
+        mapTeam(t),
+      ])
+    );
+
+    return (data as Record<string, unknown>[]).map((row) => ({
+      rank: row.rank as number,
+      team_id: row.team_id as string,
+      team: teamsMap.get(row.team_id as string) ?? {
+        id: row.team_id as string,
+        name: row.name as string,
+        short_name: (row.name as string).substring(0, 3).toUpperCase(),
+        area: "",
+        format: "",
+        emoji: "⚽",
+        color: "#2E7D32",
+        description: "",
+        open_spots: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        goals_for: 0,
+        goals_against: 0,
+        points: 0,
+        created_at: "",
+      },
+      played: row.played as number,
+      won: row.w as number,
+      drawn: row.d as number,
+      lost: row.l as number,
+      goals_for: row.gf as number,
+      goals_against: row.ga as number,
+      goal_diff: row.gd as number,
+      points: row.pts as number,
+    }));
+  }
+
+  // Registration phase: show enrolled teams as standings (0 stats until tournament starts)
+  const { data: regs } = await supabase
+    .from("tournament_registrations")
+    .select("team_id")
+    .eq("tournament_id", tournamentId)
+    .eq("status", "approved")
+    .order("applied_at", { ascending: true });
+
+  if (!regs || regs.length === 0) return [];
+
+  const teamIds = (regs as { team_id: string }[]).map((r) => r.team_id);
   const { data: teamsData } = await supabase
     .from("teams")
     .select("*")
     .in("id", teamIds);
 
-  const teamsMap = new Map<string, Team>(
-    ((teamsData as Record<string, unknown>[]) ?? []).map((t) => [
-      t.id as string,
-      mapTeam(t),
-    ])
-  );
+  const teams = ((teamsData as Record<string, unknown>[]) ?? []).map(mapTeam);
 
-  return (data as Record<string, unknown>[]).map((row) => ({
-    rank: row.rank as number,
-    team_id: row.team_id as string,
-    team: teamsMap.get(row.team_id as string) ?? {
-      id: row.team_id as string,
-      name: row.name as string,
-      short_name: (row.name as string).substring(0, 3).toUpperCase(),
-      area: "",
-      format: "",
-      emoji: "⚽",
-      color: "#2E7D32",
-      description: "",
-      open_spots: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      goals_for: 0,
-      goals_against: 0,
-      points: 0,
-      created_at: "",
-    },
-    played: row.played as number,
-    won: row.w as number,
-    drawn: row.d as number,
-    lost: row.l as number,
-    goals_for: row.gf as number,
-    goals_against: row.ga as number,
-    goal_diff: row.gd as number,
-    points: row.pts as number,
+  return teams.map((team, i) => ({
+    rank: i + 1,
+    team_id: team.id,
+    team,
+    played: 0,
+    won: 0,
+    drawn: 0,
+    lost: 0,
+    goals_for: 0,
+    goals_against: 0,
+    goal_diff: 0,
+    points: 0,
   }));
 }
 
@@ -282,27 +324,19 @@ export async function getTournamentTopScorers(
   // Get goal events
   const { data: events } = await supabase
     .from("match_events")
-    .select("scorer_id, assist_id, match_id")
+    .select("scorer_id, match_id")
     .in("match_id", matchIds);
 
   if (!events || events.length === 0) return [];
 
-  // Tally goals and assists per player
-  const tally = new Map<string, { goals: number; assists: number }>();
-  for (const ev of events as { scorer_id: string; assist_id: string | null }[]) {
-    const scorer = tally.get(ev.scorer_id) ?? { goals: 0, assists: 0 };
-    scorer.goals++;
-    tally.set(ev.scorer_id, scorer);
-
-    if (ev.assist_id) {
-      const assister = tally.get(ev.assist_id) ?? { goals: 0, assists: 0 };
-      assister.assists++;
-      tally.set(ev.assist_id, assister);
-    }
+  // Tally goals per player
+  const tally = new Map<string, number>();
+  for (const ev of events as { scorer_id: string }[]) {
+    tally.set(ev.scorer_id, (tally.get(ev.scorer_id) ?? 0) + 1);
   }
 
   const topPlayerIds = [...tally.entries()]
-    .sort(([, a], [, b]) => b.goals - a.goals)
+    .sort(([, a], [, b]) => b - a)
     .slice(0, 5)
     .map(([id]) => id);
 
@@ -315,7 +349,7 @@ export async function getTournamentTopScorers(
   if (!profiles) return [];
 
   return (profiles as Record<string, unknown>[]).map((p) => {
-    const stats = tally.get(p.id as string) ?? { goals: 0, assists: 0 };
+    const goals = tally.get(p.id as string) ?? 0;
     const memberships = p.team_members as Record<string, unknown>[];
     const teamShortName =
       ((memberships?.[0]?.teams as Record<string, unknown>)
@@ -336,7 +370,6 @@ export async function getTournamentTopScorers(
         is_admin: (p.is_admin as boolean) ?? false,
         matches_played: (p.stat_matches as number) ?? 0,
         goals: (p.stat_goals as number) ?? 0,
-        assists: (p.stat_assists as number) ?? 0,
         wins: (p.stat_wins as number) ?? 0,
         draws: (p.stat_draws as number) ?? 0,
         losses: (p.stat_losses as number) ?? 0,
@@ -349,8 +382,7 @@ export async function getTournamentTopScorers(
         created_at: p.created_at as string,
       },
       team_short_name: teamShortName,
-      goals: stats.goals,
-      assists: stats.assists,
+      goals,
     };
   });
 }

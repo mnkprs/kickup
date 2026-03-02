@@ -20,7 +20,7 @@ function TeamBadge({ shortName }: { shortName: string }) {
 
 function UpcomingMatchCard({ match }: { match: Match }) {
   return (
-    <Link href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border p-4 hover:border-accent/40 transition-colors group block">
+    <Link href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors group block">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
           <Clock size={12} className="text-accent" />

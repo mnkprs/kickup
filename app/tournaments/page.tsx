@@ -17,7 +17,7 @@ export default async function TournamentsPage() {
   return (
     <TournamentsPageClient
       tournaments={tournaments}
-      canCreate={profile?.is_field_owner ?? false}
+      canCreate={profile?.is_field_owner ?? profile?.is_admin ?? false}
     />
   );
 }

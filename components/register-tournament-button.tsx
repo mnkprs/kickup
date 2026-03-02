@@ -55,7 +55,7 @@ export function RegisterTournamentButton({
     const result = await registerForTournamentAction(tournamentId, teamId);
     setLoading(false);
     if (result.error) { setError(result.error); return; }
-    setStatus("pending");
+    setStatus(result.status ?? "pending");
     router.refresh();
   }
 

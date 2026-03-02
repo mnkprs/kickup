@@ -21,7 +21,7 @@ export default function Loading() {
       <div className="px-5 mb-6">
         <div className="grid grid-cols-4 gap-2.5">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-xl bg-card border border-border px-2 py-3 h-20" />
+            <div key={i} className="rounded-xl bg-card border border-border shadow-card px-2 py-3 h-20" />
           ))}
         </div>
       </div>
@@ -30,7 +30,7 @@ export default function Loading() {
       <div className="px-5 flex flex-col gap-3">
         <div className="rounded-xl bg-muted h-36" />
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-xl bg-card border border-border p-4 h-32" />
+          <div key={i} className="rounded-xl bg-card border border-border shadow-card p-4 h-32" />
         ))}
       </div>
     </div>

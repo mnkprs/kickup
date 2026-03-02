@@ -13,7 +13,7 @@ export default function Loading() {
       {/* Match cards */}
       <div className="px-5 flex flex-col gap-3 pt-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-xl bg-card border border-border p-4 h-28" />
+          <div key={i} className="rounded-xl bg-card border border-border shadow-card p-4 h-28" />
         ))}
       </div>
     </div>

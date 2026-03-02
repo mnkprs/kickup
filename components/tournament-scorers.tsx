@@ -7,15 +7,16 @@ interface TournamentScorersProps {
 }
 
 export function TournamentScorers({ scorers, title = "Top Scorers" }: TournamentScorersProps) {
-  if (scorers.length === 0) return null;
-
   return (
     <section className="px-5">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-foreground font-semibold text-base">{title}</h2>
       </div>
-      <div className="rounded-xl bg-card border border-border p-4">
-        {scorers.map((entry, i) => {
+      <div className="rounded-xl bg-card border border-border shadow-card p-4">
+        {scorers.length === 0 ? (
+          <p className="text-muted-foreground text-sm text-center py-6">No scorers yet</p>
+        ) : (
+        scorers.map((entry, i) => {
           const isTop = i === 0;
           return (
             <div
@@ -36,7 +37,7 @@ export function TournamentScorers({ scorers, title = "Top Scorers" }: Tournament
               <div className="flex-1 min-w-0">
                 <span className="text-foreground text-sm font-medium block truncate">{entry.player.full_name}</span>
                 <span className="text-muted-foreground text-xs">
-                  {entry.team_short_name} · {entry.player.position}
+                  {entry.team_short_name} · {entry.player.position ?? "—"}
                 </span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
@@ -44,14 +45,11 @@ export function TournamentScorers({ scorers, title = "Top Scorers" }: Tournament
                   <span className="text-foreground font-bold text-sm block">{entry.goals}</span>
                   <span className="text-muted-foreground text-[9px]">goals</span>
                 </div>
-                <div className="text-center">
-                  <span className="text-foreground font-bold text-sm block">{entry.assists}</span>
-                  <span className="text-muted-foreground text-[9px]">assists</span>
-                </div>
               </div>
             </div>
           );
-        })}
+        })
+        )}
       </div>
     </section>
   );

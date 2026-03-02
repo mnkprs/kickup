@@ -1,6 +1,6 @@
 "use client";
 
-import { Crosshair, Handshake, Shield, Star, Lock, Trophy } from "lucide-react";
+import { Crosshair, Shield, Star, Lock, Trophy } from "lucide-react";
 import type { Profile } from "@/lib/types";
 
 interface Achievement {
@@ -13,7 +13,6 @@ interface Achievement {
 
 const ICON_MAP = {
   crosshair: Crosshair,
-  handshake: Handshake,
   shield: Shield,
   star: Star,
   lock: Lock,
@@ -28,13 +27,6 @@ function buildAchievements(profile: Profile): Achievement[] {
       description: "Score 20+ career goals",
       icon: "crosshair",
       unlocked: profile.goals >= 20,
-    },
-    {
-      id: "ach_2",
-      name: "Playmaker",
-      description: "10+ career assists",
-      icon: "handshake",
-      unlocked: profile.assists >= 10,
     },
     {
       id: "ach_3",
@@ -91,7 +83,7 @@ export function ProfileAchievements({ profile }: ProfileAchievementsProps) {
               key={achievement.id}
               className={`flex flex-col items-center gap-2 rounded-xl border px-2 py-3 text-center transition-colors ${
                 achievement.unlocked
-                  ? "bg-card border-border"
+                  ? "bg-card border-border shadow-card"
                   : "bg-muted/30 border-border/50 opacity-40"
               }`}
             >

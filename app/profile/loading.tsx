@@ -13,7 +13,7 @@ export default function Loading() {
         <div className="h-5 w-24 rounded bg-muted mb-3" />
         <div className="grid grid-cols-3 gap-2.5">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl bg-card border border-border px-2 py-3 flex flex-col items-center gap-2">
+            <div key={i} className="rounded-xl bg-card border border-border shadow-card px-2 py-3 flex flex-col items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-muted" />
               <div className="h-5 w-8 rounded bg-muted" />
               <div className="h-3 w-10 rounded bg-muted" />
@@ -33,7 +33,7 @@ export default function Loading() {
         <div className="h-5 w-28 rounded bg-muted mb-3" />
         <div className="grid grid-cols-3 gap-2.5">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-xl bg-card border border-border px-2 py-3 h-24" />
+            <div key={i} className="rounded-xl bg-card border border-border shadow-card px-2 py-3 h-24" />
           ))}
         </div>
       </div>
