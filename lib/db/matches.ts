@@ -58,6 +58,8 @@ function mapMatch(
     home_score: row.home_score as number | null,
     away_score: row.away_score as number | null,
     created_at: row.created_at as string,
+    home_result_status: row.home_result_status as string | undefined,
+    away_result_status: row.away_result_status as string | undefined,
     tournament: tournament ?? null,
   };
 }

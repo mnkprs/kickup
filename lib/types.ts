@@ -92,6 +92,9 @@ export interface Match {
   home_score: number | null;
   away_score: number | null;
   created_at: string;
+  /** Result submission status per team (for pre_match: show "awaiting opponent") */
+  home_result_status?: string;
+  away_result_status?: string;
   /** When the match belongs to a registered tournament */
   tournament?: MatchTournament | null;
 }
