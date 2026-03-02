@@ -19,6 +19,8 @@ import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { NotificationsButton } from "@/components/notifications-button";
 import { JoinTeamButton } from "@/components/join-team-button";
+import { SearchingToggle } from "@/components/searching-toggle";
+import { LookingForPlayersToggle } from "@/components/looking-for-players-toggle";
 import { TeamCaptainControlsWrapper } from "@/components/team-captain-controls-wrapper";
 import { RosterSection } from "@/components/roster-section";
 import { LiveDot } from "@/components/live-dot";
@@ -290,13 +292,27 @@ export default async function TeamDetailPage({
         </div>
 
         {/* Actions row */}
-        {user && !isMyTeam && !userHasAnyTeam && team.open_spots > 0 && (
+        {user && (
           <div className="flex items-center gap-3 mt-4 flex-wrap">
-            <JoinTeamButton
-              teamId={team.id}
-              hasPendingRequest={hasPendingRequest}
-              isAlreadyMember={false}
-            />
+            {isCaptain && (
+              <>
+                <SearchingToggle
+                  teamId={team.id}
+                  initial={team.searching_for_opponent ?? false}
+                />
+                <LookingForPlayersToggle
+                  teamId={team.id}
+                  initial={team.searching_for_players ?? false}
+                />
+              </>
+            )}
+            {!isMyTeam && !userHasAnyTeam && team.open_spots > 0 && (
+              <JoinTeamButton
+                teamId={team.id}
+                hasPendingRequest={hasPendingRequest}
+                isAlreadyMember={false}
+              />
+            )}
           </div>
         )}
       </header>
