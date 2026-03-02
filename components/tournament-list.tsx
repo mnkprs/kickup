@@ -8,6 +8,7 @@ import {
   Zap,
   Clock,
 } from "lucide-react";
+import { LiveDot } from "@/components/live-dot";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
 
@@ -58,6 +59,7 @@ function ActiveTournamentCard({
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
+          <LiveDot className="shrink-0" />
           <Trophy size={14} className="text-draw" />
           <span className="text-[10px] font-bold uppercase tracking-wider text-accent-foreground/70">
             Live
@@ -116,6 +118,7 @@ function TournamentCard({
     <Link href={`/tournaments/${tournament.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 cursor-pointer group hover:border-accent/40 transition-colors block">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
+          {tournament.status === "in_progress" && <LiveDot className="shrink-0" />}
           <span
             className={`text-[10px] font-bold uppercase tracking-wider ${statusStyle.text} ${statusStyle.bg} px-2 py-0.5 rounded-full`}
           >

@@ -23,6 +23,7 @@ import { SearchingToggle } from "@/components/searching-toggle";
 import { LookingForPlayersToggle } from "@/components/looking-for-players-toggle";
 import { TeamCaptainControlsWrapper } from "@/components/team-captain-controls-wrapper";
 import { RosterSection } from "@/components/roster-section";
+import { LiveDot } from "@/components/live-dot";
 
 function TeamStatsGrid({ team }: { team: Team }) {
   const total = team.wins + team.draws + team.losses;
@@ -75,12 +76,15 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
           const isHome = match.home_team_id === team.id;
           const opponent = isHome ? match.away_team : match.home_team;
 
-          if (match.status === "upcoming") {
+          if (match.status === "upcoming" || match.status === "live") {
             return (
               <Link key={match.id} href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors block">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    {isHome ? "Home" : "Away"}
+                  <span className="flex items-center gap-1.5">
+                    {match.status === "live" && <LiveDot className="shrink-0" />}
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {isHome ? "Home" : "Away"}
+                    </span>
                   </span>
                   <span className="text-muted-foreground text-xs">
                     {match.date ? format(parseISO(match.date), "d MMM") : "TBC"}
@@ -166,6 +170,7 @@ export default async function TeamDetailPage({
   }
 
   const members = memberRows.map((m) => m.profile);
+  const liveMatches = allMatches.filter((m) => m.status === "live");
   const upcomingMatches = allMatches.filter((m) => m.status === "upcoming");
   const completedMatches = allMatches.filter((m) => m.status === "completed");
 
@@ -326,6 +331,9 @@ export default async function TeamDetailPage({
             pendingRequests={pendingRequests}
             teamId={team.id}
           />
+        )}
+        {liveMatches.length > 0 && (
+          <TeamMatchesSection matches={liveMatches} team={team} title="Live Now" />
         )}
         <TeamMatchesSection matches={upcomingMatches} team={team} title="Upcoming Matches" />
         <TeamMatchesSection matches={completedMatches} team={team} title="Recent Results" />

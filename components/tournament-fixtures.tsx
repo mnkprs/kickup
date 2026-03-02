@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Match } from "@/lib/types";
 import Link from "next/link";
 import { MapPin, ChevronRight, Clock, CalendarPlus } from "lucide-react";
+import { LiveDot } from "@/components/live-dot";
 import { format, parseISO } from "date-fns";
 import { ScheduleTournamentMatchForm } from "@/components/schedule-tournament-match-form";
 
@@ -32,6 +33,7 @@ function UpcomingFixture({ match, tournamentId, canManageSchedule }: UpcomingFix
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
+            {match.status === "live" && <LiveDot className="shrink-0" />}
             <Clock size={12} className="text-accent" />
             <span className="text-xs font-medium text-accent">
               {match.date ? format(parseISO(match.date), "d MMM") : "TBC"}
@@ -130,11 +132,29 @@ export function TournamentFixtures({
   tournamentId,
   canManageSchedule,
 }: TournamentFixturesProps) {
+  const live = matches.filter((m) => m.status === "live");
   const upcoming = matches.filter((m) => m.status === "upcoming");
   const completed = matches.filter((m) => m.status === "completed");
 
   return (
     <>
+      {live.length > 0 && (
+        <section className="px-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-foreground font-semibold text-base">Live Now</h2>
+          </div>
+          <div className="flex flex-col gap-3">
+            {live.map((match) => (
+              <UpcomingFixture
+                key={match.id}
+                match={match}
+                tournamentId={tournamentId}
+                canManageSchedule={canManageSchedule}
+              />
+            ))}
+          </div>
+        </section>
+      )}
       <section className="px-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-foreground font-semibold text-base">Next Fixtures</h2>

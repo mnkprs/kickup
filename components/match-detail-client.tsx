@@ -14,6 +14,7 @@ import {
   submitResultAction,
   organizerSubmitResultAction,
 } from "@/app/actions/matches";
+import { LiveDot } from "@/components/live-dot";
 
 interface TeamMemberMin {
   id: string;
@@ -205,16 +206,21 @@ export function MatchDetailClient({
   const homeWin = isCompleted && match.home_score! > match.away_score!;
   const awayWin = isCompleted && match.away_score! > match.home_score!;
 
-  const statusLabel = {
-    pending_challenge: "Challenge Pending",
-    scheduling: "Scheduling",
-    pre_match: "Pre-Match",
-    completed: "Full Time",
-    disputed: "Disputed",
-  }[rawStatus] ?? "Upcoming";
+  const isLive = match.status === "live";
+  const statusLabel = isLive
+    ? "Live"
+    : {
+        pending_challenge: "Challenge Pending",
+        scheduling: "Scheduling",
+        pre_match: "Pre-Match",
+        completed: "Full Time",
+        disputed: "Disputed",
+      }[rawStatus] ?? "Upcoming";
 
   const statusClass = isCompleted
     ? "bg-muted text-muted-foreground"
+    : isLive
+    ? "bg-destructive/15 text-destructive"
     : isPendingChallenge
     ? "bg-accent/15 text-accent"
     : isScheduling
@@ -301,7 +307,8 @@ export function MatchDetailClient({
 
       <main className="flex flex-col gap-6 pb-24 pt-2">
         {/* Status */}
-        <div className="flex justify-center">
+        <div className="flex justify-center items-center gap-2">
+          {isLive && <LiveDot className="shrink-0" />}
           <span className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full ${statusClass}`}>
             {statusLabel}
           </span>

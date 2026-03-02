@@ -12,6 +12,7 @@ import { format, parseISO } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { TournamentStandings } from "@/components/tournament-standings";
 import { TournamentFixtures } from "@/components/tournament-fixtures";
+import { LiveDot } from "@/components/live-dot";
 import { TournamentScorers } from "@/components/tournament-scorers";
 import { TournamentPendingRegistrations } from "@/components/tournament-pending-registrations";
 import { TournamentOrganizerControls } from "@/components/tournament-organizer-controls";
@@ -109,6 +110,7 @@ export default async function TournamentDetailPage({
           </Link>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
+              {tournament.status === "in_progress" && <LiveDot className="shrink-0" />}
               <span
                 className={`text-[10px] font-bold uppercase tracking-wider ${statusStyle.text} ${statusStyle.bg} px-2 py-0.5 rounded-full`}
               >

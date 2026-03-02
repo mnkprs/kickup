@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Swords } from "lucide-react";
 import { toggleSearchingForOpponentAction } from "@/app/actions/teams";
+import { LiveDot } from "@/components/live-dot";
 
 interface SearchingToggleProps {
   teamId: string;
@@ -31,6 +32,7 @@ export function SearchingToggle({ teamId, initial }: SearchingToggleProps) {
           : "bg-card text-muted-foreground border-border hover:text-foreground"
       }`}
     >
+      {searching && <LiveDot className="shrink-0" />}
       <Swords size={15} className={searching ? "text-accent-foreground" : "text-muted-foreground"} />
       {searching ? "Looking for Opponent" : "Find an Opponent"}
     </button>

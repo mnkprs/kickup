@@ -1,5 +1,6 @@
 import type { Match } from "@/lib/types";
 import { MapPin, Clock, ChevronRight } from "lucide-react";
+import { LiveDot } from "@/components/live-dot";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
 
@@ -22,6 +23,7 @@ function UpcomingMatchCard({ match }: { match: Match }) {
     <Link href={`/matches/${match.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors cursor-pointer group block">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
+          {match.status === "live" && <LiveDot className="shrink-0" />}
           <Clock size={12} className="text-accent" />
           <span className="text-xs font-medium text-accent">
             {formatMatchDate(match.date, match.time)}

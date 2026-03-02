@@ -1,5 +1,6 @@
 import type { Tournament } from "@/lib/types";
 import { Trophy, Calendar, Users, ChevronRight } from "lucide-react";
+import { LiveDot } from "@/components/live-dot";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
 
@@ -28,6 +29,7 @@ export function TournamentsBanner({ tournaments }: TournamentsBannerProps) {
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
+                <LiveDot className="shrink-0" />
                 <Trophy size={14} className="text-draw" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-accent-foreground/70">
                   Live

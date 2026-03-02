@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { NotificationsButton } from "@/components/notifications-button";
 
@@ -21,6 +21,13 @@ export function TournamentHeader({
     <header className="px-5 pt-12 pb-2">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors"
+            aria-label="Go back"
+          >
+            <ArrowLeft size={18} className="text-muted-foreground" />
+          </Link>
           <h1 className="text-foreground font-semibold text-lg">Leagues</h1>
         </div>
         <div className="flex items-center gap-2">
