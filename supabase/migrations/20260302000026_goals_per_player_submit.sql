@@ -7,6 +7,10 @@ alter table matches add column if not exists pending_home_goals jsonb not null d
 alter table matches add column if not exists pending_away_goals jsonb not null default '{}';
 
 -- 2. Update submit_result: accept p_goals (jsonb) for the submitting team
+-- Drop existing versions first (PostgreSQL cannot change param names via CREATE OR REPLACE)
+drop function if exists submit_result(uuid, uuid, int, int, uuid, text);
+drop function if exists submit_result(uuid, uuid, int, int, uuid, text, jsonb);
+
 create or replace function submit_result(
   p_match_id   uuid,
   p_team_id    uuid,
@@ -104,6 +108,10 @@ end;
 $$;
 
 -- 4. Update organizer_submit_result: accept p_goals and insert match_events directly
+-- Drop existing version first (signature change: adding p_goals)
+drop function if exists organizer_submit_result(uuid, int, int, uuid, text);
+drop function if exists organizer_submit_result(uuid, int, int, uuid, text, jsonb);
+
 create or replace function organizer_submit_result(
   p_match_id   uuid,
   p_home_score int,
