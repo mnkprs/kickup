@@ -96,6 +96,7 @@ export default async function TournamentDetailPage({
   const statusStyle = getStatusStyle(tournament.status);
   const isOrganizer = user?.id === tournament.organizer_id;
   const isAdmin = profile?.is_admin === true;
+  // Organiser and admin can manage registrations, advance to knockouts, etc.
   const canManageRegistrations = isOrganizer || isAdmin;
 
   return (

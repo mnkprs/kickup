@@ -15,6 +15,8 @@ export default async function PlayerProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const [profile, team] = await Promise.all([
     getProfile(id),
@@ -30,7 +32,11 @@ export default async function PlayerProfilePage({
       <ProfileHeader profile={profile} team={team} showSettings={false} />
       <main className="flex flex-col gap-6 pb-24">
         <ProfileStats profile={profile} />
-        <ProfileTeamCard profile={profile} team={team} />
+        <ProfileTeamCard
+          profile={profile}
+          team={team}
+          showCaptainToggles={user?.id === id}
+        />
         <ProfileActivity matches={matches} teamId={team?.id ?? null} />
         <ProfileAchievements profile={profile} />
       </main>

@@ -46,7 +46,7 @@ export default async function ProfilePage() {
 
       <main className="flex flex-col gap-6 pb-24">
         <ProfileStats profile={profile} />
-        <ProfileTeamCard profile={profile} team={team} />
+        <ProfileTeamCard profile={profile} team={team} showCaptainToggles />
         <ProfileActivity matches={matches} teamId={team?.id ?? null} />
         <ProfileAchievements profile={profile} />
       </main>

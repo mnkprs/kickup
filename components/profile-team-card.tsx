@@ -1,13 +1,17 @@
 import type { Profile, Team } from "@/lib/types";
 import { ChevronRight, Users, MapPin, Trophy, Crown } from "lucide-react";
 import Link from "next/link";
+import { SearchingToggle } from "@/components/searching-toggle";
+import { LookingForPlayersToggle } from "@/components/looking-for-players-toggle";
 
 interface ProfileTeamCardProps {
   profile: Profile;
   team: Team | null;
+  /** Show captain toggles (Looking for Opponent, Looking for Players) when viewing own profile */
+  showCaptainToggles?: boolean;
 }
 
-export function ProfileTeamCard({ profile, team }: ProfileTeamCardProps) {
+export function ProfileTeamCard({ profile, team, showCaptainToggles = false }: ProfileTeamCardProps) {
   if (!team) return null;
 
   const isCaptain = team.captain_id === profile.id;
@@ -83,6 +87,19 @@ export function ProfileTeamCard({ profile, team }: ProfileTeamCardProps) {
           </div>
         </div>
       </Link>
+
+      {showCaptainToggles && isCaptain && (
+        <div className="flex items-center gap-2 mt-3">
+          <SearchingToggle
+            teamId={team.id}
+            initial={team.searching_for_opponent ?? false}
+          />
+          <LookingForPlayersToggle
+            teamId={team.id}
+            initial={team.searching_for_players ?? false}
+          />
+        </div>
+      )}
     </section>
   );
 }
