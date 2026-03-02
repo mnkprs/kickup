@@ -190,3 +190,75 @@ export async function organizerSubmitResultAction(data: {
   revalidatePath("/");
   return { success: true };
 }
+
+/** Admin: update match schedule (date, time, location) — any match, any status */
+export async function adminUpdateMatchScheduleAction(data: {
+  matchId: string;
+  date: string;
+  time: string;
+  location: string;
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const timeValue = data.time.trim() ? `${data.time.trim().padStart(5, "0")}:00` : null;
+
+  const { error } = await supabase.rpc("admin_update_match_schedule", {
+    p_match_id: data.matchId,
+    p_date: data.date || null,
+    p_time: timeValue,
+    p_location: data.location.trim() || null,
+  });
+
+  if (error) return { error: error.message };
+
+  const { data: tm } = await supabase
+    .from("tournament_matches")
+    .select("tournament_id")
+    .eq("match_id", data.matchId)
+    .maybeSingle();
+  if (tm) revalidatePath(`/tournaments/${(tm as { tournament_id: string }).tournament_id}`);
+
+  revalidatePath(`/matches/${data.matchId}`);
+  revalidatePath("/matches");
+  revalidatePath("/");
+  return { success: true };
+}
+
+/** Admin: update match result (scores, mvp, goals) — any match, including completed */
+export async function adminUpdateMatchResultAction(data: {
+  matchId: string;
+  homeScore: number;
+  awayScore: number;
+  mvpId: string | null;
+  notes: string;
+  goals?: { home?: Record<string, number>; away?: Record<string, number> };
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase.rpc("admin_update_match_result", {
+    p_match_id: data.matchId,
+    p_home_score: data.homeScore,
+    p_away_score: data.awayScore,
+    p_mvp_id: data.mvpId,
+    p_notes: data.notes || null,
+    p_goals: data.goals ?? { home: {}, away: {} },
+  });
+
+  if (error) return { error: error.message };
+
+  const { data: tm } = await supabase
+    .from("tournament_matches")
+    .select("tournament_id")
+    .eq("match_id", data.matchId)
+    .maybeSingle();
+  if (tm) revalidatePath(`/tournaments/${(tm as { tournament_id: string }).tournament_id}`);
+
+  revalidatePath(`/matches/${data.matchId}`);
+  revalidatePath("/matches");
+  revalidatePath("/");
+  return { success: true };
+}

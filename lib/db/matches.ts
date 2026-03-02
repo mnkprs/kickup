@@ -61,6 +61,8 @@ function mapMatch(
     home_result_status: row.home_result_status as string | undefined,
     away_result_status: row.away_result_status as string | undefined,
     tournament: tournament ?? null,
+    mvp_id: row.mvp_id as string | null | undefined,
+    notes: row.notes as string | null | undefined,
   };
 }
 

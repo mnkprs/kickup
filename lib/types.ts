@@ -97,6 +97,10 @@ export interface Match {
   away_result_status?: string;
   /** When the match belongs to a registered tournament */
   tournament?: MatchTournament | null;
+  /** MVP player id (for admin edit) */
+  mvp_id?: string | null;
+  /** Match notes (for admin edit) */
+  notes?: string | null;
 }
 
 export interface MatchEvent {

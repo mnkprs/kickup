@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MapPin, Clock, Calendar, Check, ChevronRight, Trophy, Minus, Plus } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Calendar, Check, ChevronRight, Trophy, Minus, Plus, Pencil, X } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { NotificationsButton } from "@/components/notifications-button";
@@ -14,6 +14,8 @@ import {
   acceptProposalAction,
   submitResultAction,
   organizerSubmitResultAction,
+  adminUpdateMatchScheduleAction,
+  adminUpdateMatchResultAction,
 } from "@/app/actions/matches";
 import { LiveDot } from "@/components/live-dot";
 import { Avatar } from "@/components/avatar";
@@ -52,6 +54,7 @@ interface MatchDetailClientProps {
   awayRoster?: RosterPlayer[];
   goalsByPlayer?: Record<string, number>;
   isTournamentOrganizer?: boolean;
+  isAdmin?: boolean;
 }
 
 function TeamBlock({
@@ -238,7 +241,7 @@ function MatchRostersSection({
   return (
     <section className="px-5">
       <h2 className="text-foreground font-semibold text-sm mb-3">Team Rosters</h2>
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4">
         <RosterColumn roster={homeRoster} team={homeTeam} />
         <RosterColumn roster={awayRoster} team={awayTeam} />
       </div>
@@ -256,6 +259,7 @@ export function MatchDetailClient({
   awayRoster = [],
   goalsByPlayer = {},
   isTournamentOrganizer = false,
+  isAdmin = false,
 }: MatchDetailClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -273,6 +277,22 @@ export function MatchDetailClient({
   const [notes, setNotes] = useState("");
   const [showResult, setShowResult] = useState(false);
   const [formGoalsByPlayer, setFormGoalsByPlayer] = useState<Record<string, number>>({});
+
+  // Admin edit state
+  const [showAdminEdit, setShowAdminEdit] = useState(false);
+  const [adminDate, setAdminDate] = useState(match.date ?? "");
+  const [adminTime, setAdminTime] = useState(match.time?.slice(0, 5) ?? "");
+  const [adminLocation, setAdminLocation] = useState(match.location ?? "");
+  const [adminHomeScore, setAdminHomeScore] = useState(match.home_score?.toString() ?? "0");
+  const [adminAwayScore, setAdminAwayScore] = useState(match.away_score?.toString() ?? "0");
+  const [adminMvpId, setAdminMvpId] = useState<string | null>(match.mvp_id ?? null);
+  const [adminNotes, setAdminNotes] = useState(match.notes ?? "");
+  const [adminGoalsByPlayer, setAdminGoalsByPlayer] = useState<Record<string, number>>(() => {
+    const g: Record<string, number> = {};
+    for (const [pid, count] of Object.entries(goalsByPlayer)) g[pid] = count;
+    return g;
+  });
+  const [adminSaveLoading, setAdminSaveLoading] = useState(false);
 
   const rawStatus = match.raw_status;
   const isCompleted = rawStatus === "completed";
@@ -413,6 +433,51 @@ export function MatchDetailClient({
     setShowResult(false);
   }
 
+  async function handleAdminSave() {
+    setAdminSaveLoading(true);
+    setError("");
+    const scheduleResult = await adminUpdateMatchScheduleAction({
+      matchId: match.id,
+      date: adminDate,
+      time: adminTime,
+      location: adminLocation,
+    });
+    if (scheduleResult.error) {
+      setError(scheduleResult.error);
+      setAdminSaveLoading(false);
+      return;
+    }
+    const h = parseInt(adminHomeScore) || 0;
+    const a = parseInt(adminAwayScore) || 0;
+    const goalsPayload = {
+      home: Object.fromEntries(
+        homeRoster
+          .map((p) => [p.player_id, adminGoalsByPlayer[p.player_id] ?? 0])
+          .filter(([, c]) => Number(c) > 0)
+      ),
+      away: Object.fromEntries(
+        awayRoster
+          .map((p) => [p.player_id, adminGoalsByPlayer[p.player_id] ?? 0])
+          .filter(([, c]) => Number(c) > 0)
+      ),
+    };
+    const res = await adminUpdateMatchResultAction({
+      matchId: match.id,
+      homeScore: h,
+      awayScore: a,
+      mvpId: adminMvpId,
+      notes: adminNotes,
+      goals: goalsPayload,
+    });
+    setAdminSaveLoading(false);
+    if (res.error) {
+      setError(res.error);
+      return;
+    }
+    router.refresh();
+    setShowAdminEdit(false);
+  }
+
   return (
     <>
       <header className="px-5 pt-12 pb-4 flex items-center justify-between">
@@ -425,7 +490,18 @@ export function MatchDetailClient({
           </Link>
           <h1 className="text-foreground font-semibold text-lg">Match</h1>
         </div>
-        <NotificationsButton />
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              onClick={() => setShowAdminEdit(true)}
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
+              aria-label="Edit match"
+            >
+              <Pencil size={18} className="text-muted-foreground" />
+            </button>
+          )}
+          <NotificationsButton />
+        </div>
       </header>
 
       <main className="flex flex-col gap-6 pb-24 pt-2">
@@ -853,6 +929,188 @@ export function MatchDetailClient({
                   "Confirm Result"
                 )}
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Admin: Edit match — full-screen drawer */}
+        {isAdmin && showAdminEdit && (
+          <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+                <h2 className="text-base font-semibold text-foreground">Edit match</h2>
+                <button
+                  onClick={() => setShowAdminEdit(false)}
+                  className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-muted transition-colors pressable"
+                  aria-label="Close"
+                >
+                  <X size={20} className="text-muted-foreground" />
+                </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
+                {/* Schedule */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Schedule
+                  </p>
+                  <div className="grid gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Date</label>
+                      <input
+                        type="date"
+                        value={adminDate}
+                        onChange={(e) => setAdminDate(e.target.value)}
+                        className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Time</label>
+                      <input
+                        type="time"
+                        value={adminTime}
+                        onChange={(e) => setAdminTime(e.target.value)}
+                        className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Location</label>
+                      <input
+                        type="text"
+                        value={adminLocation}
+                        onChange={(e) => setAdminLocation(e.target.value)}
+                        placeholder="e.g. Karaiskakis Arena"
+                        className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Result */}
+                <div className="space-y-3 pt-4 border-t border-border">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Result
+                  </p>
+                  <div className="grid grid-cols-3 gap-3 items-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-xs text-muted-foreground">{match.home_team.short_name}</span>
+                      <input
+                        type="number"
+                        value={adminHomeScore}
+                        onChange={(e) => setAdminHomeScore(e.target.value)}
+                        min={0}
+                        max={99}
+                        className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-xl font-bold text-foreground focus:outline-none focus:border-accent/50"
+                      />
+                    </div>
+                    <div className="text-center text-muted-foreground font-bold">—</div>
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-xs text-muted-foreground">{match.away_team.short_name}</span>
+                      <input
+                        type="number"
+                        value={adminAwayScore}
+                        onChange={(e) => setAdminAwayScore(e.target.value)}
+                        min={0}
+                        max={99}
+                        className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-xl font-bold text-foreground focus:outline-none focus:border-accent/50"
+                      />
+                    </div>
+                  </div>
+
+                  {homeRoster.length > 0 || awayRoster.length > 0 ? (
+                    <div className="space-y-2">
+                      <label className="text-xs text-muted-foreground">Goals per player</label>
+                      <div className="flex flex-col gap-3">
+                        <GoalsRosterSection
+                          roster={homeRoster}
+                          team={match.home_team}
+                          goals={adminGoalsByPlayer}
+                          onUpdate={(playerId, delta) =>
+                            setAdminGoalsByPlayer((prev) => ({
+                              ...prev,
+                              [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                            }))
+                          }
+                        />
+                        <GoalsRosterSection
+                          roster={awayRoster}
+                          team={match.away_team}
+                          goals={adminGoalsByPlayer}
+                          onUpdate={(playerId, delta) =>
+                            setAdminGoalsByPlayer((prev) => ({
+                              ...prev,
+                              [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {teamMembers.length > 0 && (
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Man of the Match</label>
+                      <div className="flex flex-wrap gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setAdminMvpId(null)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                            !adminMvpId ? "bg-accent/20 text-accent" : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          None
+                        </button>
+                        {teamMembers.map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => setAdminMvpId(m.id)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                              adminMvpId === m.id ? "bg-accent/20 text-accent" : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                            }`}
+                          >
+                            {m.full_name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Notes</label>
+                    <textarea
+                      value={adminNotes}
+                      onChange={(e) => setAdminNotes(e.target.value)}
+                      rows={2}
+                      className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 resize-none"
+                    />
+                  </div>
+
+                  {error && (
+                    <p className="text-sm text-destructive bg-destructive/10 rounded-xl px-4 py-3 text-center">
+                      {error}
+                    </p>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowAdminEdit(false)}
+                      className="flex-1 py-3 rounded-xl bg-card border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors pressable"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAdminSave}
+                      disabled={adminSaveLoading}
+                      className="flex-1 py-3 rounded-xl bg-accent text-accent-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-2 pressable"
+                    >
+                      {adminSaveLoading ? (
+                        <span className="h-4 w-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
+                      ) : (
+                        "Save"
+                      )}
+                    </button>
+                  </div>
+                </div>
             </div>
           </div>
         )}

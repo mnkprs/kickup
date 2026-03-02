@@ -33,7 +33,7 @@ export default async function MatchDetailPage({
     avatar_url: string | null;
   }[] = [];
   let isTournamentOrganizer = false;
-
+  let isAdmin = false;
   let isCaptain = false;
 
   if (user) {
@@ -56,24 +56,33 @@ export default async function MatchDetailPage({
     userTeamId = membership?.team_id ?? null;
     isCaptain = membership?.role === "captain";
 
+    isAdmin = profileRes.data?.is_admin === true;
     if (tmRes.data) {
       const tournaments = tmRes.data.tournaments;
       const tournament = Array.isArray(tournaments) ? tournaments[0] : tournaments;
       isTournamentOrganizer =
-        (tournament?.organizer_id === user.id) || (profileRes.data?.is_admin === true);
+        (tournament?.organizer_id === user.id) || isAdmin;
     }
 
-    // Load team members for MVP selection when submitting result (captain or organizer)
-    if ((userTeamId || isTournamentOrganizer) && match.raw_status === "pre_match") {
-      const teamIdForMembers = userTeamId ?? match.home_team_id;
-      const members = await getTeamMembers(teamIdForMembers);
-      teamMembers = members.map((m) => ({
-        id: m.profile.id,
-        full_name: m.profile.full_name,
-        avatar_initials: m.profile.avatar_initials,
-        avatar_color: m.profile.avatar_color,
-        avatar_url: m.profile.avatar_url ?? null,
-      }));
+    // Load team members for MVP selection when submitting result (captain, organizer, or admin)
+    // Include players from BOTH teams so MVP can be selected from either side
+    if ((userTeamId || isTournamentOrganizer || isAdmin) && (match.raw_status === "pre_match" || isAdmin)) {
+      const [homeMembers, awayMembers] = await Promise.all([
+        getTeamMembers(match.home_team_id),
+        getTeamMembers(match.away_team_id),
+      ]);
+      const seen = new Set<string>();
+      for (const m of [...homeMembers, ...awayMembers]) {
+        if (seen.has(m.profile.id)) continue;
+        seen.add(m.profile.id);
+        teamMembers.push({
+          id: m.profile.id,
+          full_name: m.profile.full_name,
+          avatar_initials: m.profile.avatar_initials,
+          avatar_color: m.profile.avatar_color,
+          avatar_url: m.profile.avatar_url ?? null,
+        });
+      }
     }
   }
 
@@ -132,7 +141,7 @@ export default async function MatchDetailPage({
     goalsByPlayer = goals;
   } else if (
     match.raw_status === "pre_match" &&
-    (userTeamId || isTournamentOrganizer)
+    (userTeamId || isTournamentOrganizer || isAdmin)
   ) {
     const [home, away] = await Promise.all([
       getMatchRoster(id, match.home_team_id),
@@ -140,6 +149,36 @@ export default async function MatchDetailPage({
     ]);
     homeRoster = home;
     awayRoster = away;
+  }
+
+  // For admin editing: load rosters when admin views any match (for result edit form)
+  if (isAdmin && homeRoster.length === 0 && awayRoster.length === 0) {
+    const [home, away, goals] = await Promise.all([
+      getMatchRoster(id, match.home_team_id),
+      getMatchRoster(id, match.away_team_id),
+      getMatchGoalsByPlayer(id),
+    ]);
+    homeRoster = home;
+    awayRoster = away;
+    goalsByPlayer = goals;
+  }
+
+  // For admin editing completed matches: prefer roster (match_lineups) over team_members for MVP
+  // so we include players who actually played, even if they've since left a team
+  if (isAdmin && (homeRoster.length > 0 || awayRoster.length > 0)) {
+    teamMembers = [];
+    const seen = new Set<string>();
+    for (const { player_id, profile } of [...homeRoster, ...awayRoster]) {
+      if (seen.has(player_id)) continue;
+      seen.add(player_id);
+      teamMembers.push({
+        id: player_id,
+        full_name: (profile.full_name as string) ?? "Unknown",
+        avatar_initials: (profile.avatar_initials as string) ?? "",
+        avatar_color: (profile.avatar_color as string) ?? "#2E7D32",
+        avatar_url: (profile.avatar_url as string) ?? null,
+      });
+    }
   }
 
   return (
@@ -153,6 +192,7 @@ export default async function MatchDetailPage({
       awayRoster={awayRoster}
       goalsByPlayer={Object.fromEntries(goalsByPlayer)}
       isTournamentOrganizer={isTournamentOrganizer}
+      isAdmin={isAdmin}
     />
   );
 }
