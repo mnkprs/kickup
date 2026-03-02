@@ -15,15 +15,13 @@ export function TeamCaptainControls({
   onReject,
 }: TeamCaptainControlsProps) {
   return (
-    <>
-      {/* Pending Requests Section - Always visible to captains */}
-      <section className="px-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-foreground font-semibold text-sm">
-            Pending Join Requests ({pendingRequests.length})
-          </h2>
-        </div>
-        <div className="rounded-xl bg-card border border-border shadow-card divide-y divide-border">
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-foreground font-semibold text-sm">
+          Pending Join Requests ({pendingRequests.length})
+        </h3>
+      </div>
+      <div className="rounded-xl bg-card border border-border shadow-card divide-y divide-border">
           {pendingRequests.length > 0 ? (
             pendingRequests.map((request) => {
               const player = request.profile;
@@ -70,7 +68,6 @@ export function TeamCaptainControls({
             </div>
           )}
         </div>
-      </section>
-    </>
+    </div>
   );
 }
