@@ -1,11 +1,5 @@
--- ═══════════════════════════════════════════════════════════════════
---  Full dummy data for tournament cfa215c6-af0c-4c0b-85d8-4e794764a9bb
---  Creates: registrations, groups, matches, lineups, scorers.
---  Run in Supabase SQL Editor (Dashboard > SQL Editor).
---
---  Prerequisites: Run seed_v2.sql first (or have 8 teams with players).
---  Also run migration 20260302000021 to fix the "upper bound" error.
--- ═══════════════════════════════════════════════════════════════════
+-- One-off seed: dummy data for tournament cfa215c6-af0c-4c0b-85d8-4e794764a9bb
+-- Safe to run: uses DO blocks, skips if tournament not found.
 
 DO $$
 DECLARE
@@ -14,18 +8,12 @@ DECLARE
   v_match_format text;
   v_match_id uuid;
   v_match_order int := 0;
-  -- Team IDs (seed_v2: teams 1-8)
   v_teams uuid[] := ARRAY[
-    '00000000-0000-0000-0001-000000000001'::uuid,
-    '00000000-0000-0000-0001-000000000002'::uuid,
-    '00000000-0000-0000-0001-000000000003'::uuid,
-    '00000000-0000-0000-0001-000000000004'::uuid,
-    '00000000-0000-0000-0001-000000000005'::uuid,
-    '00000000-0000-0000-0001-000000000006'::uuid,
-    '00000000-0000-0000-0001-000000000007'::uuid,
-    '00000000-0000-0000-0001-000000000008'::uuid
+    '00000000-0000-0000-0001-000000000001'::uuid, '00000000-0000-0000-0001-000000000002'::uuid,
+    '00000000-0000-0000-0001-000000000003'::uuid, '00000000-0000-0000-0001-000000000004'::uuid,
+    '00000000-0000-0000-0001-000000000005'::uuid, '00000000-0000-0000-0001-000000000006'::uuid,
+    '00000000-0000-0000-0001-000000000007'::uuid, '00000000-0000-0000-0001-000000000008'::uuid
   ];
-  -- Round-robin pairs: (home_idx, away_idx) for Group A then B
   v_pairs int[][] := ARRAY[
     ARRAY[1,2], ARRAY[3,4], ARRAY[1,3], ARRAY[2,4], ARRAY[1,4], ARRAY[2,3],
     ARRAY[5,6], ARRAY[7,8], ARRAY[5,7], ARRAY[6,8], ARRAY[5,8], ARRAY[6,7]
@@ -39,28 +27,22 @@ DECLARE
   v_home_id uuid;
   v_away_id uuid;
 BEGIN
-  -- Get tournament
   SELECT organizer_id, match_format::text INTO v_organizer_id, v_match_format
   FROM tournaments WHERE id = v_tournament_id;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Tournament % not found', v_tournament_id;
-  END IF;
+  IF NOT FOUND THEN RETURN; END IF;
 
-  -- Clear existing tournament data (match delete cascades to tournament_matches, lineups, events)
   DELETE FROM matches WHERE id IN (
     SELECT match_id FROM tournament_matches WHERE tournament_id = v_tournament_id
   );
   DELETE FROM tournament_groups WHERE tournament_id = v_tournament_id;
   DELETE FROM tournament_registrations WHERE tournament_id = v_tournament_id;
 
-  -- Registrations (approved)
   FOR v_i IN 1..8 LOOP
     INSERT INTO tournament_registrations (tournament_id, team_id, status)
     VALUES (v_tournament_id, v_teams[v_i], 'approved')
     ON CONFLICT (tournament_id, team_id) DO UPDATE SET status = 'approved';
   END LOOP;
 
-  -- Groups: A = t1-t4, B = t5-t8
   INSERT INTO tournament_groups (tournament_id, team_id, group_label) VALUES
     (v_tournament_id, v_teams[1], 'A'), (v_tournament_id, v_teams[2], 'A'),
     (v_tournament_id, v_teams[3], 'A'), (v_tournament_id, v_teams[4], 'A'),
@@ -68,29 +50,23 @@ BEGIN
     (v_tournament_id, v_teams[7], 'B'), (v_tournament_id, v_teams[8], 'B')
   ON CONFLICT (tournament_id, team_id) DO UPDATE SET group_label = EXCLUDED.group_label;
 
-  -- Matches + tournament_matches
   FOR v_i IN 1..12 LOOP
     v_home_id := v_teams[v_pairs[v_i][1]];
     v_away_id := v_teams[v_pairs[v_i][2]];
     v_match_order := v_i;
-
     INSERT INTO matches (home_team_id, away_team_id, format, status, created_by, home_score, away_score)
     VALUES (v_home_id, v_away_id, v_match_format::match_format, 'completed', v_organizer_id, v_scores[v_i][1], v_scores[v_i][2])
     RETURNING id INTO v_match_id;
-
     INSERT INTO tournament_matches (tournament_id, match_id, stage, group_label, match_order)
     VALUES (v_tournament_id, v_match_id, 'group', v_group_labels[v_i], v_match_order);
   END LOOP;
 
-  -- Tournament status
   UPDATE tournaments SET status = 'group_stage' WHERE id = v_tournament_id;
 END $$;
 
--- ─── Match lineups (7 players per team for 7v7) ───────────────────
 DO $$
 DECLARE
   v_tournament_id uuid := 'cfa215c6-af0c-4c0b-85d8-4e794764a9bb';
-  -- match_id, home_team_idx, away_team_idx
   v_match_teams int[][] := ARRAY[
     ARRAY[1,1,2], ARRAY[2,3,4], ARRAY[3,1,3], ARRAY[4,2,4], ARRAY[5,1,4], ARRAY[6,2,3],
     ARRAY[7,5,6], ARRAY[8,7,8], ARRAY[9,5,7], ARRAY[10,6,8], ARRAY[11,5,8], ARRAY[12,6,7]
@@ -107,10 +83,8 @@ DECLARE
   v_p int;
 BEGIN
   FOR v_match IN
-    SELECT tm.match_id, tm.match_order
-    FROM tournament_matches tm
-    WHERE tm.tournament_id = v_tournament_id AND tm.stage = 'group'
-    ORDER BY tm.match_order
+    SELECT tm.match_id, tm.match_order FROM tournament_matches tm
+    WHERE tm.tournament_id = v_tournament_id AND tm.stage = 'group' ORDER BY tm.match_order
   LOOP
     FOR v_side IN 1..2 LOOP
       v_tidx := v_match_teams[v_match.match_order][v_side + 1];
@@ -127,26 +101,16 @@ BEGIN
   END LOOP;
 END $$;
 
--- ─── Match events (scorers) ────────────────────────────────────────
--- Goals per match: (team_idx, scorer_player_num, minute) × count
 DO $$
 DECLARE
   v_tournament_id uuid := 'cfa215c6-af0c-4c0b-85d8-4e794764a9bb';
-  -- Per match_order: home_goals with (scorer_player_offset from team start), away_goals
-  -- Scorers: t1=p01,p06 t2=p14,p11 t3=p16,p21 t4=p25 t5=p31,p35,p29 t6=p36,p40 t7=p44,p49 t8=p51
   v_events jsonb := '[
-    {"h":[[1,12],[6,34]],"a":[[14,55]]},
-    {"h":[[16,23],[21,58]],"a":[]},
-    {"h":[[1,7],[6,51],[2,78]],"a":[]},
-    {"h":[[11,9],[14,37],[11,70]],"a":[[25,43]]},
-    {"h":[[1,7],[1,29],[6,51],[2,78]],"a":[]},
-    {"h":[[14,26]],"a":[[15,14],[21,63]]},
-    {"h":[[31,55],[35,79]],"a":[[36,22]]},
-    {"h":[[44,33],[49,61]],"a":[]},
-    {"h":[[29,19],[35,68],[31,79]],"a":[]},
-    {"h":[[36,22],[40,65]],"a":[[51,48]]},
-    {"h":[[31,15],[35,44],[29,79]],"a":[]},
-    {"h":[[36,28]],"a":[]}
+    {"h":[[1,12],[6,34]],"a":[[14,55]]},{"h":[[16,23],[21,58]],"a":[]},
+    {"h":[[1,7],[6,51],[2,78]],"a":[]},{"h":[[11,9],[14,37],[11,70]],"a":[[25,43]]},
+    {"h":[[1,7],[1,29],[6,51],[2,78]],"a":[]},{"h":[[14,26]],"a":[[15,14],[21,63]]},
+    {"h":[[31,55],[35,79]],"a":[[36,22]]},{"h":[[44,33],[49,61]],"a":[]},
+    {"h":[[29,19],[35,68],[31,79]],"a":[]},{"h":[[36,22],[40,65]],"a":[[51,48]]},
+    {"h":[[31,15],[35,44],[29,79]],"a":[]},{"h":[[36,28]],"a":[]}
   ]'::jsonb;
   v_match record;
   v_ev jsonb;
@@ -157,10 +121,8 @@ DECLARE
 BEGIN
   FOR v_match IN
     SELECT tm.match_id, tm.match_order, m.home_team_id, m.away_team_id
-    FROM tournament_matches tm
-    JOIN matches m ON m.id = tm.match_id
-    WHERE tm.tournament_id = v_tournament_id AND tm.stage = 'group'
-    ORDER BY tm.match_order
+    FROM tournament_matches tm JOIN matches m ON m.id = tm.match_id
+    WHERE tm.tournament_id = v_tournament_id AND tm.stage = 'group' ORDER BY tm.match_order
   LOOP
     v_ev := v_events->(v_match.match_order - 1);
     FOR v_goal IN SELECT * FROM jsonb_array_elements(v_ev->'h')
@@ -181,14 +143,3 @@ BEGIN
     END LOOP;
   END LOOP;
 END $$;
--- I need to fix the lineup logic. We have:
--- FOR each match
---   FOR side 1 (home) and 2 (away)
---     get team_id from v_match_teams[match_order][side+1]
---     FOR each player in that team
---       insert lineup
--- The inner loop var needs to be different. Let me use v_side and v_p.
-</think>
-Fixing the lineup block — inner loop variable conflict:
-<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
-StrReplace

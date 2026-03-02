@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export async function createTeamAction(data: {
@@ -131,4 +132,16 @@ export async function removeMemberAction(teamId: string, playerId: string) {
   if (error) return { error: error.message };
   revalidatePath(`/teams/${teamId}`);
   return { success: true };
+}
+
+export async function deleteTeamAction(teamId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase.from("teams").delete().eq("id", teamId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/teams");
+  redirect("/teams");
 }

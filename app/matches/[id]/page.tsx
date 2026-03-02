@@ -47,7 +47,8 @@ export default async function MatchDetailPage({
     userTeamId = membershipRes.data?.team_id ?? null;
 
     if (tmRes.data) {
-      const tournament = (tmRes.data as { tournaments: { organizer_id: string } | null }).tournaments;
+      const tournaments = tmRes.data.tournaments;
+      const tournament = Array.isArray(tournaments) ? tournaments[0] : tournaments;
       isTournamentOrganizer =
         (tournament?.organizer_id === user.id) || (profileRes.data?.is_admin === true);
     }

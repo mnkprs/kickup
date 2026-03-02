@@ -14,10 +14,13 @@ import {
   Trophy,
   ShieldAlert,
   Star,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { NotificationsButton } from "@/components/notifications-button";
+import { TeamSettingsButton } from "@/components/team-settings-button";
+import { StatusBadge } from "@/components/status-badge";
 import { JoinTeamButton } from "@/components/join-team-button";
 import { TeamCaptainControlsWrapper } from "@/components/team-captain-controls-wrapper";
 import { RosterSection } from "@/components/roster-section";
@@ -207,7 +210,16 @@ export default async function TeamDetailPage({
             </Link>
             <h1 className="text-foreground font-semibold text-lg">Team Detail</h1>
           </div>
-          <NotificationsButton />
+          <div className="flex items-center gap-2">
+            {isCaptain && (
+              <TeamSettingsButton
+                teamId={team.id}
+                searchingForOpponent={team.searching_for_opponent ?? false}
+                searchingForPlayers={team.searching_for_players ?? false}
+              />
+            )}
+            <NotificationsButton />
+          </div>
         </div>
 
         {/* Team hero card */}
@@ -245,6 +257,20 @@ export default async function TeamDetailPage({
                     <Crown size={10} fill="currentColor" />
                     Captain
                   </span>
+                )}
+                {isMyTeam && (
+                  <>
+                    <StatusBadge
+                      label="Looking for Opponents"
+                      active={team.searching_for_opponent ?? false}
+                      icon={Swords}
+                    />
+                    <StatusBadge
+                      label="Looking for Players"
+                      active={team.searching_for_players ?? false}
+                      icon={UserPlus}
+                    />
+                  </>
                 )}
               </div>
             </div>
@@ -314,8 +340,6 @@ export default async function TeamDetailPage({
           <TeamCaptainControlsWrapper
             pendingRequests={pendingRequests}
             teamId={team.id}
-            searchingForOpponent={team.searching_for_opponent ?? false}
-            searchingForPlayers={team.searching_for_players ?? false}
           />
         )}
         {liveMatches.length > 0 && (
