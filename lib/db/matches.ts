@@ -19,6 +19,7 @@ function mapTeam(row: Record<string, unknown>): Team {
     format: row.format as string,
     emoji: (row.emoji as string) ?? "⚽",
     color: (row.color as string) ?? "#2E7D32",
+    avatar_url: row.avatar_url as string | null,
     description: (row.description as string) ?? "",
     open_spots: (row.open_spots as number) ?? 0,
     wins: (row.record_w as number) ?? 0,

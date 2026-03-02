@@ -8,6 +8,7 @@ import {
   approveTournamentRegistrationAction,
   rejectTournamentRegistrationAction,
 } from "@/app/actions/tournaments";
+import { TeamAvatar } from "@/components/team-avatar";
 
 interface TournamentPendingRegistrationsProps {
   registrations: TournamentPendingRegistration[];
@@ -56,11 +57,7 @@ export function TournamentPendingRegistrations({
             className="flex items-center justify-between gap-3 px-4 py-3"
           >
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0 border border-border">
-                <span className="text-foreground text-[10px] font-bold">
-                  {reg.team.short_name}
-                </span>
-              </div>
+              <TeamAvatar team={reg.team} size="2xs" />
               <span className="text-foreground text-sm font-medium truncate">
                 {reg.team.name}
               </span>

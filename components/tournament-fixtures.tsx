@@ -7,14 +7,7 @@ import { MapPin, ChevronRight, Clock, CalendarPlus } from "lucide-react";
 import { LiveDot } from "@/components/live-dot";
 import { format, parseISO } from "date-fns";
 import { ScheduleTournamentMatchForm } from "@/components/schedule-tournament-match-form";
-
-function TeamBadge({ shortName }: { shortName: string }) {
-  return (
-    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center border border-border">
-      <span className="text-foreground font-bold text-xs">{shortName}</span>
-    </div>
-  );
-}
+import { TeamAvatar } from "@/components/team-avatar";
 
 interface UpcomingFixtureProps {
   match: Match;
@@ -47,13 +40,13 @@ function UpcomingFixture({ match, tournamentId, canManageSchedule }: UpcomingFix
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
-            <TeamBadge shortName={match.home_team.short_name} />
+            <TeamAvatar team={match.home_team} size="lg" />
             <span className="text-foreground text-sm font-medium truncate">{match.home_team.name}</span>
           </div>
           <span className="text-muted-foreground text-xs font-bold px-3 shrink-0">VS</span>
           <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end">
             <span className="text-foreground text-sm font-medium truncate text-right">{match.away_team.name}</span>
-            <TeamBadge shortName={match.away_team.short_name} />
+            <TeamAvatar team={match.away_team} size="lg" />
           </div>
         </div>
         {match.location && (

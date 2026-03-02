@@ -96,13 +96,9 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                      <span className="text-foreground font-bold text-xs">{team.short_name}</span>
-                    </div>
+                    <TeamAvatar team={team} size="lg" />
                     <span className="text-muted-foreground text-sm">vs</span>
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                      <span className="text-foreground font-bold text-xs">{opponent.short_name}</span>
-                    </div>
+                    <TeamAvatar team={opponent} size="lg" />
                     <span className="text-foreground text-sm font-medium">{opponent.name}</span>
                   </div>
                   <ChevronRight size={14} className="text-muted-foreground" />

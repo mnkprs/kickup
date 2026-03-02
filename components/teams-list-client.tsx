@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { NotificationsButton } from "@/components/notifications-button";
+import { TeamAvatar } from "@/components/team-avatar";
 
 const filters = ["All", "My Team", "Open", "vs Ready"];
 
@@ -143,21 +144,11 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
                 }`}
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <div
-                    className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 ${
-                      isMyTeam
-                        ? "bg-accent/15 ring-2 ring-accent/30"
-                        : "bg-muted"
-                    }`}
-                  >
-                    <span
-                      className={`font-bold text-sm ${
-                        isMyTeam ? "text-accent" : "text-foreground"
-                      }`}
-                    >
-                      {team.short_name}
-                    </span>
-                  </div>
+                  <TeamAvatar
+                    team={team}
+                    size="lg"
+                    className={isMyTeam ? "ring-2 ring-accent/30" : ""}
+                  />
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">

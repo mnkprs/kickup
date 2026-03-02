@@ -16,6 +16,7 @@ import {
 } from "@/app/actions/matches";
 import { LiveDot } from "@/components/live-dot";
 import { Avatar } from "@/components/avatar";
+import { TeamAvatar } from "@/components/team-avatar";
 
 interface TeamMemberMin {
   id: string;
@@ -41,43 +42,33 @@ interface MatchDetailClientProps {
 }
 
 function TeamBlock({
-  teamId,
-  emoji,
-  color,
-  shortName,
-  name,
+  team,
   score,
   isWinner,
 }: {
-  teamId: string;
-  emoji?: string;
-  color?: string;
-  shortName: string;
-  name: string;
+  team: { id: string; avatar_url?: string | null; emoji?: string; color?: string; short_name: string; name: string };
   score: number | null;
   isWinner: boolean;
 }) {
   return (
     <Link
-      href={`/teams/${teamId}`}
+      href={`/teams/${team.id}`}
       className="flex flex-col items-center gap-2 flex-1 hover:opacity-90 transition-opacity"
     >
-      <div
-        className="h-16 w-16 rounded-full flex items-center justify-center border border-border text-2xl"
-        style={color ? { backgroundColor: color + "33" } : undefined}
-      >
-        {emoji ? (
-          <span>{emoji}</span>
-        ) : (
-          <span className="text-foreground font-bold text-sm">{shortName}</span>
-        )}
-      </div>
+      <TeamAvatar
+        avatar_url={team.avatar_url}
+        emoji={team.emoji}
+        short_name={team.short_name}
+        name={team.name}
+        color={team.color}
+        size="2xl"
+      />
       <span
         className={`text-sm font-medium text-center leading-tight ${
           isWinner ? "text-foreground" : "text-muted-foreground"
         }`}
       >
-        {name}
+        {team.name}
       </span>
       {score !== null && (
         <span
@@ -106,12 +97,14 @@ function GoalsRosterSection({
   return (
     <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-muted/30">
-        <div
-          className="h-6 w-6 rounded-full flex items-center justify-center border border-border text-xs font-bold"
-          style={team.color ? { backgroundColor: team.color + "33" } : undefined}
-        >
-          {team.emoji || team.short_name}
-        </div>
+        <TeamAvatar
+          avatar_url={team.avatar_url}
+          emoji={team.emoji}
+          short_name={team.short_name}
+          name={team.name}
+          color={team.color}
+          size="2xs"
+        />
         <span className="text-xs font-semibold text-foreground">{team.name}</span>
       </div>
       <div className="divide-y divide-border">
@@ -184,12 +177,14 @@ function MatchRostersSection({
     return (
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-2">
-          <div
-            className="h-8 w-8 rounded-full flex items-center justify-center border border-border text-xs font-bold"
-            style={team.color ? { backgroundColor: team.color + "33" } : undefined}
-          >
-            {team.emoji || team.short_name}
-          </div>
+          <TeamAvatar
+            avatar_url={team.avatar_url}
+            emoji={team.emoji}
+            short_name={team.short_name}
+            name={team.name}
+            color={team.color}
+            size="2xs"
+          />
           <span className="text-sm font-semibold text-foreground truncate">{team.name}</span>
         </div>
         <div className="rounded-xl bg-card border border-border shadow-card divide-y divide-border overflow-hidden">
@@ -345,24 +340,24 @@ export function MatchDetailClient({
           home: Object.fromEntries(
             homeRoster
               .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
-              .filter(([, c]) => c > 0)
+              .filter(([, c]) => Number(c) > 0)
           ),
           away: Object.fromEntries(
             awayRoster
               .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
-              .filter(([, c]) => c > 0)
+              .filter(([, c]) => Number(c) > 0)
           ),
         }
       : userTeamId === match.home_team_id
         ? Object.fromEntries(
             homeRoster
               .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
-              .filter(([, c]) => c > 0)
+              .filter(([, c]) => Number(c) > 0)
           )
         : Object.fromEntries(
             awayRoster
               .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
-              .filter(([, c]) => c > 0)
+              .filter(([, c]) => Number(c) > 0)
           );
 
     const result = isTournamentOrganizer && !isParticipant
@@ -418,11 +413,7 @@ export function MatchDetailClient({
           <div className="rounded-xl bg-card border border-border shadow-card p-6">
             <div className="flex items-center gap-4">
               <TeamBlock
-                teamId={match.home_team_id}
-                emoji={match.home_team.emoji}
-                color={match.home_team.color}
-                shortName={match.home_team.short_name}
-                name={match.home_team.name}
+                team={match.home_team}
                 score={match.home_score}
                 isWinner={homeWin}
               />
@@ -437,11 +428,7 @@ export function MatchDetailClient({
               </div>
 
               <TeamBlock
-                teamId={match.away_team_id}
-                emoji={match.away_team.emoji}
-                color={match.away_team.color}
-                shortName={match.away_team.short_name}
-                name={match.away_team.name}
+                team={match.away_team}
                 score={match.away_score}
                 isWinner={awayWin}
               />

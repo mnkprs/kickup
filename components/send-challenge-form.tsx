@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Swords, Search, Check } from "lucide-react";
 import Link from "next/link";
+import { TeamAvatar } from "@/components/team-avatar";
 import { NotificationsButton } from "@/components/notifications-button";
 import type { Team } from "@/lib/types";
 import { sendChallengeAction } from "@/app/actions/matches";
@@ -111,12 +112,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
                   }}
                   className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border shadow-card hover:border-accent/40 hover:bg-muted/30 transition-all text-left pressable"
                 >
-                  <div
-                    className="h-12 w-12 rounded-full flex items-center justify-center text-xl shrink-0"
-                    style={{ backgroundColor: team.color + "33" }}
-                  >
-                    {team.emoji}
-                  </div>
+                  <TeamAvatar team={team} size="lg" />
                   <div className="flex-1 min-w-0">
                     <p className="text-foreground font-semibold text-sm truncate">{team.name}</p>
                     <p className="text-muted-foreground text-xs mt-0.5">
@@ -139,12 +135,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
           <>
             {opponent && (
               <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border shadow-card">
-                <div
-                  className="h-12 w-12 rounded-full flex items-center justify-center text-xl shrink-0"
-                  style={{ backgroundColor: opponent.color + "33" }}
-                >
-                  {opponent.emoji}
-                </div>
+                <TeamAvatar team={opponent} size="lg" />
                 <div>
                   <p className="text-muted-foreground text-xs">Challenging</p>
                   <p className="text-foreground font-semibold text-sm">{opponent.name}</p>

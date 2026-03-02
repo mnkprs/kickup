@@ -2,6 +2,7 @@ import type { Match } from "@/lib/types";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
 import { Trophy, MapPin } from "lucide-react";
+import { TeamAvatar } from "@/components/team-avatar";
 
 function getResultForTeam(match: Match, teamId: string | null | undefined) {
   if (!teamId || match.home_score === null || match.away_score === null) return null;
@@ -51,11 +52,7 @@ function ResultMatchCard({ match, teamId }: { match: Match; teamId?: string | nu
             <span className="text-foreground text-sm font-medium truncate text-right">
               {match.home_team.short_name}
             </span>
-            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center border border-border shrink-0">
-              <span className="text-foreground font-bold text-[10px]">
-                {match.home_team.short_name}
-              </span>
-            </div>
+            <TeamAvatar team={match.home_team} size="2xs" />
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-foreground font-bold text-xl">
@@ -67,11 +64,7 @@ function ResultMatchCard({ match, teamId }: { match: Match; teamId?: string | nu
             </span>
           </div>
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center border border-border shrink-0">
-              <span className="text-foreground font-bold text-[10px]">
-                {match.away_team.short_name}
-              </span>
-            </div>
+            <TeamAvatar team={match.away_team} size="2xs" />
             <span className="text-foreground text-sm font-medium truncate">
               {match.away_team.short_name}
             </span>

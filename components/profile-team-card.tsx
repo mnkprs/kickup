@@ -2,6 +2,7 @@ import type { Profile, Team } from "@/lib/types";
 import { ChevronRight, Users, MapPin, Trophy, Crown } from "lucide-react";
 import Link from "next/link";
 import { SearchingToggle } from "@/components/searching-toggle";
+import { TeamAvatar } from "@/components/team-avatar";
 import { LookingForPlayersToggle } from "@/components/looking-for-players-toggle";
 
 interface ProfileTeamCardProps {
@@ -31,11 +32,11 @@ export function ProfileTeamCard({ profile, team, showCaptainToggles = false }: P
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-accent-foreground/10 flex items-center justify-center border border-accent-foreground/20">
-                <span className="text-accent-foreground font-bold text-sm">
-                  {team.short_name}
-                </span>
-              </div>
+              <TeamAvatar
+                team={team}
+                size="lg"
+                className="ring-2 ring-accent-foreground/20"
+              />
               <div>
                 <h3 className="text-accent-foreground font-semibold text-sm">{team.name}</h3>
                 <div className="flex items-center gap-2 mt-0.5">

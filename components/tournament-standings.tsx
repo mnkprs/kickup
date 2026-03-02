@@ -1,4 +1,5 @@
 import type { TournamentStandingsGroup } from "@/lib/types";
+import { TeamAvatar } from "@/components/team-avatar";
 
 interface TournamentStandingsProps {
   standingsGroups: TournamentStandingsGroup[];
@@ -11,7 +12,7 @@ function StandingsTable({
   rows: {
     rank: number;
     team_id: string;
-    team: { short_name: string; name: string };
+    team: { short_name: string; name: string; avatar_url?: string | null; emoji?: string; color?: string };
     played: number;
     won: number;
     drawn: number;
@@ -44,9 +45,14 @@ function StandingsTable({
               {row.rank}
             </span>
             <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
-              <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center shrink-0 border border-border">
-                <span className="text-foreground text-[7px] font-bold">{row.team.short_name}</span>
-              </div>
+              <TeamAvatar
+                avatar_url={row.team.avatar_url}
+                emoji={row.team.emoji ?? "⚽"}
+                short_name={row.team.short_name}
+                name={row.team.name}
+                color={row.team.color ?? "#2E7D32"}
+                size="2xs"
+              />
               <span className="text-xs truncate text-foreground font-medium">{row.team.name}</span>
             </div>
             <span className="text-foreground text-xs text-center">{row.played}</span>
