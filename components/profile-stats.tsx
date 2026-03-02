@@ -15,7 +15,7 @@ export function ProfileStats({ profile }: ProfileStatsProps) {
   ];
 
   return (
-    <section className="px-5">
+    <section>
       <h2 className="text-foreground font-semibold text-base mb-3">Season Stats</h2>
       <div className="grid grid-cols-3 gap-2.5">
         {stats.map((stat) => (

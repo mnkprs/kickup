@@ -68,7 +68,7 @@ export function ProfileAchievements({ profile }: ProfileAchievementsProps) {
   const unlockedCount = achievements.filter((a) => a.unlocked).length;
 
   return (
-    <section className="px-5">
+    <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-foreground font-semibold text-sm">Achievements</h2>
         <span className="text-muted-foreground text-xs">

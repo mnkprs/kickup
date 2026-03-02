@@ -3,6 +3,7 @@ import { getProfile } from "@/lib/db/profiles";
 import { getUserTeam } from "@/lib/db/teams";
 import { getMatchesForTeam } from "@/lib/db/matches";
 import { ProfileHeader } from "@/components/profile-header";
+import { ProfileAbout } from "@/components/profile-about";
 import { ProfileStats } from "@/components/profile-stats";
 import { ProfileTeamCard } from "@/components/profile-team-card";
 import { ProfileActivity } from "@/components/profile-activity";
@@ -44,7 +45,8 @@ export default async function ProfilePage() {
     <>
       <ProfileHeader profile={profile} team={team} />
 
-      <main className="flex flex-col gap-6 pb-24">
+      <main className="flex flex-col gap-5 pb-24 px-5">
+        <ProfileAbout profile={profile} />
         <ProfileStats profile={profile} />
         <ProfileTeamCard profile={profile} team={team} showCaptainToggles />
         <ProfileActivity matches={matches} teamId={team?.id ?? null} />

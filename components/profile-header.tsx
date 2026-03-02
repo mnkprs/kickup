@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import type { Profile, Team } from "@/lib/types";
-import { Settings, Share2, MapPin, Calendar, Crown, ArrowLeft } from "lucide-react";
+import { Settings, Share2, Crown, ArrowLeft } from "lucide-react";
 
 function BackButton() {
   const router = useRouter();
@@ -16,7 +16,6 @@ function BackButton() {
     </button>
   );
 }
-import { format, parseISO } from "date-fns";
 import Link from "next/link";
 import { NotificationsButton } from "@/components/notifications-button";
 
@@ -77,71 +76,56 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-3 mb-5">
-        <div className="relative">
-          <div
-            className="h-20 w-20 rounded-full flex items-center justify-center ring-4 ring-accent/20"
-            style={{ backgroundColor: profile.avatar_color }}
-          >
-            <span className="text-accent-foreground font-bold text-xl">
-              {profile.avatar_initials}
+      <div className="rounded-xl bg-card border border-border shadow-card p-6 mb-2">
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative">
+            <div
+              className="h-20 w-20 rounded-full flex items-center justify-center ring-4 ring-accent/20"
+              style={{ backgroundColor: profile.avatar_color }}
+            >
+              <span className="text-accent-foreground font-bold text-xl">
+                {profile.avatar_initials}
+              </span>
+            </div>
+            <span
+              aria-label="Online"
+              className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full bg-win border-2 border-card"
+            />
+            <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+              {winRate}%
             </span>
           </div>
-          <span
-            aria-label="Online"
-            className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full bg-win border-2 border-background"
-          />
-          <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-            {winRate}%
-          </span>
-        </div>
 
-        <div className="text-center">
-          <h2 className="text-foreground font-bold text-xl leading-tight">{profile.full_name}</h2>
-          <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap">
-            {profile.position && (
-              <span className="text-xs font-semibold text-accent bg-accent/10 px-2.5 py-0.5 rounded-full">
-                {profile.position}
-              </span>
-            )}
-            {profile.is_freelancer && (
-              <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-full">
-                Looking for team
-              </span>
-            )}
-            {isCaptain && (
-              <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-draw">
-                <Crown size={10} fill="currentColor" />
-                Captain
-              </span>
-            )}
-            {team && (
-              <span className="text-xs text-muted-foreground">{team.name}</span>
+          <div className="text-center">
+            <h2 className="text-foreground font-bold text-xl leading-tight">{profile.full_name}</h2>
+            <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap">
+              {profile.position && (
+                <span className="text-xs font-semibold text-accent bg-accent/10 px-2.5 py-0.5 rounded-full">
+                  {profile.position}
+                </span>
+              )}
+              {profile.is_freelancer && (
+                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-full">
+                  Looking for team
+                </span>
+              )}
+              {isCaptain && (
+                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-draw">
+                  <Crown size={10} fill="currentColor" />
+                  Captain
+                </span>
+              )}
+              {team && (
+                <span className="text-xs text-muted-foreground">{team.name}</span>
+              )}
+            </div>
+            {profile.bio && (
+              <p className="text-muted-foreground text-xs mt-2 max-w-[240px] mx-auto leading-relaxed">
+                {profile.bio}
+              </p>
             )}
           </div>
-          {profile.bio && (
-            <p className="text-muted-foreground text-xs mt-2 max-w-[240px] mx-auto leading-relaxed">
-              {profile.bio}
-            </p>
-          )}
         </div>
-      </div>
-
-      <div className="flex items-center justify-center gap-4 mb-4">
-        {profile.area && (
-          <div className="flex items-center gap-1.5">
-            <MapPin size={12} className="text-muted-foreground" />
-            <span className="text-muted-foreground text-xs">{profile.area}</span>
-          </div>
-        )}
-        {profile.joined_date && (
-          <div className="flex items-center gap-1.5">
-            <Calendar size={12} className="text-muted-foreground" />
-            <span className="text-muted-foreground text-xs">
-              Joined {format(parseISO(profile.joined_date), "MMM yyyy")}
-            </span>
-          </div>
-        )}
       </div>
 
       <div className="rounded-xl bg-card border border-border shadow-card p-4">

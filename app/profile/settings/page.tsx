@@ -34,7 +34,10 @@ export default async function ProfileSettingsPage() {
     if (!cityMap[row.city]) cityMap[row.city] = [];
     cityMap[row.city].push(row.name);
   }
-  const areaGroups = Object.entries(cityMap).map(([city, areas]) => ({ city, areas }));
+  const areaGroups = Object.entries(cityMap).map(([city, areas]) => ({
+    city,
+    areas: [...areas].sort((a, b) => a.localeCompare(b)),
+  }));
   const colors = (colorsData ?? []).map((r) => r.hex);
 
   return (

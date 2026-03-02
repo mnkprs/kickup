@@ -18,7 +18,7 @@ export function ProfileTeamCard({ profile, team, showCaptainToggles = false }: P
   const totalMatches = team.wins + team.losses + team.draws;
 
   return (
-    <section className="px-5">
+    <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-foreground font-semibold text-sm">My Team</h2>
         <Link href="/teams" className="text-accent text-xs font-medium hover:underline">
