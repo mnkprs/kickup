@@ -20,7 +20,10 @@ export default async function CreateTournamentPage() {
     if (!cityMap[row.city]) cityMap[row.city] = [];
     cityMap[row.city].push(row.name);
   }
-  const areaGroups = Object.entries(cityMap).map(([city, areas]) => ({ city, areas }));
+  const areaGroups = Object.entries(cityMap).map(([city, areas]) => ({
+    city,
+    areas: [...areas].sort((a, b) => a.localeCompare(b)),
+  }));
 
   return <CreateTournamentForm areaGroups={areaGroups} />;
 }

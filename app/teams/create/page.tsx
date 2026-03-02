@@ -23,7 +23,7 @@ export default async function CreateTeamPage() {
   }
   const areaGroups = Object.entries(cityMap).map(([city, areas]) => ({
     city,
-    areas,
+    areas: [...areas].sort((a, b) => a.localeCompare(b)),
   }));
 
   const emojis = (emojisData ?? []).map((r) => r.emoji);

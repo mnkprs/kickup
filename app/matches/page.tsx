@@ -27,7 +27,7 @@ export default async function MatchesPage() {
   }
   const areaGroups: AreaGroup[] = Object.entries(cityMap).map(([city, areas]) => ({
     city,
-    areas,
+    areas: [...areas].sort((a, b) => a.localeCompare(b)),
   }));
 
   const [myUpcomingMatches, myRecentResults] = teamId
