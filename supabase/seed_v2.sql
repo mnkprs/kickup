@@ -272,9 +272,21 @@ INSERT INTO team_members (team_id, player_id, role, status) VALUES
   ('00000000-0000-0000-0001-000000000010','00000000-0000-0000-0000-000000000066','player','active'),
   ('00000000-0000-0000-0001-000000000010','00000000-0000-0000-0000-000000000067','player','active');
 
+-- Set captain_id and home_ground for teams (captains = first member of each team)
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000001', home_ground='Kolonaki Sports Center' WHERE id='00000000-0000-0000-0001-000000000001';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000008', home_ground='Piraeus Municipal Stadium' WHERE id='00000000-0000-0000-0001-000000000002';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000015', home_ground='Exarcheia Community Pitch' WHERE id='00000000-0000-0000-0001-000000000003';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000022', home_ground='Glyfada Sports Complex' WHERE id='00000000-0000-0000-0001-000000000004';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000029', home_ground='Kifisia Athletic Club' WHERE id='00000000-0000-0000-0001-000000000005';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000036', home_ground='Pangrati Stadium' WHERE id='00000000-0000-0000-0001-000000000006';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000043', home_ground='Monastiraki Square Pitch' WHERE id='00000000-0000-0000-0001-000000000007';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000050', home_ground='Nea Smyrni Arena' WHERE id='00000000-0000-0000-0001-000000000008';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000057', home_ground='Maroussi Indoor Arena' WHERE id='00000000-0000-0000-0001-000000000009';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000062', home_ground='Kallithea Sports Hall' WHERE id='00000000-0000-0000-0001-000000000010';
+
 -- ─── 7. TOURNAMENT ─────────────────────────────────────────────────
 -- organizer = p01 (admin)
-INSERT INTO tournaments (id, name, description, organizer_id, venue, area, match_format, max_teams, teams_per_group, prize, start_date, end_date, status)
+INSERT INTO tournaments (id, name, description, organizer_id, venue, area, match_format, max_teams, teams_per_group, prize, entry_fee, bracket_format, start_date, end_date, status)
 VALUES (
   '00000000-0000-0000-0003-000000000001',
   'Athens 7v7 Summer Cup 2026',
@@ -284,6 +296,8 @@ VALUES (
   'Exarcheia',
   '7v7', 8, 4,
   '€500 + Trophy',
+  '€50',
+  'group_stage',
   '2026-03-15',
   '2026-04-12',
   'group_stage'

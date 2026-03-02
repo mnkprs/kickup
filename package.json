@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed:tournament": "node scripts/run-seed.mjs"
+    "seed:tournament": "node scripts/run-seed.mjs",
+    "db:reset-fresh": "node scripts/reset-db-fresh.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6",
@@ -17,6 +18,7 @@
     "lucide-react": "^0.487.0",
     "next": "^15",
     "next-themes": "^0.4.4",
+    "pg": "^8.19.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tailwind-merge": "^3.5.0"
