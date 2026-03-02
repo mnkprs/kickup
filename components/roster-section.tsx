@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Crown, Crosshair, ShieldAlert, UserMinus } from "lucide-react";
 import { removeMemberAction } from "@/app/actions/teams";
+import { ConfirmModal } from "@/components/confirm-modal";
 import type { Profile } from "@/lib/types";
 
 const positionOrder: Record<string, number> = {
@@ -34,19 +36,42 @@ export function RosterSection({
 }: RosterSectionProps) {
   const router = useRouter();
   const roster = [...members].sort(posSort);
+  const [pendingRemove, setPendingRemove] = useState<{
+    playerId: string;
+    playerName: string;
+  } | null>(null);
+  const [removing, setRemoving] = useState(false);
 
-  async function handleRemove(e: React.MouseEvent, playerId: string, playerName: string) {
+  function handleRemoveClick(e: React.MouseEvent, playerId: string, playerName: string) {
     e.preventDefault();
     e.stopPropagation();
-    const confirmed = window.confirm(
-      `Remove ${playerName} from the team? They will need to request to join again.`
-    );
-    if (!confirmed) return;
-    const result = await removeMemberAction(teamId, playerId);
+    setPendingRemove({ playerId, playerName });
+  }
+
+  async function handleConfirmRemove() {
+    if (!pendingRemove) return;
+    setRemoving(true);
+    const result = await removeMemberAction(teamId, pendingRemove.playerId);
+    setRemoving(false);
+    setPendingRemove(null);
     if (result.success) router.refresh();
   }
 
   return (
+    <>
+      <ConfirmModal
+        open={!!pendingRemove}
+        onClose={() => setPendingRemove(null)}
+        title="Remove player"
+        message={
+          pendingRemove
+            ? `Remove ${pendingRemove.playerName} from the team? They will need to request to join again.`
+            : ""
+        }
+        buttons={{ confirmLabel: "Remove", variant: "destructive" }}
+        loading={removing}
+        onConfirm={handleConfirmRemove}
+      />
     <section className="px-5">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-foreground font-semibold text-sm">Roster</h2>
@@ -95,7 +120,7 @@ export function RosterSection({
               </Link>
               {canRemove && (
                 <button
-                  onClick={(e) => handleRemove(e, player.id, player.full_name)}
+                  onClick={(e) => handleRemoveClick(e, player.id, player.full_name)}
                   className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center hover:bg-loss/10 transition-colors shrink-0"
                   title="Remove from team"
                 >
@@ -107,5 +132,6 @@ export function RosterSection({
         })}
       </div>
     </section>
+    </>
   );
 }
