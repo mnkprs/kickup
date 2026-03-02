@@ -74,14 +74,20 @@ function UpcomingMatchCard({ match }: { match: Match }) {
               <span className="text-xs font-medium truncate">{match.tournament.name}</span>
             </Link>
           )}
-          {match.location && (
-            <div className="flex items-center gap-1.5">
-              <MapPin size={12} className="text-muted-foreground shrink-0" />
-              <span className="text-muted-foreground text-xs truncate">
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-muted-foreground text-xs">
+            {match.date && (
+              <span>{format(parseISO(match.date), "d MMM")}</span>
+            )}
+            {match.time && (
+              <span>{match.time.slice(0, 5)}</span>
+            )}
+            {match.location && (
+              <span className="flex items-center gap-1">
+                <MapPin size={10} className="shrink-0" />
                 {match.location}
               </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </div>

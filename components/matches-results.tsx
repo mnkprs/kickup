@@ -1,7 +1,7 @@
 import type { Match } from "@/lib/types";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
-import { Trophy } from "lucide-react";
+import { Trophy, MapPin } from "lucide-react";
 
 function getResultForTeam(match: Match, teamId: string | null | undefined) {
   if (!teamId || match.home_score === null || match.away_score === null) return null;
@@ -90,11 +90,20 @@ function ResultMatchCard({ match, teamId }: { match: Match; teamId?: string | nu
               <span className="text-xs font-medium truncate">{match.tournament.name}</span>
             </Link>
           )}
-          {match.location && (
-            <span className="text-muted-foreground text-xs truncate">
-              {match.location}
-            </span>
-          )}
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-muted-foreground text-xs">
+            {match.date && (
+              <span>{format(parseISO(match.date), "d MMM yyyy")}</span>
+            )}
+            {match.time && (
+              <span>{match.time.slice(0, 5)}</span>
+            )}
+            {match.location && (
+              <span className="flex items-center gap-1">
+                <MapPin size={10} className="shrink-0" />
+                {match.location}
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>
