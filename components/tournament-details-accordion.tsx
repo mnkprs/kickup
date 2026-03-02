@@ -11,13 +11,25 @@ import {
   Trophy,
   User,
   ChevronRight,
+  LayoutGrid,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+
+function getFormatLabel(fmt: string) {
+  switch (fmt) {
+    case "knockout": return "Knockout";
+    case "round_robin": return "Round Robin";
+    case "group_stage": return "Groups + KO";
+    default: return fmt;
+  }
+}
 
 interface TournamentDetailsAccordionProps {
   details: {
     organizerId: string;
     organizer: string;
+    bracketFormat: string;
+    matchFormat?: string;
     startDate: string | null;
     endDate: string | null;
     area: string;
@@ -71,6 +83,8 @@ export function TournamentDetailsAccordion({ details }: TournamentDetailsAccordi
   const {
     organizerId,
     organizer,
+    bracketFormat,
+    matchFormat,
     startDate,
     endDate,
     area,
@@ -80,9 +94,12 @@ export function TournamentDetailsAccordion({ details }: TournamentDetailsAccordi
     prize,
     description,
   } = details;
+
+  const formatDisplay = [getFormatLabel(bracketFormat), matchFormat].filter(Boolean).join(" · ");
   const [open, setOpen] = useState(true);
 
   const previewParts: string[] = [];
+  if (formatDisplay) previewParts.push(formatDisplay);
   if (organizer) previewParts.push(organizer);
   previewParts.push(`${teamsCount}/${maxTeams} teams`);
   if (area) previewParts.push(area);
@@ -121,6 +138,13 @@ export function TournamentDetailsAccordion({ details }: TournamentDetailsAccordi
         {open && (
           <div className="border-t border-border px-4 pb-4">
             <div className="divide-y divide-border/80">
+              {formatDisplay && (
+                <DetailRow
+                  icon={LayoutGrid}
+                  label="Format"
+                  value={formatDisplay}
+                />
+              )}
               {organizer && (
                 <DetailRow
                   icon={User}

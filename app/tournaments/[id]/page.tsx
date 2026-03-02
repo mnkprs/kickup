@@ -149,6 +149,8 @@ export default async function TournamentDetailPage({
           details={{
             organizerId: tournament.organizer_id,
             organizer: tournament.organizer,
+            bracketFormat: tournament.format,
+            matchFormat: tournament.match_format,
             startDate: tournament.start_date,
             endDate: tournament.end_date,
             area: tournament.area,
