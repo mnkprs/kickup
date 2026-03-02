@@ -34,11 +34,13 @@ export default async function MatchDetailPage({
   }[] = [];
   let isTournamentOrganizer = false;
 
+  let isCaptain = false;
+
   if (user) {
     const [membershipRes, tmRes, profileRes] = await Promise.all([
       supabase
         .from("team_members")
-        .select("team_id")
+        .select("team_id, role")
         .eq("player_id", user.id)
         .in("team_id", [match.home_team_id, match.away_team_id])
         .maybeSingle(),
@@ -50,7 +52,9 @@ export default async function MatchDetailPage({
       supabase.from("profiles").select("is_admin").eq("id", user.id).single(),
     ]);
 
-    userTeamId = membershipRes.data?.team_id ?? null;
+    const membership = membershipRes.data as { team_id: string; role: string } | null;
+    userTeamId = membership?.team_id ?? null;
+    isCaptain = membership?.role === "captain";
 
     if (tmRes.data) {
       const tournaments = tmRes.data.tournaments;
@@ -69,6 +73,44 @@ export default async function MatchDetailPage({
         avatar_initials: m.profile.avatar_initials,
         avatar_color: m.profile.avatar_color,
         avatar_url: m.profile.avatar_url ?? null,
+      }));
+    }
+  }
+
+  // For scheduling: fetch proposals
+  let proposals: {
+    id: string;
+    proposed_by_team_id: string;
+    proposed_date: string;
+    proposed_time: string;
+    location: string;
+    accepted: boolean;
+    team_name?: string;
+  }[] = [];
+
+  if (match.raw_status === "scheduling" && user) {
+    const { data: proposalRows } = await supabase
+      .from("match_proposals")
+      .select("id, proposed_by_team_id, proposed_date, proposed_time, location, accepted")
+      .eq("match_id", id)
+      .order("created_at", { ascending: false });
+
+    if (proposalRows?.length) {
+      const teamIds = [...new Set(proposalRows.map((p) => p.proposed_by_team_id))];
+      const { data: teams } = await supabase
+        .from("teams")
+        .select("id, name")
+        .in("id", teamIds);
+
+      const teamMap = new Map((teams ?? []).map((t) => [t.id, t.name]));
+      proposals = proposalRows.map((p) => ({
+        id: p.id,
+        proposed_by_team_id: p.proposed_by_team_id,
+        proposed_date: p.proposed_date,
+        proposed_time: typeof p.proposed_time === "string" ? p.proposed_time.slice(0, 5) : "",
+        location: p.location,
+        accepted: p.accepted,
+        team_name: teamMap.get(p.proposed_by_team_id),
       }));
     }
   }
@@ -104,6 +146,8 @@ export default async function MatchDetailPage({
     <MatchDetailClient
       match={match}
       userTeamId={userTeamId}
+      isCaptain={isCaptain}
+      proposals={proposals}
       teamMembers={teamMembers}
       homeRoster={homeRoster}
       awayRoster={awayRoster}

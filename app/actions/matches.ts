@@ -66,8 +66,10 @@ export async function declineChallengeAction(matchId: string) {
   return { success: true };
 }
 
-export async function setMatchTimeAction(data: {
+/** Captains propose date/time/location; opponent must accept for it to become final. */
+export async function proposeMatchTimeAction(data: {
   matchId: string;
+  teamId: string;
   date: string;
   time: string;
   location: string;
@@ -76,20 +78,41 @@ export async function setMatchTimeAction(data: {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
-  const { error } = await supabase
-    .from("matches")
-    .update({
-      match_date: data.date,
-      match_time: data.time || null,
-      location: data.location || null,
-      status: "pre_match",
-    })
-    .eq("id", data.matchId)
-    .eq("status", "scheduling");
+  const timeValue = data.time.trim() ? `${data.time.trim().padStart(5, "0")}:00` : "12:00:00";
+
+  const { error } = await supabase.rpc("propose_match_time", {
+    p_match_id: data.matchId,
+    p_team_id: data.teamId,
+    p_proposed_date: data.date,
+    p_proposed_time: timeValue,
+    p_location: data.location.trim() || "TBD",
+  });
 
   if (error) return { error: error.message };
 
   revalidatePath(`/matches/${data.matchId}`);
+  revalidatePath("/matches");
+  return { success: true };
+}
+
+/** Opponent captain accepts a proposal; it becomes the final schedule. */
+export async function acceptProposalAction(
+  proposalId: string,
+  teamId: string,
+  matchId: string
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase.rpc("accept_proposal", {
+    p_proposal_id: proposalId,
+    p_team_id: teamId,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/matches/${matchId}`);
   revalidatePath("/matches");
   return { success: true };
 }

@@ -10,7 +10,8 @@ import type { Match } from "@/lib/types";
 import {
   acceptChallengeAction,
   declineChallengeAction,
-  setMatchTimeAction,
+  proposeMatchTimeAction,
+  acceptProposalAction,
   submitResultAction,
   organizerSubmitResultAction,
 } from "@/app/actions/matches";
@@ -31,9 +32,21 @@ interface RosterPlayer {
   profile: Record<string, unknown>;
 }
 
+interface MatchProposal {
+  id: string;
+  proposed_by_team_id: string;
+  proposed_date: string;
+  proposed_time: string;
+  location: string;
+  accepted: boolean;
+  team_name?: string;
+}
+
 interface MatchDetailClientProps {
   match: Match;
   userTeamId: string | null;
+  isCaptain?: boolean;
+  proposals?: MatchProposal[];
   teamMembers: TeamMemberMin[];
   homeRoster?: RosterPlayer[];
   awayRoster?: RosterPlayer[];
@@ -236,6 +249,8 @@ function MatchRostersSection({
 export function MatchDetailClient({
   match,
   userTeamId,
+  isCaptain = false,
+  proposals = [],
   teamMembers,
   homeRoster = [],
   awayRoster = [],
@@ -267,7 +282,10 @@ export function MatchDetailClient({
 
   const isAwayTeam = userTeamId === match.away_team_id;
   const isParticipant = userTeamId !== null;
-  const canSubmitResult = isParticipant || isTournamentOrganizer;
+  const canSubmitResult = (isParticipant && isCaptain) || isTournamentOrganizer;
+  const myTeamHasSubmitted =
+    (userTeamId === match.home_team_id && match.home_result_status === "confirmed") ||
+    (userTeamId === match.away_team_id && match.away_result_status === "confirmed");
 
   const homeWin = isCompleted && match.home_score! > match.away_score!;
   const awayWin = isCompleted && match.away_score! > match.home_score!;
@@ -314,16 +332,27 @@ export function MatchDetailClient({
     router.push("/matches");
   }
 
-  async function handleSetTime() {
-    if (!matchDate) return;
+  async function handlePropose() {
+    if (!userTeamId || !matchDate) return;
     setLoading(true);
     setError("");
-    const result = await setMatchTimeAction({
+    const result = await proposeMatchTimeAction({
       matchId: match.id,
+      teamId: userTeamId,
       date: matchDate,
       time: matchTime,
-      location: matchLocation,
+      location: matchLocation.trim() || "TBD",
     });
+    setLoading(false);
+    if (result.error) { setError(result.error); return; }
+    router.refresh();
+  }
+
+  async function handleAcceptProposal(proposalId: string) {
+    if (!userTeamId) return;
+    setLoading(true);
+    setError("");
+    const result = await acceptProposalAction(proposalId, userTeamId, match.id);
     setLoading(false);
     if (result.error) { setError(result.error); return; }
     router.refresh();
@@ -526,65 +555,129 @@ export function MatchDetailClient({
           </div>
         )}
 
-        {/* Scheduling: set date/time/location */}
+        {/* Scheduling: captains propose date/time; opponent accepts */}
         {isScheduling && isParticipant && (
           <div className="px-5 flex flex-col gap-4">
             <div className="p-4 rounded-xl bg-card border border-border shadow-card">
-              <p className="text-foreground font-semibold text-sm mb-1">Set Match Details</p>
-              <p className="text-muted-foreground text-xs">Agree on a date, time, and location with your opponent.</p>
+              <p className="text-foreground font-semibold text-sm mb-1">Propose Match Details</p>
+              <p className="text-muted-foreground text-xs">
+                Each captain can propose a date, time, and location. The opponent must accept a proposal for it to become final.
+              </p>
             </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
-                Date <span className="text-destructive">*</span>
-              </label>
-              <input
-                type="date"
-                value={matchDate}
-                onChange={(e) => setMatchDate(e.target.value)}
-                min={new Date().toISOString().split("T")[0]}
-                className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
-                Time
-              </label>
-              <input
-                type="time"
-                value={matchTime}
-                onChange={(e) => setMatchTime(e.target.value)}
-                className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
-                Location
-              </label>
-              <input
-                type="text"
-                value={matchLocation}
-                onChange={(e) => setMatchLocation(e.target.value)}
-                placeholder="e.g. Karaiskakis Arena"
-                maxLength={100}
-                className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
-              />
-            </div>
-            <button
-              onClick={handleSetTime}
-              disabled={loading || !matchDate}
-              className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center"
-            >
-              {loading ? (
-                <span className="h-4 w-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
-              ) : (
-                "Confirm Details"
-              )}
-            </button>
+
+            {/* Proposals from both teams */}
+            {proposals.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Proposals</p>
+                {proposals.map((p) => {
+                  const isFromOpponent = p.proposed_by_team_id !== userTeamId;
+                  const canAccept = isCaptain && isFromOpponent;
+                  return (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between gap-3 p-3 rounded-xl bg-card border border-border"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {p.team_name ?? "Team"} · {format(parseISO(p.proposed_date), "EEE d MMM")}
+                          {p.proposed_time && ` @ ${p.proposed_time}`}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">{p.location}</p>
+                      </div>
+                      {canAccept && (
+                        <button
+                          onClick={() => handleAcceptProposal(p.id)}
+                          disabled={loading}
+                          className="shrink-0 py-2 px-3 rounded-lg bg-accent text-accent-foreground text-xs font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity pressable"
+                        >
+                          {loading ? (
+                            <span className="h-3 w-3 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin inline-block" />
+                          ) : (
+                            <>
+                              <Check size={12} className="inline mr-1 -mt-0.5" />
+                              Accept
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Propose form (captains only) */}
+            {isCaptain && (
+              <>
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                    Date <span className="text-destructive">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={matchDate}
+                    onChange={(e) => setMatchDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                    className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    value={matchTime}
+                    onChange={(e) => setMatchTime(e.target.value)}
+                    className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    value={matchLocation}
+                    onChange={(e) => setMatchLocation(e.target.value)}
+                    placeholder="e.g. Karaiskakis Arena"
+                    maxLength={100}
+                    className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
+                  />
+                </div>
+                <button
+                  onClick={handlePropose}
+                  disabled={loading || !matchDate}
+                  className="w-full py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center"
+                >
+                  {loading ? (
+                    <span className="h-4 w-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
+                  ) : (
+                    "Propose Date & Time"
+                  )}
+                </button>
+              </>
+            )}
+
+            {isScheduling && isParticipant && !isCaptain && proposals.length === 0 && (
+              <p className="text-muted-foreground text-xs text-center py-2">
+                Waiting for your captain to propose a date and time.
+              </p>
+            )}
           </div>
         )}
 
         {/* Pre-match: submit result (captain or tournament organizer) */}
-        {isPreMatch && canSubmitResult && !showResult && (
+        {isPreMatch && canSubmitResult && myTeamHasSubmitted && !showResult && (
+          <div className="px-5">
+            <div className="py-3.5 rounded-xl bg-muted/50 border border-border text-center">
+              <p className="text-sm font-medium text-foreground">Result submitted</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Awaiting opponent confirmation</p>
+            </div>
+          </div>
+        )}
+
+        {isPreMatch && canSubmitResult && !myTeamHasSubmitted && !showResult && (
           <div className="px-5">
             <button
               onClick={() => setShowResult(true)}
@@ -596,7 +689,7 @@ export function MatchDetailClient({
           </div>
         )}
 
-        {isPreMatch && canSubmitResult && showResult && (
+        {isPreMatch && canSubmitResult && !myTeamHasSubmitted && showResult && (
           <div className="px-5 flex flex-col gap-4">
             <div className="p-4 rounded-xl bg-card border border-border shadow-card">
               <p className="text-foreground font-semibold text-sm mb-1">Submit Result</p>
