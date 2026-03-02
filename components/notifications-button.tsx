@@ -1,10 +1,15 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { Bell } from "lucide-react";
 import { getNotificationsAction } from "@/app/actions/profile";
-import { NotificationsSheet } from "@/components/notifications-sheet";
 import type { Notification } from "@/lib/types";
+
+const NotificationsSheet = dynamic(
+  () => import("@/components/notifications-sheet").then((m) => m.NotificationsSheet),
+  { ssr: false },
+);
 
 export function NotificationsButton() {
   const [open, setOpen] = useState(false);
@@ -44,15 +49,17 @@ export function NotificationsButton() {
         )}
       </button>
 
-      <NotificationsSheet
-        open={open}
-        onClose={() => {
-          setOpen(false);
-          fetchNotifications();
-        }}
-        notifications={loading ? [] : notifications}
-        onMarkedRead={() => fetchNotifications()}
-      />
+      {open && (
+        <NotificationsSheet
+          open={open}
+          onClose={() => {
+            setOpen(false);
+            fetchNotifications();
+          }}
+          notifications={loading ? [] : notifications}
+          onMarkedRead={() => fetchNotifications()}
+        />
+      )}
     </>
   );
 }

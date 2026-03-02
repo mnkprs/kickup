@@ -4,6 +4,8 @@
 /*  Static tokens (shared across both themes)         */
 /* -------------------------------------------------- */
 @theme inline {
+  --color-muted: #F0F0F0;
+  --color-muted-foreground: #6B7280;
   --color-accent: #2E7D32;
   --color-accent-foreground: #FFFFFF;
   --color-accent-light: #43A047;

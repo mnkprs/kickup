@@ -1,10 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Pencil } from "lucide-react";
 import type { Tournament } from "@/lib/types";
 import type { AreaGroup } from "@/lib/types";
-import { EditTournamentSheet } from "@/components/edit-tournament-sheet";
+
+const EditTournamentSheet = dynamic(
+  () => import("@/components/edit-tournament-sheet").then((m) => m.EditTournamentSheet),
+  { ssr: false },
+);
 
 interface TournamentEditButtonProps {
   tournament: Tournament;
@@ -24,12 +29,14 @@ export function TournamentEditButton({ tournament, areaGroups }: TournamentEditB
       >
         <Pencil size={18} className="text-muted-foreground" />
       </button>
-      <EditTournamentSheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        tournament={tournament}
-        areaGroups={areaGroups}
-      />
+      {sheetOpen && (
+        <EditTournamentSheet
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          tournament={tournament}
+          areaGroups={areaGroups}
+        />
+      )}
     </>
   );
 }

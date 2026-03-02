@@ -1,8 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Settings } from "lucide-react";
-import { TeamSettingsSheet } from "@/components/team-settings-sheet";
+
+const TeamSettingsSheet = dynamic(
+  () => import("@/components/team-settings-sheet").then((m) => m.TeamSettingsSheet),
+  { ssr: false },
+);
 
 interface TeamSettingsButtonProps {
   teamId: string;
@@ -27,13 +32,15 @@ export function TeamSettingsButton({
       >
         <Settings size={18} className="text-muted-foreground" />
       </button>
-      <TeamSettingsSheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        teamId={teamId}
-        searchingForOpponent={searchingForOpponent}
-        searchingForPlayers={searchingForPlayers}
-      />
+      {sheetOpen && (
+        <TeamSettingsSheet
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          teamId={teamId}
+          searchingForOpponent={searchingForOpponent}
+          searchingForPlayers={searchingForPlayers}
+        />
+      )}
     </>
   );
 }

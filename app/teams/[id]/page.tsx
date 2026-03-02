@@ -242,39 +242,33 @@ export default async function TeamDetailPage({
                 {team.short_name}
               </span>
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h2 className={`font-bold text-xl ${isMyTeam ? "text-accent-foreground" : "text-foreground"}`}>
                 {team.name}
               </h2>
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                {isMyTeam && (
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-accent bg-accent-foreground/10 px-1.5 py-0.5 rounded-full">
-                    My team
-                  </span>
-                )}
-                {isCaptain && (
-                  <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-draw">
-                    <Crown size={10} fill="currentColor" />
-                    Captain
-                  </span>
-                )}
-                {isMyTeam && (
-                  <>
-                    <StatusBadge
-                      label="Looking for Opponents"
-                      active={team.searching_for_opponent ?? false}
-                      icon={Swords}
-                    />
-                    <StatusBadge
-                      label="Looking for Players"
-                      active={team.searching_for_players ?? false}
-                      icon={UserPlus}
-                    />
-                  </>
-                )}
-              </div>
+              {isCaptain && (
+                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-draw mt-1 inline-flex">
+                  <Crown size={10} fill="currentColor" />
+                  Captain
+                </span>
+              )}
             </div>
           </div>
+
+          {isMyTeam && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              <StatusBadge
+                label="Looking for Opponents"
+                active={team.searching_for_opponent ?? false}
+                icon={Swords}
+              />
+              <StatusBadge
+                label="Looking for Players"
+                active={team.searching_for_players ?? false}
+                icon={UserPlus}
+              />
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3">
             <div className="flex items-center gap-1.5">
