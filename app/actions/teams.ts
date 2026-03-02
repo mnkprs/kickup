@@ -134,6 +134,19 @@ export async function removeMemberAction(teamId: string, playerId: string) {
   return { success: true };
 }
 
+export async function assignTeamCaptainAction(teamId: string, playerId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("assign_team_captain", {
+    p_team_id: teamId,
+    p_player_id: playerId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/teams/${teamId}`);
+  revalidatePath("/teams");
+  revalidatePath("/");
+  return { success: true };
+}
+
 export async function updateTeamAvatarUrlAction(teamId: string, avatarUrl: string | null) {
   const supabase = await createClient();
   const {

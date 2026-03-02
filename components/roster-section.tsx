@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Crown, Crosshair, UserMinus } from "lucide-react";
 import { Avatar } from "@/components/avatar";
-import { removeMemberAction } from "@/app/actions/teams";
+import { removeMemberAction, assignTeamCaptainAction } from "@/app/actions/teams";
 import { ConfirmModal } from "@/components/confirm-modal";
 import type { Profile } from "@/lib/types";
 
@@ -67,6 +67,11 @@ export function RosterSection({
     playerName: string;
   } | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [pendingMakeCaptain, setPendingMakeCaptain] = useState<{
+    playerId: string;
+    playerName: string;
+  } | null>(null);
+  const [assigning, setAssigning] = useState(false);
 
   function handleRemoveClick(e: React.MouseEvent, playerId: string, playerName: string) {
     e.preventDefault();
@@ -80,6 +85,21 @@ export function RosterSection({
     const result = await removeMemberAction(teamId, pendingRemove.playerId);
     setRemoving(false);
     setPendingRemove(null);
+    if (result.success) router.refresh();
+  }
+
+  function handleMakeCaptainClick(e: React.MouseEvent, playerId: string, playerName: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    setPendingMakeCaptain({ playerId, playerName });
+  }
+
+  async function handleConfirmMakeCaptain() {
+    if (!pendingMakeCaptain) return;
+    setAssigning(true);
+    const result = await assignTeamCaptainAction(teamId, pendingMakeCaptain.playerId);
+    setAssigning(false);
+    setPendingMakeCaptain(null);
     if (result.success) router.refresh();
   }
 
@@ -98,6 +118,19 @@ export function RosterSection({
         loading={removing}
         onConfirm={handleConfirmRemove}
       />
+      <ConfirmModal
+        open={!!pendingMakeCaptain}
+        onClose={() => setPendingMakeCaptain(null)}
+        title="Transfer captaincy"
+        message={
+          pendingMakeCaptain
+            ? `Make ${pendingMakeCaptain.playerName} the new captain? You will become a regular player.`
+            : ""
+        }
+        buttons={{ confirmLabel: "Transfer" }}
+        loading={assigning}
+        onConfirm={handleConfirmMakeCaptain}
+      />
     <section className="px-5">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-foreground font-semibold text-sm">Roster</h2>
@@ -114,6 +147,7 @@ export function RosterSection({
                 const isPlayerCaptain = captainId === player.id;
                 const isMe = player.id === myPlayerId;
                 const canRemove = isCaptain && !isPlayerCaptain && !isMe;
+                const canMakeCaptain = isCaptain && !isPlayerCaptain;
                 return (
                   <div
                     key={player.id}
@@ -145,15 +179,26 @@ export function RosterSection({
                         {player.goals}
                       </span>
                     </Link>
-                    {canRemove && (
-                      <button
-                        onClick={(e) => handleRemoveClick(e, player.id, player.full_name)}
-                        className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center hover:bg-loss/10 transition-colors shrink-0"
-                        title="Remove from team"
-                      >
-                        <UserMinus size={14} className="text-muted-foreground hover:text-loss" />
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {canMakeCaptain && (
+                        <button
+                          onClick={(e) => handleMakeCaptainClick(e, player.id, player.full_name)}
+                          className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center hover:bg-accent/10 transition-colors"
+                          title="Make captain"
+                        >
+                          <Crown size={14} className="text-muted-foreground hover:text-accent" />
+                        </button>
+                      )}
+                      {canRemove && (
+                        <button
+                          onClick={(e) => handleRemoveClick(e, player.id, player.full_name)}
+                          className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center hover:bg-loss/10 transition-colors"
+                          title="Remove from team"
+                        >
+                          <UserMinus size={14} className="text-muted-foreground hover:text-loss" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
