@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getProfile, getNotifications, getFreelancers } from "@/lib/db/profiles";
+import { getProfile, getNotifications, getLookingForTeamCount } from "@/lib/db/profiles";
 import { getUpcomingMatches, getRecentResults } from "@/lib/db/matches";
 import { getTeams } from "@/lib/db/teams";
 import { getTournaments } from "@/lib/db/tournaments";
@@ -15,11 +15,11 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [profile, tournaments, notifications, freelancers] = await Promise.all([
+  const [profile, tournaments, notifications, lookingForTeamCount] = await Promise.all([
     user ? getProfile(user.id) : null,
     getTournaments(),
     user ? getNotifications(user.id) : [],
-    getFreelancers(),
+    getLookingForTeamCount(),
   ]);
 
   const [upcomingMatches, recentResults] = await Promise.all([
@@ -38,7 +38,7 @@ export default async function DashboardPage() {
 
       <main className="dashboard-page__main flex flex-col gap-6 pb-24">
         {profile && <QuickStats profile={profile} />}
-        <FindPlayersBanner freelancerCount={freelancers.length} />
+        <FindPlayersBanner lookingForTeamCount={lookingForTeamCount} />
         <UpcomingMatches matches={upcomingMatches} />
         {userTeam && <MyForm matches={recentResults} team={userTeam} />}
         <RecentResults matches={recentResults} teamId={profile?.team_id} seeAllHref="/matches?tab=Results" />

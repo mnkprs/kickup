@@ -21,7 +21,7 @@ function getRankStyle(index: number) {
 
 export function TournamentScorers({ scorers, title = "Top Scorers" }: TournamentScorersProps) {
   return (
-    <section className="tournament-scorers px-5">
+    <section className="tournament-scorers">
       <div className="tournament-scorers__header flex items-center justify-between mb-3">
         <h2 className="tournament-scorers__title text-foreground font-semibold text-base">{title}</h2>
       </div>

@@ -156,7 +156,7 @@ export function TournamentBracket({
     .sort(([a], [b]) => b - a);
 
   return (
-    <section className="tournament-bracket px-5">
+    <section className="tournament-bracket">
       <div className="flex items-center gap-2 mb-3">
         <Trophy size={16} className="text-draw shrink-0" />
         <h2 className="text-foreground font-semibold text-base">Knockout Bracket</h2>

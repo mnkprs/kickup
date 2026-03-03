@@ -8,7 +8,7 @@ import type { AreaGroup } from "@/lib/types";
 import type { Tournament } from "@/lib/types";
 import { updateTournamentAction } from "@/app/actions/tournaments";
 
-const FORMAT_OPTIONS = ["5v5", "6v6", "7v7", "8v8", "11v11"];
+const FORMAT_OPTIONS = ["5v5", "6v6", "7v7", "8v8"];
 const MAX_TEAMS_OPTIONS = [4, 8, 16, 32];
 const BRACKET_FORMAT_OPTIONS = [
   { value: "group_stage", label: "Groups + Knockout" },

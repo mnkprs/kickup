@@ -9,7 +9,7 @@ import { NotificationsButton } from "@/components/notifications/notifications-bu
 import type { Team } from "@/lib/types";
 import { sendChallengeAction } from "@/app/actions/matches";
 
-const FORMAT_OPTIONS = ["5v5", "6v6", "7v7", "8v8", "11v11"];
+const FORMAT_OPTIONS = ["5v5", "6v6", "7v7", "8v8"];
 const STEPS = ["Opponent", "Format", "Message", "Confirm"];
 
 interface SendChallengeFormProps {

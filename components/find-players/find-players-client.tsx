@@ -14,14 +14,27 @@ import { BackButton } from "@/components/ui/back-button";
 import { NotificationsButton } from "@/components/notifications/notifications-button";
 import { Avatar } from "@/components/ui/avatar";
 import { invitePlayerToTeamAction } from "@/app/actions/teams";
+
+function isLookingForTeam(p: Profile): boolean {
+  if (!p.is_freelancer) return false;
+  const until = p.freelancer_until;
+  if (!until) return true;
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const pastNoon = now.getHours() >= 12;
+  if (until > today) return true;
+  if (until === today && !pastNoon) return true;
+  return false;
+}
+
 interface FindPlayersClientProps {
-  freelancers: Profile[];
+  players: Profile[];
   captainTeamId: string | null;
   currentUserId: string | null;
 }
 
 export function FindPlayersClient({
-  freelancers,
+  players,
   captainTeamId,
   currentUserId,
 }: FindPlayersClientProps) {
@@ -31,15 +44,15 @@ export function FindPlayersClient({
   const [inviteError, setInviteError] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return freelancers;
+    if (!search.trim()) return players;
     const q = search.toLowerCase();
-    return freelancers.filter(
+    return players.filter(
       (p) =>
         p.full_name.toLowerCase().includes(q) ||
         (p.position?.toLowerCase().includes(q) ?? false) ||
         (p.area?.toLowerCase().includes(q) ?? false)
     );
-  }, [search, freelancers]);
+  }, [search, players]);
 
   const canInvite = !!captainTeamId && !!currentUserId;
 
@@ -75,7 +88,7 @@ export function FindPlayersClient({
         </div>
 
         <p className="text-muted-foreground text-sm mb-4">
-          Players looking for a team. {canInvite ? "Invite them to your team or apply to teams." : "Apply to teams with open spots."}
+          Browse all players. Those looking for a team appear first. {canInvite ? "Invite them or apply to teams." : "Apply to teams with open spots."}
         </p>
 
         {showSearch && (
@@ -101,6 +114,7 @@ export function FindPlayersClient({
 
         {filtered.map((player) => {
           const isSelf = player.id === currentUserId;
+          const playerLooking = isLookingForTeam(player);
 
           return (
             <div
@@ -128,6 +142,15 @@ export function FindPlayersClient({
                       {isSelf && (
                         <span className="text-[9px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded-full shrink-0">
                           You
+                        </span>
+                      )}
+                      {playerLooking && (
+                        <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-full shrink-0">
+                          <span className="relative flex h-1.5 w-1.5 shrink-0">
+                            <span className="absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75 animate-ping" />
+                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
+                          </span>
+                          Looking
                         </span>
                       )}
                     </div>
@@ -170,11 +193,16 @@ export function FindPlayersClient({
               </div>
 
               <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
+                <span title="Matches">{player.matches_played} matches</span>
                 <span title="Goals">
                   <Crosshair size={11} className="inline mr-0.5 text-draw" />
                   {player.goals}G
                 </span>
-                <span>{player.matches_played} matches</span>
+                <span title="Win rate">
+                  {player.matches_played > 0
+                    ? `${Math.round((player.wins / player.matches_played) * 100)}% win`
+                    : "—"}
+                </span>
               </div>
             </div>
           );
@@ -186,13 +214,13 @@ export function FindPlayersClient({
               <UserPlus size={20} className="text-muted-foreground" />
             </div>
             <p className="text-muted-foreground text-sm text-center">
-              {freelancers.length === 0
-                ? "No players looking for a team yet. Enable &quot;Find a Team&quot; in your profile settings to appear here."
+              {players.length === 0
+                ? "No players yet."
                 : "No players match your search"}
             </p>
             {!currentUserId && (
               <p className="text-muted-foreground text-xs">
-                Sign in to see freelancers and apply to teams.
+                Sign in to toggle &quot;Looking for team&quot; and apply to teams.
               </p>
             )}
           </div>

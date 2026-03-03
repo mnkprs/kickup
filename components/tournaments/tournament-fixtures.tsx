@@ -192,7 +192,7 @@ export function TournamentFixtures({
   };
 
   return (
-    <section className="tournament-fixtures px-5">
+    <section className="tournament-fixtures">
       <div className="tournament-fixtures__header flex items-center justify-between mb-3">
         <h2 className="tournament-fixtures__title text-foreground font-semibold text-base">Fixtures</h2>
       </div>

@@ -21,6 +21,7 @@ export interface Profile {
   // aggregate stats
   matches_played: number;
   goals: number;
+  goals_against: number;
   wins: number;
   draws: number;
   losses: number;
@@ -133,7 +134,7 @@ export interface Tournament {
   venue: string;
   area: string;
   format: string; // bracket format: knockout | round_robin | group_stage
-  match_format: string; // playing format: 5v5 | 7v7 | 11v11
+  match_format: string; // playing format: 5v5 | 6v6 | 7v7 | 8v8
   max_teams: number;
   teams_per_group?: number;
   knockout_mode?: "auto" | "custom";

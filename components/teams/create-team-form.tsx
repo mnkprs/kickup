@@ -10,7 +10,7 @@ import { AreaGroupSelect } from "@/components/ui/area-group-select";
 import { createTeamAction } from "@/app/actions/teams";
 import type { AreaGroup } from "@/lib/types";
 
-const FORMAT_OPTIONS = ["5v5", "6v6", "7v7", "8v8", "11v11"];
+const FORMAT_OPTIONS = ["5v5", "6v6", "7v7", "8v8"];
 
 interface CreateTeamFormProps {
   areaGroups: AreaGroup[];

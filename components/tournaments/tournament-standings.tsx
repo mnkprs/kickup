@@ -422,7 +422,7 @@ export function TournamentStandings({
   );
 
   return (
-    <section className="tournament-standings px-5">
+    <section className="tournament-standings">
       <div className="tournament-standings__header flex items-center justify-between mb-3">
         <h2 className="tournament-standings__title text-foreground font-semibold text-base">{title}</h2>
         {canMove && (

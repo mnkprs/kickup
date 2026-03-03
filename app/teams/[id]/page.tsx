@@ -32,31 +32,30 @@ import { LiveDot } from "@/components/ui/live-dot";
 function TeamStatsGrid({ team }: { team: Team }) {
   const total = team.wins + team.draws + team.losses;
   const gd = team.goals_for - team.goals_against;
-  const winRate = total > 0 ? Math.round((team.wins / total) * 100) : 0;
   const stats = [
     { label: "Played", value: total, icon: Swords, iconClass: "text-muted-foreground", bgClass: "bg-muted" },
     { label: "Wins", value: team.wins, icon: Trophy, iconClass: "text-win", bgClass: "bg-win/10" },
     { label: "Goals", value: team.goals_for, icon: Crosshair, iconClass: "text-draw", bgClass: "bg-draw/10" },
-    { label: "Win %", value: `${winRate}`, icon: Shield, iconClass: "text-info", bgClass: "bg-info/10" },
+    { label: "GA", value: team.goals_against, icon: Shield, iconClass: "text-muted-foreground", bgClass: "bg-muted" },
     { label: "GD", value: gd > 0 ? `+${gd}` : `${gd}`, icon: Star, iconClass: gd >= 0 ? "text-win" : "text-loss", bgClass: gd >= 0 ? "bg-win/10" : "bg-loss/10" },
   ];
 
   return (
     <section className="team-stats-section px-5">
       <h2 className="team-stats-section__title text-foreground font-semibold text-sm mb-3">Team Stats</h2>
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-5 gap-1.5">
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border shadow-card px-2 py-3"
+            className="flex flex-col items-center gap-0.5 rounded-lg bg-card border border-border shadow-card px-1 py-2 min-w-0"
           >
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${stat.bgClass}`}>
-              <stat.icon size={16} className={stat.iconClass} />
+            <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 ${stat.bgClass}`}>
+              <stat.icon size={12} className={stat.iconClass} />
             </div>
-            <span className="text-foreground font-bold text-lg leading-none">
+            <span className="text-foreground font-bold text-sm leading-none">
               {stat.value}
             </span>
-            <span className="text-muted-foreground text-[11px] leading-none">
+            <span className="text-muted-foreground text-[10px] leading-none">
               {stat.label}
             </span>
           </div>

@@ -109,7 +109,7 @@ export function TournamentOrganizerControls({
   if (rawStatus === "registration") {
     const canStart = teamsCount >= 2;
     return (
-      <section className="px-5">
+      <section>
         <div className="rounded-xl bg-card border border-border shadow-card p-4">
           <p className="text-muted-foreground text-sm mb-3">
             {canStart
@@ -140,7 +140,7 @@ export function TournamentOrganizerControls({
 
   if (rawStatus === "group_stage") {
     return (
-      <section className="px-5">
+      <section>
         <div className="rounded-xl bg-card border border-border shadow-card p-4">
           <p className="text-muted-foreground text-sm mb-3">
             {knockoutMode === "custom"
@@ -172,7 +172,7 @@ export function TournamentOrganizerControls({
   if (rawStatus === "knockout_stage") {
     if (canAdvanceToNextRound) {
       return (
-        <section className="px-5">
+        <section>
           <div className="rounded-xl bg-card border border-border shadow-card p-4">
             <p className="text-muted-foreground text-sm mb-3">
               All matches in current round completed? Advance to {nextRoundLabel.toLowerCase()}.
@@ -201,7 +201,7 @@ export function TournamentOrganizerControls({
 
     if (knockoutMode === "custom" && !canAdvanceToNextRound && !finalCompleted) {
       return (
-        <section className="px-5">
+        <section>
           <div className="rounded-xl bg-card border border-border shadow-card p-4">
             {showCreateMatch ? (
               <CreateKnockoutMatchForm
@@ -239,7 +239,7 @@ export function TournamentOrganizerControls({
 
     if (finalCompleted) {
       return (
-        <section className="px-5">
+        <section>
           <div className="rounded-xl bg-card border border-border shadow-card p-4">
             <p className="text-muted-foreground text-sm mb-3">
               Final completed? Mark the tournament as finished.

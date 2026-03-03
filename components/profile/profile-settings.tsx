@@ -514,9 +514,9 @@ export function ProfileSettings({
         <main className="profile-settings__main profile-settings__main--freelancer px-5 pb-24 flex flex-col gap-5">
           <div className="profile-settings__freelancer-toggle flex items-center justify-between p-4 rounded-xl bg-card border border-border shadow-card">
             <div>
-              <p className="text-foreground font-semibold text-sm mb-1">Available for Teams</p>
+              <p className="text-foreground font-semibold text-sm mb-1">Looking for team (permanent)</p>
               <p className="text-muted-foreground text-xs leading-relaxed">
-                When enabled, you appear in the Find Players section until 12pm today. Team captains can invite you, and you can apply to teams with open spots.
+                When enabled, you appear at the top of Find Players until you turn it off. Team captains can invite you, and you can apply to teams with open spots.
               </p>
             </div>
             <button
@@ -526,9 +526,8 @@ export function ProfileSettings({
               disabled={freelancerSaving}
               onClick={() => {
                 const next = !isFreelancer;
-                const until = next ? new Date().toISOString().split("T")[0] : null;
                 setIsFreelancer(next);
-                saveFreelancer({ is_freelancer: next, freelancer_until: until });
+                saveFreelancer({ is_freelancer: next, freelancer_until: null });
               }}
               className={`relative h-8 w-14 rounded-full transition-colors shrink-0 ${
                 isFreelancer ? "bg-accent" : "bg-muted"

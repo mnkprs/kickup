@@ -106,7 +106,7 @@ export function TournamentDetailsAccordion({ details }: TournamentDetailsAccordi
   const preview = previewParts.join(" · ");
 
   return (
-    <section className="tournament-details-accordion px-5">
+    <section className="tournament-details-accordion">
       <div className="tournament-details-accordion__card rounded-xl border border-border bg-card shadow-card overflow-hidden">
         <button
           type="button"

@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Crown, Crosshair, UserMinus } from "lucide-react";
+import { Crown, Crosshair, Shield, UserMinus } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { removeMemberAction, assignTeamCaptainAction } from "@/app/actions/teams";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
@@ -174,9 +174,17 @@ export function RosterSection({
                         </div>
                         <span className="text-muted-foreground text-xs">{player.position ?? "N/A"}</span>
                       </div>
-                      <span title="Goals" className="shrink-0 text-xs text-muted-foreground flex items-center gap-0.5">
-                        <Crosshair size={11} className="text-draw" />
-                        {player.goals}
+                      <span title="Goals" className="shrink-0 text-xs text-muted-foreground flex items-center gap-1.5">
+                        <span className="flex items-center gap-0.5">
+                          <Crosshair size={11} className="text-draw" />
+                          {player.goals}
+                        </span>
+                        {player.position === "GK" && player.matches_played > 0 && (
+                          <span title="Avg goals against per match" className="flex items-center gap-0.5 text-muted-foreground">
+                            <Shield size={11} />
+                            {(player.goals_against / player.matches_played).toFixed(1)} GA
+                          </span>
+                        )}
                       </span>
                     </Link>
                     <div className="flex items-center gap-1 shrink-0">

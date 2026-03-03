@@ -21,6 +21,7 @@ function mapProfile(row: Record<string, unknown>): Profile {
     is_admin: (row.is_admin as boolean) ?? false,
     matches_played: (row.stat_matches as number) ?? 0,
     goals: (row.stat_goals as number) ?? 0,
+    goals_against: (row.stat_goals_against as number) ?? 0,
     wins: (row.stat_wins as number) ?? 0,
     draws: (row.stat_draws as number) ?? 0,
     losses: (row.stat_losses as number) ?? 0,
@@ -118,6 +119,18 @@ export async function searchProfiles(query: string, limit = 20): Promise<{ id: s
   return (data ?? []) as { id: string; full_name: string; avatar_initials: string; avatar_color: string; avatar_url: string | null }[];
 }
 
+/** Whether a player is currently "looking for team" (visible in find-players). */
+export function isLookingForTeam(p: Profile): boolean {
+  if (!p.is_freelancer) return false;
+  const until = p.freelancer_until;
+  if (!until) return true; // permanent (from profile)
+  const today = new Date().toISOString().slice(0, 10);
+  const pastNoon = new Date().getHours() >= 12;
+  if (until > today) return true;
+  if (until === today && !pastNoon) return true;
+  return false;
+}
+
 export async function getFreelancers(): Promise<Profile[]> {
   const supabase = await createClient();
   const now = new Date();
@@ -143,6 +156,38 @@ export async function getFreelancers(): Promise<Profile[]> {
     if (until === today && pastNoon) return false;
     return true;
   });
+}
+
+/** All players for Find Players page. Sorted: looking-for-team first, then matches, goals, win ratio. */
+export async function getAllPlayers(): Promise<Profile[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("stat_matches", { ascending: false })
+    .order("stat_goals", { ascending: false })
+    .order("full_name", { ascending: true });
+
+  if (error || !data) return [];
+
+  const profiles = (data as Record<string, unknown>[]).map((row) => mapProfile(row));
+
+  return profiles.sort((a, b) => {
+      const aLooking = isLookingForTeam(a);
+      const bLooking = isLookingForTeam(b);
+      if (aLooking !== bLooking) return aLooking ? -1 : 1;
+      if (a.matches_played !== b.matches_played) return b.matches_played - a.matches_played;
+      if (a.goals !== b.goals) return b.goals - a.goals;
+      const aWinRatio = a.matches_played > 0 ? a.wins / a.matches_played : 0;
+      const bWinRatio = b.matches_played > 0 ? b.wins / b.matches_played : 0;
+      return bWinRatio - aWinRatio;
+    });
+}
+
+/** Count of players currently looking for team (for banner). */
+export async function getLookingForTeamCount(): Promise<number> {
+  const players = await getAllPlayers();
+  return players.filter(isLookingForTeam).length;
 }
 
 export async function getNotifications(userId: string): Promise<Notification[]> {

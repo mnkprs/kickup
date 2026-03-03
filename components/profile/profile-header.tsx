@@ -13,12 +13,25 @@ interface ProfileHeaderProps {
   showSettings?: boolean;
 }
 
+function isLookingForTeam(p: { is_freelancer: boolean; freelancer_until?: string | null }): boolean {
+  if (!p.is_freelancer) return false;
+  const until = p.freelancer_until;
+  if (!until) return true;
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const pastNoon = now.getHours() >= 12;
+  if (until > today) return true;
+  if (until === today && !pastNoon) return true;
+  return false;
+}
+
 export function ProfileHeader({ profile, team, showSettings = true }: ProfileHeaderProps) {
   const winRate =
     profile.matches_played > 0
       ? Math.round((profile.wins / profile.matches_played) * 100)
       : 0;
   const isCaptain = team?.captain_id === profile.id;
+  const lookingForTeam = isLookingForTeam(profile);
 
   return (
     <header className="profile-header px-5 pt-12 pb-2">
@@ -90,9 +103,13 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
                   {profile.position}
                 </span>
               )}
-              {profile.is_freelancer && (
-                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-full">
-                  Looking for team
+              {lookingForTeam && (
+                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-destructive bg-destructive/10 border border-destructive/30 px-2 py-0.5 rounded-full">
+                  <span className="relative flex h-1.5 w-1.5 shrink-0">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75 animate-ping" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
+                  </span>
+                  Looking for a team
                 </span>
               )}
               {isCaptain && (

@@ -130,8 +130,8 @@ export function TournamentDetailClient({
     scorers.length === 0;
 
   return (
-    <div className="tournament-detail-client">
-      <div className="tournament-detail__tabs sticky top-0 z-30 bg-background px-5 py-3 -mx-5">
+    <div className="tournament-detail-client px-5">
+      <div className="tournament-detail__tabs sticky top-0 z-30 bg-background py-3 -mx-5">
         <div
           className="flex flex-nowrap gap-1 p-1 rounded-xl bg-card border border-border shadow-card overflow-x-auto scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
@@ -210,7 +210,7 @@ export function TournamentDetailClient({
               )}
 
             {(nextFixture || topScorersPreview.length > 0 || hasStandings) && (
-              <div className="tournament-overview__preview flex flex-col gap-4 px-5">
+              <div className="tournament-overview__preview flex flex-col gap-4">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Quick links
                 </h3>
@@ -267,7 +267,7 @@ export function TournamentDetailClient({
             )}
 
             {isEmpty && (
-              <section className="tournament-detail__empty px-5 py-8 flex flex-col items-center gap-3 text-center">
+              <section className="tournament-detail__empty py-8 flex flex-col items-center gap-3 text-center">
                 <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
                   <TrophyIcon size={20} className="text-muted-foreground" />
                 </div>

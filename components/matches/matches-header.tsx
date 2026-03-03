@@ -5,7 +5,7 @@ import { NotificationsButton } from "@/components/notifications/notifications-bu
 import type { AreaGroup } from "@/lib/types";
 
 const tabs = ["Upcoming", "Results"];
-const formatOptions = ["All", "5v5", "7v7", "11v11"];
+const formatOptions = ["All", "5v5", "6v6", "7v7", "8v8"];
 
 export interface MatchTournamentFilter {
   id: string;

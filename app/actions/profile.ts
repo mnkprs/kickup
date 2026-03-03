@@ -120,6 +120,7 @@ export async function updateFreelancerAction(data: {
 
   if (error) return { error: error.message };
 
+  revalidatePath("/");
   revalidatePath("/profile");
   revalidatePath("/find-players");
   return { success: true };

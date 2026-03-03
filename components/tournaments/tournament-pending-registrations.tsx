@@ -45,7 +45,7 @@ export function TournamentPendingRegistrations({
   }
 
   return (
-    <section className="px-5">
+    <section>
       <div className="flex items-center gap-2 mb-3">
         <Users size={16} className="text-muted-foreground" />
         <h2 className="text-foreground font-semibold text-base">Pending Applications</h2>

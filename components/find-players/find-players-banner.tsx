@@ -2,10 +2,10 @@ import { UserSearch, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 interface FindPlayersBannerProps {
-  freelancerCount: number;
+  lookingForTeamCount: number;
 }
 
-export function FindPlayersBanner({ freelancerCount }: FindPlayersBannerProps) {
+export function FindPlayersBanner({ lookingForTeamCount }: FindPlayersBannerProps) {
   return (
     <section className="find-players-banner px-5">
       <Link
@@ -20,9 +20,9 @@ export function FindPlayersBanner({ freelancerCount }: FindPlayersBannerProps) {
             <div>
               <h2 className="text-foreground font-semibold text-sm">Find Players</h2>
               <p className="text-muted-foreground text-xs mt-0.5">
-                {freelancerCount === 0
-                  ? "Players looking for a team"
-                  : `${freelancerCount} player${freelancerCount === 1 ? "" : "s"} looking for a team`}
+                {lookingForTeamCount === 0
+                  ? "Browse all players"
+                  : `${lookingForTeamCount} player${lookingForTeamCount === 1 ? "" : "s"} looking for a team`}
               </p>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getFreelancers } from "@/lib/db/profiles";
+import { getAllPlayers } from "@/lib/db/profiles";
 import { getCaptainTeam } from "@/lib/db/teams";
 import { FindPlayersClient } from "@/components/find-players/find-players-client";
 
@@ -9,14 +9,14 @@ export default async function FindPlayersPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [freelancers, captainTeam] = await Promise.all([
-    getFreelancers(),
+  const [players, captainTeam] = await Promise.all([
+    getAllPlayers(),
     user ? getCaptainTeam(user.id) : null,
   ]);
 
   return (
     <FindPlayersClient
-      freelancers={freelancers}
+      players={players}
       captainTeamId={captainTeam?.id ?? null}
       currentUserId={user?.id ?? null}
     />

@@ -46,6 +46,7 @@ function mapMemberProfile(row: Record<string, unknown>): Profile {
     is_admin: (row.is_admin as boolean) ?? false,
     matches_played: (row.stat_matches as number) ?? 0,
     goals: (row.stat_goals as number) ?? 0,
+    goals_against: (row.stat_goals_against as number) ?? 0,
     wins: (row.stat_wins as number) ?? 0,
     draws: (row.stat_draws as number) ?? 0,
     losses: (row.stat_losses as number) ?? 0,

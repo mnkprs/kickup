@@ -472,6 +472,7 @@ export async function getTournamentTopScorers(
         is_admin: (p.is_admin as boolean) ?? false,
         matches_played: (p.stat_matches as number) ?? 0,
         goals: (p.stat_goals as number) ?? 0,
+        goals_against: (p.stat_goals_against as number) ?? 0,
         wins: (p.stat_wins as number) ?? 0,
         draws: (p.stat_draws as number) ?? 0,
         losses: (p.stat_losses as number) ?? 0,
