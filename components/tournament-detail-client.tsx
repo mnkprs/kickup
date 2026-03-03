@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LayoutGrid, Trophy, Swords, GitBranch, Target } from "lucide-react";
+import { LayoutGrid, Trophy, Swords, GitBranch } from "lucide-react";
 import type { TournamentStandingsGroup } from "@/lib/types";
 import type { TournamentMatchWithStage } from "@/lib/db/tournaments";
 import type { TopScorer } from "@/lib/types";
@@ -18,13 +18,14 @@ import { Trophy as TrophyIcon } from "lucide-react";
 
 const TAB_OVERVIEW = "overview";
 const TAB_STANDINGS = "standings";
-const TAB_SCORERS = "scorers";
 const TAB_FIXTURES = "fixtures";
 const TAB_BRACKET = "bracket";
 
-const VALID_TABS = [TAB_OVERVIEW, TAB_STANDINGS, TAB_SCORERS, TAB_FIXTURES, TAB_BRACKET] as const;
+const VALID_TABS = [TAB_OVERVIEW, TAB_STANDINGS, TAB_FIXTURES, TAB_BRACKET] as const;
 
 type TabId = (typeof VALID_TABS)[number];
+
+type ScrollToSection = "standings" | "scorers" | null;
 
 interface TabConfig {
   id: TabId;
@@ -42,16 +43,11 @@ interface TournamentDetailClientProps {
   userTeamId?: string | null;
 }
 
-function parseTabFromParam(
-  param: string | null,
-  showBracketTab: boolean,
-  hasScorers: boolean
-): TabId {
-  if (param === "scorers") return hasScorers ? TAB_SCORERS : TAB_STANDINGS;
+function parseTabFromParam(param: string | null, showBracketTab: boolean): TabId {
+  if (param === "scorers") return TAB_STANDINGS;
   if (VALID_TABS.includes(param as TabId)) {
     const t = param as TabId;
     if (t === TAB_BRACKET && !showBracketTab) return TAB_OVERVIEW;
-    if (t === TAB_SCORERS && !hasScorers) return TAB_STANDINGS;
     return t;
   }
   return TAB_OVERVIEW;
@@ -69,40 +65,52 @@ export function TournamentDetailClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const showBracketTab = tournament.raw_status === "knockout_stage";
-  const hasScorers = scorers.length > 0;
+  const scorersRef = useRef<HTMLDivElement>(null);
 
   const [activeTab, setActiveTabState] = useState<TabId>(() =>
-    parseTabFromParam(searchParams.get("tab"), showBracketTab, hasScorers)
+    parseTabFromParam(searchParams.get("tab"), showBracketTab)
   );
+  const [scrollToSection, setScrollToSection] = useState<ScrollToSection>(() => {
+    const tab = searchParams.get("tab");
+    const scroll = searchParams.get("scroll");
+    return tab === "scorers" || (tab === "standings" && scroll === "scorers") ? "scorers" : null;
+  });
 
   const tabs: TabConfig[] = useMemo(() => {
     const bracketTab: TabConfig = { id: TAB_BRACKET, label: "Bracket", icon: GitBranch };
-    const scorersTab: TabConfig = { id: TAB_SCORERS, label: "Top Scorers", icon: Target };
     const list: TabConfig[] = [
       { id: TAB_OVERVIEW, label: "Overview", icon: LayoutGrid },
       { id: TAB_STANDINGS, label: "Standings", icon: Trophy },
-      ...(hasScorers ? [scorersTab] : []),
       { id: TAB_FIXTURES, label: "Fixtures", icon: Swords },
       ...(showBracketTab ? [bracketTab] : []),
     ];
     return list;
-  }, [showBracketTab, hasScorers]);
+  }, [showBracketTab]);
 
-  const setTab = useCallback((tab: TabId) => {
+  const setTab = useCallback((tab: TabId, scrollTo?: ScrollToSection) => {
     setActiveTabState(tab);
-    const url = `${window.location.pathname}?tab=${tab}`;
+    setScrollToSection(scrollTo ?? null);
+    const url = `${window.location.pathname}?tab=${tab}${scrollTo === "scorers" ? "&scroll=scorers" : ""}`;
     window.history.replaceState(null, "", url);
   }, []);
 
   useEffect(() => {
     const handler = () => {
       const params = new URLSearchParams(window.location.search);
-      const tab = parseTabFromParam(params.get("tab"), showBracketTab, hasScorers);
+      const tab = parseTabFromParam(params.get("tab"), showBracketTab);
       setActiveTabState(tab);
+      setScrollToSection(params.get("scroll") === "scorers" ? "scorers" : null);
     };
     window.addEventListener("popstate", handler);
     return () => window.removeEventListener("popstate", handler);
-  }, [showBracketTab, hasScorers]);
+  }, [showBracketTab]);
+
+  useEffect(() => {
+    if (activeTab === TAB_STANDINGS && scrollToSection === "scorers" && scorersRef.current) {
+      scorersRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      setScrollToSection(null);
+    }
+  }, [activeTab, scrollToSection]);
 
   const knockoutMatches = matches.filter(
     (m) =>
@@ -225,7 +233,7 @@ export function TournamentDetailClient({
                   {topScorersPreview.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setTab(TAB_SCORERS)}
+                      onClick={() => setTab(TAB_STANDINGS, "scorers")}
                       className="w-full text-left rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors pressable"
                     >
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -295,17 +303,9 @@ export function TournamentDetailClient({
                   : undefined
               }
             />
-          </div>
-        )}
-
-        {activeTab === TAB_SCORERS && (
-          <div
-            id="tournament-tabpanel-scorers"
-            role="tabpanel"
-            aria-labelledby="tournament-tab-scorers"
-            className="flex flex-col gap-6"
-          >
-            <TournamentScorers scorers={scorers} />
+            <div ref={scorersRef}>
+              <TournamentScorers scorers={scorers} />
+            </div>
           </div>
         )}
 
