@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, ChevronRight, Trophy, Loader2 } from "lucide-react";
+import { Play, ChevronRight, Trophy, Loader2, Plus } from "lucide-react";
 import {
   startGroupStageAction,
   advanceToKnockoutsAction,
@@ -10,31 +10,51 @@ import {
   completeTournamentAction,
 } from "@/app/actions/tournaments";
 import type { TournamentMatchWithStage } from "@/lib/db/tournaments";
+import { CreateKnockoutMatchForm } from "@/components/create-knockout-match-form";
+
+const KNOCKOUT_STAGES = ["round_of_16", "quarter_final", "semi_final", "final"] as const;
+
+function getNextRoundLabel(matchCount: number): string {
+  if (matchCount === 2) return "Final";
+  if (matchCount === 4) return "Semi-finals";
+  if (matchCount === 8) return "Quarter-finals";
+  return "Next round";
+}
 
 interface TournamentOrganizerControlsProps {
   tournamentId: string;
   rawStatus: string;
   teamsCount: number;
-  /** Knockout matches (semi_final + final) for advance-to-final logic */
+  knockoutMode?: "auto" | "custom";
+  /** Knockout matches (all rounds) for advance logic */
   knockoutMatches?: TournamentMatchWithStage[];
+  advancingTeams?: { id: string; name: string; short_name: string }[];
 }
 
 export function TournamentOrganizerControls({
   tournamentId,
   rawStatus,
   teamsCount,
+  knockoutMode = "auto",
   knockoutMatches = [],
+  advancingTeams = [],
 }: TournamentOrganizerControlsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateMatch, setShowCreateMatch] = useState(false);
 
-  const semiFinals = knockoutMatches.filter((m) => m.stage === "semi_final");
-  const finalMatch = knockoutMatches.find((m) => m.stage === "final");
-  const allSemisCompleted =
-    semiFinals.length >= 2 &&
-    semiFinals.every((m) => m.status === "completed" || m.raw_status === "completed");
-  const canAdvanceToFinal = !finalMatch && allSemisCompleted;
+  const knockoutOnly = knockoutMatches.filter((m) =>
+    KNOCKOUT_STAGES.includes(m.stage as (typeof KNOCKOUT_STAGES)[number])
+  );
+  const finalMatch = knockoutOnly.find((m) => m.stage === "final");
+  const maxRoundOrder = Math.max(0, ...knockoutOnly.map((m) => m.round_order ?? 0));
+  const currentRoundMatches = knockoutOnly.filter((m) => (m.round_order ?? 0) === maxRoundOrder);
+  const allCurrentRoundCompleted =
+    currentRoundMatches.length >= 2 &&
+    currentRoundMatches.every((m) => m.status === "completed" || m.raw_status === "completed");
+  const canAdvanceToNextRound = !finalMatch && allCurrentRoundCompleted;
+  const nextRoundLabel = getNextRoundLabel(currentRoundMatches.length);
   const finalCompleted =
     !!finalMatch && (finalMatch.status === "completed" || finalMatch.raw_status === "completed");
 
@@ -123,7 +143,9 @@ export function TournamentOrganizerControls({
       <section className="px-5">
         <div className="rounded-xl bg-card border border-border shadow-card p-4">
           <p className="text-muted-foreground text-sm mb-3">
-            All group matches completed? Advance to semi-finals.
+            {knockoutMode === "custom"
+              ? "All group matches completed? Advance to knockouts and create matches manually."
+              : "All group matches completed? Advance to knockouts."}
           </p>
           <button
             onClick={handleAdvanceToKnockouts}
@@ -148,12 +170,12 @@ export function TournamentOrganizerControls({
   }
 
   if (rawStatus === "knockout_stage") {
-    if (canAdvanceToFinal) {
+    if (canAdvanceToNextRound) {
       return (
         <section className="px-5">
           <div className="rounded-xl bg-card border border-border shadow-card p-4">
             <p className="text-muted-foreground text-sm mb-3">
-              Both semi-finals completed? Create the final match.
+              All matches in current round completed? Advance to {nextRoundLabel.toLowerCase()}.
             </p>
             <button
               onClick={handleAdvanceToFinal}
@@ -165,10 +187,47 @@ export function TournamentOrganizerControls({
               ) : (
                 <>
                   <ChevronRight size={18} />
-                  Advance to final
+                  Advance to {nextRoundLabel}
                 </>
               )}
             </button>
+            {error && (
+              <p className="text-destructive text-sm mt-2">{error}</p>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    if (knockoutMode === "custom" && !canAdvanceToNextRound && !finalCompleted) {
+      return (
+        <section className="px-5">
+          <div className="rounded-xl bg-card border border-border shadow-card p-4">
+            {showCreateMatch ? (
+              <CreateKnockoutMatchForm
+                tournamentId={tournamentId}
+                advancingTeams={advancingTeams}
+                onClose={() => setShowCreateMatch(false)}
+                onSuccess={() => {
+                  setShowCreateMatch(false);
+                  router.refresh();
+                }}
+              />
+            ) : (
+              <>
+                <p className="text-muted-foreground text-sm mb-3">
+                  Create knockout matches and assign teams from the advancing teams.
+                </p>
+                <button
+                  onClick={() => setShowCreateMatch(true)}
+                  disabled={loading !== null}
+                  className="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-accent text-accent-foreground font-medium hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Plus size={18} />
+                  Create knockout match
+                </button>
+              </>
+            )}
             {error && (
               <p className="text-destructive text-sm mt-2">{error}</p>
             )}

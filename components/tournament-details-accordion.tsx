@@ -96,7 +96,7 @@ export function TournamentDetailsAccordion({ details }: TournamentDetailsAccordi
   } = details;
 
   const formatDisplay = [getFormatLabel(bracketFormat), matchFormat].filter(Boolean).join(" · ");
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   const previewParts: string[] = [];
   if (formatDisplay) previewParts.push(formatDisplay);

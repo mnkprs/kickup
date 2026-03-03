@@ -11,6 +11,7 @@
  *   - POSTGRES_URL or DATABASE_URL in .env.local (Supabase Dashboard → Settings → Database)
  *   - Migrations applied: supabase db push
  */
+import dns from "dns";
 import pg from "pg";
 import { readFileSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
@@ -40,8 +41,22 @@ async function main() {
 
   const isCloud = dbUrl.includes("supabase.com") || dbUrl.includes("pooler") || !dbUrl.includes("127.0.0.1");
   if (isCloud) process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
+  // Resolve hostname to IPv4 to avoid ENETUNREACH when network lacks IPv6
+  let connectionUrl = dbUrl;
+  try {
+    const url = new URL(dbUrl);
+    if (url.hostname && url.hostname !== "localhost" && !/^\d+\.\d+\.\d+\.\d+$/.test(url.hostname)) {
+      const { address } = await dns.promises.lookup(url.hostname, { family: 4 });
+      url.hostname = address;
+      connectionUrl = url.toString();
+    }
+  } catch {
+    // Keep original URL if resolution fails
+  }
+
   const client = new pg.Client({
-    connectionString: dbUrl,
+    connectionString: connectionUrl,
     ssl: isCloud ? { rejectUnauthorized: false } : false,
   });
   await client.connect();
@@ -53,7 +68,18 @@ async function main() {
 
     console.log("→ Seeding fresh data...");
     const seedSql = readFileSync(join(SUPABASE, "seed.sql"), "utf8");
-    await client.query(seedSql);
+    const batches = seedSql
+      .split(/(?=^-- ─── \d+\.)/m)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (let i = 0; i < batches.length; i++) {
+      try {
+        await client.query(batches[i]);
+      } catch (err) {
+        console.error(`Error in batch ${i + 1}/${batches.length}:`, err.message);
+        throw err;
+      }
+    }
 
     console.log("✓ Done. Database reset to fresh environment. Users preserved.");
   } catch (err) {

@@ -16,6 +16,10 @@ const BRACKET_FORMAT_OPTIONS = [
   { value: "knockout", label: "Knockout only" },
 ] as const;
 const TEAMS_PER_GROUP_OPTIONS = [2, 3, 4];
+const KNOCKOUT_MODE_OPTIONS = [
+  { value: "auto", label: "Auto (system creates matches)" },
+  { value: "custom", label: "Custom (you create & assign matches)" },
+] as const;
 
 interface EditTournamentSheetProps {
   open: boolean;
@@ -39,6 +43,9 @@ export function EditTournamentSheet({
     (tournament.format as "group_stage" | "round_robin" | "knockout") || "group_stage"
   );
   const [teamsPerGroup, setTeamsPerGroup] = useState(tournament.teams_per_group ?? 4);
+  const [knockoutMode, setKnockoutMode] = useState<"auto" | "custom">(
+    (tournament.knockout_mode as "auto" | "custom") ?? "auto"
+  );
   const [venue, setVenue] = useState(tournament.venue);
   const [area, setArea] = useState(tournament.area);
   const [startDate, setStartDate] = useState(tournament.start_date ?? "");
@@ -61,6 +68,7 @@ export function EditTournamentSheet({
       max_teams: maxTeams,
       bracket_format: bracketFormat,
       teams_per_group: bracketFormat === "group_stage" ? teamsPerGroup : undefined,
+      knockout_mode: bracketFormat === "group_stage" ? knockoutMode : undefined,
       venue,
       area,
       start_date: startDate,
@@ -174,27 +182,50 @@ export function EditTournamentSheet({
           </div>
 
           {bracketFormat === "group_stage" && (
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
-                Teams per Group
-              </label>
-              <div className="flex gap-2">
-                {TEAMS_PER_GROUP_OPTIONS.map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setTeamsPerGroup(n)}
-                    className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all border ${
-                      teamsPerGroup === n
-                        ? "bg-accent text-accent-foreground border-accent"
-                        : "bg-card text-muted-foreground border-border hover:text-foreground"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
+            <>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                  Teams per Group
+                </label>
+                <div className="flex gap-2">
+                  {TEAMS_PER_GROUP_OPTIONS.map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setTeamsPerGroup(n)}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all border ${
+                        teamsPerGroup === n
+                          ? "bg-accent text-accent-foreground border-accent"
+                          : "bg-card text-muted-foreground border-border hover:text-foreground"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                  Knockout Mode
+                </label>
+                <div className="flex flex-col gap-2">
+                  {KNOCKOUT_MODE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setKnockoutMode(opt.value)}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border text-left ${
+                        knockoutMode === opt.value
+                          ? "bg-accent text-accent-foreground border-accent"
+                          : "bg-card text-muted-foreground border-border hover:text-foreground"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
 
           <div>

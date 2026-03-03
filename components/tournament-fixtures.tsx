@@ -177,7 +177,7 @@ export function TournamentFixtures({
           <div className="tournament-fixtures__subsection">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Recent Results</h3>
             {completed.length > 0 ? (
-              <div className="rounded-lg border border-border overflow-hidden">
+              <div className="rounded-lg border border-border overflow-hidden max-h-[280px] overflow-y-auto">
                 {completed.map((match) => (
                   <CompletedFixture key={match.id} match={match} />
                 ))}

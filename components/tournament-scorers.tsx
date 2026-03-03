@@ -8,55 +8,78 @@ interface TournamentScorersProps {
   title?: string;
 }
 
+const RANK_STYLES = [
+  { color: "text-draw", bg: "bg-draw/10", crown: true },
+  { color: "text-[#94a3b8]", bg: "bg-[#94a3b8]/10", crown: false },
+  { color: "text-[#b45309]", bg: "bg-[#b45309]/10", crown: false },
+] as const;
+
+function getRankStyle(index: number) {
+  return RANK_STYLES[index] ?? { color: "text-muted-foreground", bg: "", crown: false };
+}
+
 export function TournamentScorers({ scorers, title = "Top Scorers" }: TournamentScorersProps) {
   return (
     <section className="tournament-scorers px-5">
       <div className="tournament-scorers__header flex items-center justify-between mb-3">
         <h2 className="tournament-scorers__title text-foreground font-semibold text-base">{title}</h2>
       </div>
-      <div className="tournament-scorers__list rounded-xl bg-card border border-border shadow-card p-4">
+      <div className="tournament-scorers__list rounded-lg bg-card border border-border shadow-card overflow-hidden">
         {scorers.length === 0 ? (
-          <p className="text-muted-foreground text-sm text-center py-6">No scorers yet</p>
+          <p className="text-muted-foreground text-sm text-center py-8">No scorers yet</p>
         ) : (
-        scorers.map((entry, i) => {
-          const isTop = i === 0;
-          return (
-            <Link
-              key={entry.player.id}
-              href={`/profile/${entry.player.id}`}
-              className="tournament-scorers__row flex items-center gap-3 py-2.5 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors -mx-2 px-2 rounded-lg cursor-pointer"
-            >
-              <span className={`w-5 text-xs font-bold shrink-0 ${isTop ? "text-draw" : "text-muted-foreground"}`}>
-                {i + 1}
-              </span>
-              <div className="relative shrink-0">
-                <Avatar
-                  avatar_url={entry.player.avatar_url}
-                  avatar_initials={entry.player.avatar_initials}
-                  avatar_color={entry.player.avatar_color}
-                  full_name={entry.player.full_name}
-                  size="2xs"
-                  className="border border-border"
-                />
-                {isTop && (
-                  <Crown size={10} className="absolute -top-1.5 -right-1 text-draw" fill="currentColor" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-foreground text-sm font-medium block truncate">{entry.player.full_name}</span>
-                <span className="text-muted-foreground text-xs">
-                  {entry.team_short_name} · {entry.player.position ?? "—"}
-                </span>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="text-center">
-                  <span className="text-foreground font-bold text-sm block">{entry.goals}</span>
-                  <span className="text-muted-foreground text-[9px]">goals</span>
-                </div>
-              </div>
-            </Link>
-          );
-        })
+          <ul className="divide-y divide-border">
+            {scorers.map((entry, i) => {
+              const rankStyle = getRankStyle(i);
+              const isPodium = i < 3;
+              return (
+                <li key={entry.player.id}>
+                  <Link
+                    href={`/profile/${entry.player.id}`}
+                    className="tournament-scorers__row flex items-center gap-4 px-4 py-3 hover:bg-muted/40 active:bg-muted/60 transition-colors"
+                  >
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums ${rankStyle.color} ${rankStyle.bg}`}
+                    >
+                      {i + 1}
+                    </span>
+                    <div className="relative shrink-0">
+                      <Avatar
+                        avatar_url={entry.player.avatar_url}
+                        avatar_initials={entry.player.avatar_initials}
+                        avatar_color={entry.player.avatar_color}
+                        full_name={entry.player.full_name}
+                        size={i === 0 ? "sm" : "2xs"}
+                        className="border-2 border-border"
+                      />
+                      {rankStyle.crown && (
+                        <Crown
+                          size={12}
+                          className="absolute -top-1 -right-1 text-draw drop-shadow-sm"
+                          fill="currentColor"
+                          strokeWidth={1.5}
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-foreground text-sm font-semibold block truncate">
+                        {entry.player.full_name}
+                      </span>
+                      <span className="text-muted-foreground text-xs truncate block">
+                        {entry.team_short_name} · {entry.player.position ?? "—"}
+                      </span>
+                    </div>
+                    <div className="shrink-0">
+                      <span className="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-md bg-accent/12 px-2.5 font-bold text-accent text-sm tabular-nums">
+                        {entry.goals}
+                      </span>
+                      <span className="sr-only">goals</span>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
     </section>

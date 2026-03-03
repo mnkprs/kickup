@@ -131,6 +131,7 @@ export interface Tournament {
   match_format: string; // playing format: 5v5 | 7v7 | 11v11
   max_teams: number;
   teams_per_group?: number;
+  knockout_mode?: "auto" | "custom";
   prize: string;
   entry_fee: string;
   start_date: string | null;

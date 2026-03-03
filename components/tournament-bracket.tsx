@@ -6,6 +6,13 @@ import { MapPin, Clock, Trophy } from "lucide-react";
 import type { TournamentMatchWithStage } from "@/lib/db/tournaments";
 import { TeamAvatar } from "@/components/team-avatar";
 
+const STAGE_LABELS: Record<string, string> = {
+  round_of_16: "Round of 16",
+  quarter_final: "Quarter-finals",
+  semi_final: "Semi-finals",
+  final: "Final",
+};
+
 interface TournamentBracketProps {
   matches: TournamentMatchWithStage[];
 }
@@ -61,13 +68,22 @@ function BracketMatch({ match, label }: { match: TournamentMatchWithStage; label
 
 export function TournamentBracket({ matches }: TournamentBracketProps) {
   const knockoutMatches = matches.filter(
-    (m) => m.stage === "semi_final" || m.stage === "final"
+    (m) =>
+      m.stage === "round_of_16" ||
+      m.stage === "quarter_final" ||
+      m.stage === "semi_final" ||
+      m.stage === "final"
   );
 
   if (knockoutMatches.length === 0) return null;
 
-  const semiFinals = knockoutMatches.filter((m) => m.stage === "semi_final");
-  const finalMatch = knockoutMatches.find((m) => m.stage === "final");
+  const byRound = new Map<number, TournamentMatchWithStage[]>();
+  for (const m of knockoutMatches) {
+    const order = m.round_order ?? 0;
+    if (!byRound.has(order)) byRound.set(order, []);
+    byRound.get(order)!.push(m);
+  }
+  const rounds = [...byRound.entries()].sort(([a], [b]) => a - b);
 
   return (
     <section className="tournament-bracket px-5">
@@ -77,22 +93,26 @@ export function TournamentBracket({ matches }: TournamentBracketProps) {
       </div>
       <div className="rounded-xl bg-card border border-border shadow-card p-4">
         <div className="flex flex-col gap-4">
-          {semiFinals.length > 0 && (
-            <div>
-              <div className="text-xs font-semibold text-muted-foreground mb-2">Semi-finals</div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {semiFinals.map((m, i) => (
-                  <BracketMatch key={m.id} match={m} label={`Semi-final ${i + 1}`} />
-                ))}
+          {rounds.map(([order, roundMatches]) => {
+            const stage = roundMatches[0]?.stage;
+            const label = stage ? STAGE_LABELS[stage] ?? `Round ${order}` : `Round ${order}`;
+            return (
+              <div key={order}>
+                <div className="text-xs font-semibold text-muted-foreground mb-2">{label}</div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {roundMatches
+                    .sort((a, b) => (a.match_order ?? 0) - (b.match_order ?? 0))
+                    .map((m, i) => (
+                      <BracketMatch
+                        key={m.id}
+                        match={m}
+                        label={roundMatches.length > 1 ? `Match ${i + 1}` : undefined}
+                      />
+                    ))}
+                </div>
               </div>
-            </div>
-          )}
-          {finalMatch && (
-            <div>
-              <div className="text-xs font-semibold text-muted-foreground mb-2">Final</div>
-              <BracketMatch match={finalMatch} />
-            </div>
-          )}
+            );
+          })}
         </div>
       </div>
     </section>

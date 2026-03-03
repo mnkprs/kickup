@@ -172,8 +172,20 @@ export default async function TournamentDetailPage({
             tournamentId={id}
             rawStatus={tournament.raw_status}
             teamsCount={tournament.teams_count}
+            knockoutMode={tournament.knockout_mode}
             knockoutMatches={matches.filter(
-              (m) => m.stage === "semi_final" || m.stage === "final"
+              (m) =>
+                m.stage === "round_of_16" ||
+                m.stage === "quarter_final" ||
+                m.stage === "semi_final" ||
+                m.stage === "final"
+            )}
+            advancingTeams={standings.flatMap((g) =>
+              g.standings.slice(0, 2).map((s) => ({
+                id: s.team_id,
+                name: s.team.name,
+                short_name: s.team.short_name,
+              }))
             )}
           />
         )}

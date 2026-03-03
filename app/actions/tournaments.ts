@@ -81,6 +81,7 @@ export async function createTournamentAction(data: {
   max_teams: number;
   bracket_format?: string;
   teams_per_group?: number;
+  knockout_mode?: "auto" | "custom";
   venue: string;
   area: string;
   start_date: string;
@@ -100,6 +101,7 @@ export async function createTournamentAction(data: {
       max_teams: data.max_teams,
       bracket_format: data.bracket_format ?? "group_stage",
       teams_per_group: data.teams_per_group ?? 4,
+      knockout_mode: data.knockout_mode ?? "auto",
       venue: data.venue.trim(),
       area: data.area,
       start_date: data.start_date || null,
@@ -176,6 +178,26 @@ export async function advanceToFinalAction(tournamentId: string) {
   return { success: true };
 }
 
+export async function createKnockoutMatchAction(data: {
+  tournamentId: string;
+  stage: string;
+  roundOrder: number;
+  homeTeamId: string;
+  awayTeamId: string;
+}) {
+  const supabase = await createClient();
+  const { data: matchId, error } = await supabase.rpc("create_knockout_match", {
+    p_tournament_id: data.tournamentId,
+    p_stage: data.stage,
+    p_round_order: data.roundOrder,
+    p_home_team_id: data.homeTeamId,
+    p_away_team_id: data.awayTeamId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/tournaments/${data.tournamentId}`);
+  return { success: true, matchId };
+}
+
 export async function completeTournamentAction(tournamentId: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("complete_tournament", {
@@ -215,6 +237,7 @@ export async function updateTournamentAction(
     max_teams: number;
     bracket_format?: string;
     teams_per_group?: number;
+    knockout_mode?: "auto" | "custom";
     venue: string;
     area: string;
     start_date: string;
@@ -236,6 +259,7 @@ export async function updateTournamentAction(
   };
   if (data.bracket_format != null) update.bracket_format = data.bracket_format;
   if (data.teams_per_group != null) update.teams_per_group = data.teams_per_group;
+  if (data.knockout_mode != null) update.knockout_mode = data.knockout_mode;
   const { error } = await supabase
     .from("tournaments")
     .update(update)

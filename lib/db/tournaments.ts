@@ -83,6 +83,7 @@ export async function getTournaments(): Promise<Tournament[]> {
       format: (row.bracket_format as string) ?? "knockout",
       match_format: row.match_format as string,
       max_teams: (row.max_teams as number) ?? 8,
+      knockout_mode: (row.knockout_mode as "auto" | "custom") ?? "auto",
       prize: (row.prize as string) ?? "",
       entry_fee: (row.entry_fee as string) ?? "",
       start_date: row.start_date as string | null,
@@ -150,6 +151,7 @@ export async function getTournament(id: string): Promise<Tournament | null> {
     match_format: row.match_format as string,
     max_teams: (row.max_teams as number) ?? 8,
     teams_per_group: (row.teams_per_group as number) ?? 4,
+    knockout_mode: (row.knockout_mode as "auto" | "custom") ?? "auto",
     prize: (row.prize as string) ?? "",
     entry_fee: (row.entry_fee as string) ?? "",
     start_date: row.start_date as string | null,
@@ -274,10 +276,13 @@ export async function getTournamentStandings(
   return [{ groupLabel: "", standings }];
 }
 
+export type KnockoutStage = "group" | "round_of_16" | "quarter_final" | "semi_final" | "final";
+
 export interface TournamentMatchWithStage extends Match {
-  stage?: "group" | "semi_final" | "final";
+  stage?: KnockoutStage;
   group_label?: string | null;
   match_order?: number;
+  round_order?: number;
 }
 
 export async function getTournamentMatches(
@@ -297,6 +302,7 @@ export async function getTournamentMatchesWithStage(
       stage,
       group_label,
       match_order,
+      round_order,
       matches(
         *,
         home_team:teams!home_team_id(*),
@@ -331,6 +337,7 @@ export async function getTournamentMatchesWithStage(
       stage: row.stage as TournamentMatchWithStage["stage"],
       group_label: row.group_label as string | null,
       match_order: row.match_order as number,
+      round_order: (row.round_order as number) ?? 0,
     });
   }
   return results;

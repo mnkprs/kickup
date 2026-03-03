@@ -43,15 +43,15 @@ function StandingsTable({
     : "grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem]";
   return (
     <>
-      <div className={`tournament-standings__header-row grid ${gridCols} gap-0.5 px-2 py-1.5 border-b border-border`}>
+      <div className={`tournament-standings__header-row grid ${gridCols} gap-0.5 px-2 py-1.5 items-center min-h-[2rem] border-b border-border`}>
         <span className="text-muted-foreground text-[10px] font-medium">#</span>
         <span className="text-muted-foreground text-[10px] font-medium">Team</span>
-        <span className="text-muted-foreground text-[10px] font-medium text-center">P</span>
-        <span className="text-muted-foreground text-[10px] font-medium text-center">W</span>
-        <span className="text-muted-foreground text-[10px] font-medium text-center">D</span>
-        <span className="text-muted-foreground text-[10px] font-medium text-center">L</span>
-        <span className="text-muted-foreground text-[10px] font-medium text-center">GD</span>
-        <span className="text-muted-foreground text-[10px] font-medium text-right">PTS</span>
+        <span className="text-muted-foreground text-xs font-medium text-center">P</span>
+        <span className="text-muted-foreground text-xs font-medium text-center">W</span>
+        <span className="text-muted-foreground text-xs font-medium text-center">D</span>
+        <span className="text-muted-foreground text-xs font-medium text-center">L</span>
+        <span className="text-muted-foreground text-xs font-medium text-center">GD</span>
+        <span className="text-muted-foreground text-xs font-medium text-center">PTS</span>
         {canRemove && <span className="w-8" />}
       </div>
       {rows.map((row, i) => {
@@ -59,7 +59,7 @@ function StandingsTable({
         return (
           <div
             key={row.team_id}
-            className={`tournament-standings__row grid ${gridCols} gap-0.5 px-2 py-1.5 items-center border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors`}
+            className={`tournament-standings__row grid ${gridCols} gap-0.5 px-2 py-1.5 items-center min-h-[2rem] border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors`}
           >
             <span className={`text-xs font-medium ${i < 2 ? "text-accent" : "text-muted-foreground"}`}>
               {row.rank}
@@ -82,7 +82,7 @@ function StandingsTable({
             <span className={`text-xs text-center font-medium ${gd > 0 ? "text-win" : gd < 0 ? "text-loss" : "text-muted-foreground"}`}>
               {gd > 0 ? `+${gd}` : gd}
             </span>
-            <span className="text-foreground text-xs font-bold text-right">{row.points}</span>
+            <span className="text-foreground text-xs font-bold text-center">{row.points}</span>
             {canRemove && onRemove && (
               <button
                 onClick={() => onRemove(row.team_id, row.team.name)}
