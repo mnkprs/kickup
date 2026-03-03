@@ -8,6 +8,7 @@ import { LiveDot } from "@/components/live-dot";
 import { format, parseISO } from "date-fns";
 import { ScheduleTournamentMatchForm } from "@/components/schedule-tournament-match-form";
 import { TeamAvatar } from "@/components/team-avatar";
+import { RecentResults } from "@/components/recent-results";
 
 interface UpcomingFixtureProps {
   match: Match;
@@ -95,31 +96,6 @@ function UpcomingFixture({ match, tournamentId, canManageSchedule }: UpcomingFix
   );
 }
 
-function CompletedFixture({ match }: { match: Match }) {
-  return (
-    <Link
-      href={`/matches/${match.id}`}
-      className="tournament-fixture tournament-fixture--completed flex items-center gap-3 py-3 px-4 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 transition-colors block pressable"
-    >
-      <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-        <span className="text-xs font-bold text-muted-foreground">FT</span>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-foreground text-sm font-medium">{match.home_team.short_name}</span>
-          <span className="text-foreground font-bold text-sm">{match.home_score}</span>
-          <span className="text-muted-foreground text-xs">-</span>
-          <span className="text-foreground font-bold text-sm">{match.away_score}</span>
-          <span className="text-foreground text-sm font-medium">{match.away_team.short_name}</span>
-        </div>
-        <span className="text-muted-foreground text-xs">
-          {match.date ? format(parseISO(match.date), "d MMM yyyy") : ""}
-        </span>
-      </div>
-    </Link>
-  );
-}
-
 interface TournamentFixturesProps {
   matches: Match[];
   tournamentId?: string;
@@ -175,16 +151,11 @@ export function TournamentFixtures({
             )}
           </div>
           <div className="tournament-fixtures__subsection">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Recent Results</h3>
-            {completed.length > 0 ? (
-              <div className="rounded-lg border border-border overflow-hidden max-h-[280px] overflow-y-auto">
-                {completed.map((match) => (
-                  <CompletedFixture key={match.id} match={match} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-sm text-center py-6">No results yet</p>
-            )}
+            <RecentResults
+              matches={matches}
+              variant="embedded"
+              maxItems={undefined}
+            />
           </div>
         </div>
       </div>

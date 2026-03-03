@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { Match } from "@/lib/types";
@@ -18,6 +18,14 @@ interface MatchesPageClientProps {
   areaGroups: AreaGroup[];
 }
 
+function buildMatchesUrl(params: { tab?: string; myTeam?: boolean }) {
+  const search = new URLSearchParams();
+  if (params.tab && params.tab !== "Upcoming") search.set("tab", params.tab);
+  if (params.myTeam) search.set("myTeam", "1");
+  const qs = search.toString();
+  return `${window.location.pathname}${qs ? `?${qs}` : ""}`;
+}
+
 export function MatchesPageClient({
   upcomingMatches,
   recentResults,
@@ -29,18 +37,50 @@ export function MatchesPageClient({
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const myTeamParam = searchParams.get("myTeam");
-  const [activeTab, setActiveTab] = useState(tabParam === "Results" ? "Results" : "Upcoming");
+
+  const [activeTab, setActiveTabState] = useState(tabParam === "Results" ? "Results" : "Upcoming");
+  const activeTabRef = useRef(activeTab);
+  activeTabRef.current = activeTab;
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<MatchFilters>({
+  const [filters, setFiltersState] = useState<MatchFilters>({
     format: "All",
     myMatchesOnly: myTeamParam === "1" && !!teamId,
     tournamentId: "",
     city: "",
   });
 
+  const setActiveTab = useCallback((tab: string) => {
+    const t = tab === "Results" ? "Results" : "Upcoming";
+    setActiveTabState(t);
+    window.history.replaceState(null, "", buildMatchesUrl({ tab: t, myTeam: filters.myMatchesOnly }));
+  }, [filters.myMatchesOnly]);
+
+  const setFilters = useCallback((next: MatchFilters | ((prev: MatchFilters) => MatchFilters)) => {
+    setFiltersState((prev) => {
+      const nextFilters = typeof next === "function" ? next(prev) : next;
+      if (nextFilters.myMatchesOnly !== prev.myMatchesOnly) {
+        window.history.replaceState(
+          null,
+          "",
+          buildMatchesUrl({ tab: activeTabRef.current, myTeam: nextFilters.myMatchesOnly })
+        );
+      }
+      return nextFilters;
+    });
+  }, []);
+
   useEffect(() => {
-    if (tabParam === "Results") setActiveTab("Results");
-  }, [tabParam]);
+    const handler = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      const myTeam = params.get("myTeam") === "1" && !!teamId;
+      if (tab === "Results") setActiveTabState("Results");
+      else setActiveTabState("Upcoming");
+      setFiltersState((f) => (f.myMatchesOnly !== myTeam ? { ...f, myMatchesOnly: myTeam } : f));
+    };
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, [teamId]);
 
   const baseUpcoming = filters.myMatchesOnly && teamId && myUpcomingMatches
     ? myUpcomingMatches

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import type { Team } from "@/lib/types";
 import {
   Search,
@@ -16,7 +17,11 @@ import { BackButton } from "@/components/back-button";
 import { NotificationsButton } from "@/components/notifications-button";
 import { TeamAvatar } from "@/components/team-avatar";
 
-const filters = ["All", "My Team", "Open", "vs Ready"];
+const filters = ["All", "My Team", "Open", "vs Ready"] as const;
+
+function parseFilter(param: string | null): string {
+  return filters.includes(param as (typeof filters)[number]) ? param! : "All";
+}
 
 function getTeamRecord(team: Team) {
   return {
@@ -33,9 +38,27 @@ interface TeamsListClientProps {
 }
 
 export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
+  const searchParams = useSearchParams();
+  const filterParam = searchParams.get("filter");
+
   const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState("All");
+  const [activeFilter, setActiveFilterState] = useState(() => parseFilter(filterParam));
   const [showSearch, setShowSearch] = useState(false);
+
+  const setActiveFilter = useCallback((next: string) => {
+    setActiveFilterState(next);
+    const url = `${window.location.pathname}${next !== "All" ? `?filter=${encodeURIComponent(next)}` : ""}`;
+    window.history.replaceState(null, "", url);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      const params = new URLSearchParams(window.location.search);
+      setActiveFilterState(parseFilter(params.get("filter")));
+    };
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, []);
 
   const filtered = useMemo(() => {
     let result = teams;

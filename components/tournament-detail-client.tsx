@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { LayoutGrid, Trophy, Swords, GitBranch } from "lucide-react";
 import type { TournamentStandingsGroup } from "@/lib/types";
 import type { TournamentMatchWithStage } from "@/lib/db/tournaments";
@@ -40,6 +40,19 @@ interface TournamentDetailClientProps {
   canManageRegistrations: boolean;
 }
 
+function parseTabFromParam(
+  param: string | null,
+  showBracketTab: boolean
+): TabId {
+  if (param === "scorers") return TAB_STANDINGS;
+  if (VALID_TABS.includes(param as TabId)) {
+    const t = param as TabId;
+    if (t === TAB_BRACKET && !showBracketTab) return TAB_OVERVIEW;
+    return t;
+  }
+  return TAB_OVERVIEW;
+}
+
 export function TournamentDetailClient({
   tournamentId,
   tournament,
@@ -48,11 +61,12 @@ export function TournamentDetailClient({
   scorers,
   canManageRegistrations,
 }: TournamentDetailClientProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const tabParam = searchParams.get("tab") ?? TAB_OVERVIEW;
-
   const showBracketTab = tournament.raw_status === "knockout_stage";
+
+  const [activeTab, setActiveTabState] = useState<TabId>(() =>
+    parseTabFromParam(searchParams.get("tab"), showBracketTab)
+  );
 
   const tabs: TabConfig[] = useMemo(() => {
     const bracketTab: TabConfig = { id: TAB_BRACKET, label: "Bracket", icon: GitBranch };
@@ -65,32 +79,21 @@ export function TournamentDetailClient({
     return list;
   }, [showBracketTab]);
 
-  const activeTab: TabId = useMemo(() => {
-    if (tabParam === "scorers") return TAB_STANDINGS;
-    if (VALID_TABS.includes(tabParam as TabId)) {
-      const t = tabParam as TabId;
-      if (t === TAB_BRACKET && !showBracketTab) return TAB_OVERVIEW;
-      return t;
-    }
-    return TAB_OVERVIEW;
-  }, [tabParam, showBracketTab]);
-
-  const setTab = useCallback(
-    (tab: TabId) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("tab", tab);
-      router.replace(`/tournaments/${tournamentId}?${params.toString()}`, { scroll: false });
-    },
-    [router, searchParams, tournamentId]
-  );
+  const setTab = useCallback((tab: TabId) => {
+    setActiveTabState(tab);
+    const url = `${window.location.pathname}?tab=${tab}`;
+    window.history.replaceState(null, "", url);
+  }, []);
 
   useEffect(() => {
-    if (activeTab !== tabParam) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("tab", activeTab);
-      router.replace(`/tournaments/${tournamentId}?${params.toString()}`, { scroll: false });
-    }
-  }, [activeTab, tabParam, router, searchParams, tournamentId]);
+    const handler = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = parseTabFromParam(params.get("tab"), showBracketTab);
+      setActiveTabState(tab);
+    };
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, [showBracketTab]);
 
   const knockoutMatches = matches.filter(
     (m) =>

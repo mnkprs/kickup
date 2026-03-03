@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getTeams, getUserTeam } from "@/lib/db/teams";
 import { TeamsListClient } from "@/components/teams-list-client";
@@ -13,5 +14,9 @@ export default async function TeamsPage() {
     user ? getUserTeam(user.id) : null,
   ]);
 
-  return <TeamsListClient teams={teams} userTeamId={userTeam?.id} />;
+  return (
+    <Suspense fallback={<div className="h-32 animate-pulse bg-muted/30 rounded-xl mx-5" />}>
+      <TeamsListClient teams={teams} userTeamId={userTeam?.id} />
+    </Suspense>
+  );
 }
