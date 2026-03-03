@@ -1,18 +1,27 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import type { Profile } from "@/lib/types";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import type { Profile, AreaGroup } from "@/lib/types";
+import { parseISO } from "date-fns";
 import {
   Search,
   UserPlus,
   MapPin,
   Crosshair,
+  Ruler,
+  Cake,
+  Footprints,
 } from "lucide-react";
 import Link from "next/link";
 import { BackButton } from "@/components/ui/back-button";
 import { NotificationsButton } from "@/components/notifications/notifications-button";
 import { Avatar } from "@/components/ui/avatar";
+import { AreaGroupSelect } from "@/components/ui/area-group-select";
 import { invitePlayerToTeamAction } from "@/app/actions/teams";
+
+const POSITIONS = ["All", "GK", "DEF", "MID", "FWD"] as const;
+const LOOKING_FILTERS = ["All", "Looking"] as const;
 
 function isLookingForTeam(p: Profile): boolean {
   if (!p.is_freelancer) return false;
@@ -26,32 +35,121 @@ function isLookingForTeam(p: Profile): boolean {
   return false;
 }
 
+function parsePosition(param: string | null): (typeof POSITIONS)[number] {
+  if (param === "GK" || param === "DEF" || param === "MID" || param === "FWD") return param;
+  return "All";
+}
+
+function parseLooking(param: string | null): (typeof LOOKING_FILTERS)[number] {
+  return param === "Looking" ? "Looking" : "All";
+}
+
+function getAge(dateOfBirth: string | null | undefined): number | null {
+  if (!dateOfBirth) return null;
+  try {
+    const dob = parseISO(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    return age;
+  } catch {
+    return null;
+  }
+}
+
+function formatFoot(foot: string | null | undefined): string {
+  if (!foot) return "";
+  if (foot === "both") return "Both";
+  return foot.charAt(0).toUpperCase() + foot.slice(1);
+}
+
 interface FindPlayersClientProps {
   players: Profile[];
   captainTeamId: string | null;
   currentUserId: string | null;
+  areaGroups: AreaGroup[];
 }
 
 export function FindPlayersClient({
   players,
   captainTeamId,
   currentUserId,
+  areaGroups,
 }: FindPlayersClientProps) {
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [invitingId, setInvitingId] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [positionFilter, setPositionFilterState] = useState<typeof POSITIONS[number]>(() =>
+    parsePosition(searchParams.get("position"))
+  );
+  const [lookingFilter, setLookingFilterState] = useState<typeof LOOKING_FILTERS[number]>(() =>
+    parseLooking(searchParams.get("looking"))
+  );
+  const [areaFilter, setAreaFilterState] = useState<string>(() =>
+    searchParams.get("area") ?? ""
+  );
+
+  const setPositionFilter = useCallback((next: string) => {
+    setPositionFilterState(next as (typeof POSITIONS)[number]);
+    const params = new URLSearchParams(window.location.search);
+    if (next !== "All") params.set("position", next);
+    else params.delete("position");
+    window.history.replaceState(null, "", `${window.location.pathname}${params.toString() ? `?${params}` : ""}`);
+  }, []);
+
+  const setLookingFilter = useCallback((next: string) => {
+    setLookingFilterState(next as (typeof LOOKING_FILTERS)[number]);
+    const params = new URLSearchParams(window.location.search);
+    if (next !== "All") params.set("looking", next);
+    else params.delete("looking");
+    window.history.replaceState(null, "", `${window.location.pathname}${params.toString() ? `?${params}` : ""}`);
+  }, []);
+
+  const setAreaFilter = useCallback((next: string) => {
+    setAreaFilterState(next);
+    const params = new URLSearchParams(window.location.search);
+    if (next) params.set("area", next);
+    else params.delete("area");
+    window.history.replaceState(null, "", `${window.location.pathname}${params.toString() ? `?${params}` : ""}`);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      const params = new URLSearchParams(window.location.search);
+      setPositionFilterState(parsePosition(params.get("position")));
+      setLookingFilterState(parseLooking(params.get("looking")));
+      setAreaFilterState(params.get("area") ?? "");
+    };
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, []);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return players;
-    const q = search.toLowerCase();
-    return players.filter(
-      (p) =>
-        p.full_name.toLowerCase().includes(q) ||
-        (p.position?.toLowerCase().includes(q) ?? false) ||
-        (p.area?.toLowerCase().includes(q) ?? false)
-    );
-  }, [search, players]);
+    let result = players;
+
+    if (positionFilter !== "All") {
+      result = result.filter((p) => p.position === positionFilter);
+    }
+    if (lookingFilter === "Looking") {
+      result = result.filter(isLookingForTeam);
+    }
+    if (areaFilter) {
+      result = result.filter((p) => p.area && p.area.toLowerCase() === areaFilter.toLowerCase());
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.full_name.toLowerCase().includes(q) ||
+          (p.position?.toLowerCase().includes(q) ?? false) ||
+          (p.area?.toLowerCase().includes(q) ?? false)
+      );
+    }
+    return result;
+  }, [players, positionFilter, lookingFilter, areaFilter, search]);
 
   const canInvite = !!captainTeamId && !!currentUserId;
 
@@ -102,6 +200,55 @@ export function FindPlayersClient({
             />
           </div>
         )}
+
+        {/* Position filter pills */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+          {POSITIONS.map((pos) => {
+            const isActive = positionFilter === pos;
+            return (
+              <button
+                key={pos}
+                onClick={() => setPositionFilter(pos)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-card border border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {pos}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Looking + Area filters */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+          {LOOKING_FILTERS.map((opt) => {
+            const isActive = lookingFilter === opt;
+            return (
+              <button
+                key={opt}
+                onClick={() => setLookingFilter(opt)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive
+                    ? "bg-accent text-accent-foreground"
+                    : "bg-card border border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {opt}
+              </button>
+            );
+          })}
+          <div className="shrink-0 min-w-[140px] max-w-[200px]">
+            <AreaGroupSelect
+              areaGroups={areaGroups}
+              value={areaFilter}
+              onChange={setAreaFilter}
+              placeholder="All areas"
+              emptyOptionLabel="All areas"
+            />
+          </div>
+        </div>
       </header>
 
       <main className="find-players__main px-5 flex flex-col gap-3 pb-24">
@@ -114,6 +261,7 @@ export function FindPlayersClient({
         {filtered.map((player) => {
           const isSelf = player.id === currentUserId;
           const playerLooking = isLookingForTeam(player);
+          const age = getAge(player.date_of_birth);
 
           return (
             <div
@@ -187,17 +335,41 @@ export function FindPlayersClient({
                 )}
               </div>
 
-              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
-                <span title="Matches">{player.matches_played} matches</span>
-                <span title="Goals">
-                  <Crosshair size={11} className="inline mr-0.5 text-draw" />
-                  {player.goals}G
-                </span>
-                <span title="Win rate">
-                  {player.matches_played > 0
-                    ? `${Math.round((player.wins / player.matches_played) * 100)}% win`
-                    : "—"}
-                </span>
+              <div className="flex items-center justify-between gap-4 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
+                <div className="flex items-center gap-4 shrink-0">
+                  <span title="Matches">{player.matches_played} matches</span>
+                  <span title="Goals">
+                    <Crosshair size={11} className="inline mr-0.5 text-draw" />
+                    {player.goals}G
+                  </span>
+                  <span title="Win rate">
+                    {player.matches_played > 0
+                      ? `${Math.round((player.wins / player.matches_played) * 100)}% win`
+                      : "—"}
+                  </span>
+                </div>
+                {(player.height != null || age != null || !!player.preferred_foot) && (
+                  <div className="flex items-center gap-3 shrink-0 text-muted-foreground">
+                    {player.height != null && (
+                      <span title="Height" className="flex items-center gap-1">
+                        <Ruler size={11} />
+                        {player.height} cm
+                      </span>
+                    )}
+                    {age != null && (
+                      <span title="Age" className="flex items-center gap-1">
+                        <Cake size={11} />
+                        {age}y
+                      </span>
+                    )}
+                    {player.preferred_foot && (
+                      <span title="Preferred foot" className="flex items-center gap-1">
+                        <Footprints size={11} />
+                        {formatFoot(player.preferred_foot)}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -211,7 +383,7 @@ export function FindPlayersClient({
             <p className="text-muted-foreground text-sm text-center">
               {players.length === 0
                 ? "No players yet."
-                : "No players match your search"}
+                : "No players match your filters"}
             </p>
             {!currentUserId && (
               <p className="text-muted-foreground text-xs">

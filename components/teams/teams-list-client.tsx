@@ -17,10 +17,26 @@ import { BackButton } from "@/components/ui/back-button";
 import { NotificationsButton } from "@/components/notifications/notifications-button";
 import { TeamAvatar } from "@/components/ui/team-avatar";
 
-const filters = ["All", "My Team", "Open", "vs Ready"] as const;
+const FILTERS = [
+  { key: "all", label: "All" },
+  { key: "recruiting", label: "With open spot" },
+  { key: "up_for_match", label: "Looking for opponent" },
+] as const;
 
-function parseFilter(param: string | null): string {
-  return filters.includes(param as (typeof filters)[number]) ? param! : "All";
+type FilterKey = (typeof FILTERS)[number]["key"];
+
+const LEGACY_PARAM_MAP: Record<string, FilterKey> = {
+  All: "all",
+  Open: "recruiting",
+  "vs Ready": "up_for_match",
+};
+
+function parseFilter(param: string | null): FilterKey {
+  if (!param) return "all";
+  const mapped = LEGACY_PARAM_MAP[param];
+  if (mapped) return mapped;
+  const valid = FILTERS.some((f) => f.key === param);
+  return valid ? (param as FilterKey) : "all";
 }
 
 function getTeamRecord(team: Team) {
@@ -45,9 +61,9 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
   const [activeFilter, setActiveFilterState] = useState(() => parseFilter(filterParam));
   const [showSearch, setShowSearch] = useState(false);
 
-  const setActiveFilter = useCallback((next: string) => {
+  const setActiveFilter = useCallback((next: FilterKey) => {
     setActiveFilterState(next);
-    const url = `${window.location.pathname}${next !== "All" ? `?filter=${encodeURIComponent(next)}` : ""}`;
+    const url = `${window.location.pathname}${next !== "all" ? `?filter=${encodeURIComponent(next)}` : ""}`;
     window.history.replaceState(null, "", url);
   }, []);
 
@@ -63,11 +79,9 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
   const filtered = useMemo(() => {
     let result = teams;
 
-    if (activeFilter === "My Team") {
-      result = result.filter((t) => t.id === userTeamId);
-    } else if (activeFilter === "Open") {
+    if (activeFilter === "recruiting") {
       result = result.filter((t) => t.open_spots > 0);
-    } else if (activeFilter === "vs Ready") {
+    } else if (activeFilter === "up_for_match") {
       result = result.filter((t) => t.searching_for_opponent);
     }
 
@@ -82,7 +96,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
     }
 
     return result;
-  }, [search, activeFilter, teams, userTeamId]);
+  }, [search, activeFilter, teams]);
 
   return (
     <>
@@ -127,19 +141,19 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
 
         {/* Filter pills */}
         <div className="teams-list-header__filters flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
-          {filters.map((filter) => {
-            const isActive = activeFilter === filter;
+          {FILTERS.map(({ key, label }) => {
+            const isActive = activeFilter === key;
             return (
               <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
+                key={key}
+                onClick={() => setActiveFilter(key)}
                 className={`teams-list-header__filter shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${isActive ? "teams-list-header__filter--active" : ""} ${
                   isActive
                     ? "bg-accent text-accent-foreground"
                     : "bg-card border border-border text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {filter}
+                {label}
               </button>
             );
           })}

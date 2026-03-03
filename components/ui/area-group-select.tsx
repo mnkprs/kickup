@@ -10,6 +10,9 @@ interface AreaGroupSelectProps {
   onChange: (value: string) => void;
   placeholder?: string;
   required?: boolean;
+  /** When set, adds a clearable option at the top (e.g. "All areas") that sets value to "" */
+  emptyOptionLabel?: string;
+  className?: string;
 }
 
 export function AreaGroupSelect({
@@ -18,6 +21,8 @@ export function AreaGroupSelect({
   onChange,
   placeholder = "Select area...",
   required = false,
+  emptyOptionLabel,
+  className,
 }: AreaGroupSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -63,7 +68,7 @@ export function AreaGroupSelect({
   };
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={`relative ${isOpen ? "z-[100]" : ""} ${className ?? ""}`}>
       <div
         role="combobox"
         aria-expanded={isOpen}
@@ -97,13 +102,25 @@ export function AreaGroupSelect({
         <div
           id="area-listbox"
           role="listbox"
-          className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-xl bg-card border border-border shadow-lg py-1"
+          className="absolute z-[100] mt-1 w-full max-h-60 overflow-auto rounded-xl bg-card border border-border shadow-lg py-1"
         >
-          {filtered.length === 0 ? (
+          {emptyOptionLabel && (
+            <div
+              role="option"
+              aria-selected={!value}
+              onClick={() => handleSelect("")}
+              className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-muted transition-colors ${
+                !value ? "bg-accent/10 text-accent" : ""
+              }`}
+            >
+              {emptyOptionLabel}
+            </div>
+          )}
+          {filtered.length === 0 && !emptyOptionLabel ? (
             <div className="px-4 py-3 text-sm text-muted-foreground">
               No areas found
             </div>
-          ) : (
+          ) : filtered.length > 0 ? (
             areaGroups.map(({ city, areas }) => {
               const cityAreas = areas.filter((a) =>
                 filtered.some((f) => f.city === city && f.name === a)
@@ -130,7 +147,7 @@ export function AreaGroupSelect({
                 </div>
               );
             })
-          )}
+          ) : null}
         </div>
       )}
     </div>
