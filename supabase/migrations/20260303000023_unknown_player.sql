@@ -2,6 +2,8 @@
 -- For goals scored by non-registered players. Similar to TBD teams.
 -- When admin/captain enters a score with unassigned goals, they go to Unknown.
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- ─── Unknown placeholder profile ───────────────────────────────────
 -- UUID chosen to avoid collision with real users (b0... vs 00...)
 -- Profile references auth.users, so we must create both.
