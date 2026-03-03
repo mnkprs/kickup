@@ -110,7 +110,7 @@ export function EditTournamentSheet({
     <>
       <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-background border-l border-border shadow-2xl flex flex-col overflow-hidden">
+      <div className="fixed inset-0 z-50 w-full bg-background border-l border-border shadow-2xl flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
           <h2 className="text-base font-semibold text-foreground">Edit tournament</h2>
           <button
