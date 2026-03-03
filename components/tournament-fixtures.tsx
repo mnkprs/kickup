@@ -99,7 +99,7 @@ function CompletedFixture({ match }: { match: Match }) {
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="tournament-fixture tournament-fixture--completed flex items-center gap-3 py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors block pressable"
+      className="tournament-fixture tournament-fixture--completed flex items-center gap-3 py-3 px-4 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 transition-colors block pressable"
     >
       <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
         <span className="text-xs font-bold text-muted-foreground">FT</span>
@@ -136,62 +136,58 @@ export function TournamentFixtures({
   const completed = matches.filter((m) => m.status === "completed");
 
   return (
-    <div className="tournament-fixtures">
-      {live.length > 0 && (
-        <section className="tournament-fixtures__section tournament-fixtures__section--live px-5">
-          <div className="tournament-fixtures__header flex items-center justify-between mb-3">
-            <h2 className="tournament-fixtures__title text-foreground font-semibold text-base">Live Now</h2>
+    <section className="tournament-fixtures px-5">
+      <div className="tournament-fixtures__header flex items-center justify-between mb-3">
+        <h2 className="tournament-fixtures__title text-foreground font-semibold text-base">Fixtures</h2>
+      </div>
+      <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">
+        <div className="flex flex-col gap-6 p-4">
+          {live.length > 0 && (
+            <div className="tournament-fixtures__subsection">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Live Now</h3>
+              <div className="flex flex-col gap-3">
+                {live.map((match) => (
+                  <UpcomingFixture
+                    key={match.id}
+                    match={match}
+                    tournamentId={tournamentId}
+                    canManageSchedule={canManageSchedule}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="tournament-fixtures__subsection">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Next Fixtures</h3>
+            {upcoming.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {upcoming.map((match) => (
+                  <UpcomingFixture
+                    key={match.id}
+                    match={match}
+                    tournamentId={tournamentId}
+                    canManageSchedule={canManageSchedule}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm text-center py-6">No fixtures scheduled yet</p>
+            )}
           </div>
-          <div className="flex flex-col gap-3">
-            {live.map((match) => (
-              <UpcomingFixture
-                key={match.id}
-                match={match}
-                tournamentId={tournamentId}
-                canManageSchedule={canManageSchedule}
-              />
-            ))}
+          <div className="tournament-fixtures__subsection">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Recent Results</h3>
+            {completed.length > 0 ? (
+              <div className="rounded-lg border border-border overflow-hidden">
+                {completed.map((match) => (
+                  <CompletedFixture key={match.id} match={match} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm text-center py-6">No results yet</p>
+            )}
           </div>
-        </section>
-      )}
-      <section className="tournament-fixtures__section tournament-fixtures__section--upcoming px-5">
-        <div className="tournament-fixtures__header flex items-center justify-between mb-3">
-          <h2 className="tournament-fixtures__title text-foreground font-semibold text-base">Next Fixtures</h2>
         </div>
-        {upcoming.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {upcoming.map((match) => (
-              <UpcomingFixture
-                key={match.id}
-                match={match}
-                tournamentId={tournamentId}
-                canManageSchedule={canManageSchedule}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl bg-card border border-border shadow-card px-4 py-8 text-center">
-            <p className="text-muted-foreground text-sm">No fixtures scheduled yet</p>
-          </div>
-        )}
-      </section>
-
-      <section className="tournament-fixtures__section tournament-fixtures__section--results px-5">
-        <div className="tournament-fixtures__header flex items-center justify-between mb-3">
-          <h2 className="tournament-fixtures__title text-foreground font-semibold text-base">Recent Results</h2>
-        </div>
-        {completed.length > 0 ? (
-          <div className="rounded-xl bg-card border border-border shadow-card p-4">
-            {completed.map((match) => (
-              <CompletedFixture key={match.id} match={match} />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl bg-card border border-border shadow-card px-4 py-8 text-center">
-            <p className="text-muted-foreground text-sm">No results yet</p>
-          </div>
-        )}
-      </section>
-    </div>
+      </div>
+    </section>
   );
 }
