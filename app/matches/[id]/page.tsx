@@ -1,9 +1,15 @@
+import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import { getMatch, getMatchGoalsByPlayer, getMatchGoalsByTeam, getMatchRoster, getMatchActionHistory } from "@/lib/db/matches";
 import { createClient } from "@/lib/supabase/server";
 import { isTbdMatch } from "@/lib/constants";
 import { getTeamMembers } from "@/lib/db/teams";
-import { MatchDetailClient } from "@/components/match-detail-client";
+import { SkeletonMatch } from "@/components/ui/skeleton-match";
+
+const MatchDetailClient = dynamic(
+  () => import("@/components/matches/match-detail-client").then((m) => ({ default: m.MatchDetailClient })),
+  { loading: () => <SkeletonMatch /> },
+);
 
 export default async function MatchDetailPage({
   params,

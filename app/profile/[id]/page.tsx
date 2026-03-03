@@ -4,12 +4,12 @@ import { getProfile } from "@/lib/db/profiles";
 import { isUnknownPlayer } from "@/lib/constants";
 import { getUserTeam } from "@/lib/db/teams";
 import { getMatchesForTeam } from "@/lib/db/matches";
-import { ProfileHeader } from "@/components/profile-header";
-import { ProfileAbout } from "@/components/profile-about";
-import { ProfileStats } from "@/components/profile-stats";
-import { ProfileTeamCard } from "@/components/profile-team-card";
-import { ProfileActivity } from "@/components/profile-activity";
-import { ProfileAchievements } from "@/components/profile-achievements";
+import { ProfileHeader } from "@/components/profile/profile-header";
+import { ProfileAbout } from "@/components/profile/profile-about";
+import { ProfileStats } from "@/components/profile/profile-stats";
+import { ProfileTeamCard } from "@/components/profile/profile-team-card";
+import { ProfileActivity } from "@/components/profile/profile-activity";
+import { ProfileAchievements } from "@/components/profile/profile-achievements";
 
 export default async function PlayerProfilePage({
   params,

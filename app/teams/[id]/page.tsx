@@ -18,16 +18,16 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
-import { BackButton } from "@/components/back-button";
-import { NotificationsButton } from "@/components/notifications-button";
-import { TeamSettingsButton } from "@/components/team-settings-button";
-import { TeamAvatar } from "@/components/team-avatar";
-import { TeamAvatarUpload } from "@/components/team-avatar-upload";
-import { StatusBadge } from "@/components/status-badge";
-import { JoinTeamButton } from "@/components/join-team-button";
-import { TeamCaptainControlsWrapper } from "@/components/team-captain-controls-wrapper";
-import { RosterSection } from "@/components/roster-section";
-import { LiveDot } from "@/components/live-dot";
+import { BackButton } from "@/components/ui/back-button";
+import { NotificationsButton } from "@/components/notifications/notifications-button";
+import { TeamSettingsButton } from "@/components/teams/team-settings-button";
+import { TeamAvatar } from "@/components/ui/team-avatar";
+import { TeamAvatarUpload } from "@/components/teams/team-avatar-upload";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { JoinTeamButton } from "@/components/teams/join-team-button";
+import { TeamCaptainControlsWrapper } from "@/components/teams/team-captain-controls-wrapper";
+import { RosterSection } from "@/components/teams/roster-section";
+import { LiveDot } from "@/components/ui/live-dot";
 
 function TeamStatsGrid({ team }: { team: Team }) {
   const total = team.wins + team.draws + team.losses;

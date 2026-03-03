@@ -3,13 +3,13 @@ import { getProfile, getNotifications, getFreelancers } from "@/lib/db/profiles"
 import { getUpcomingMatches, getRecentResults } from "@/lib/db/matches";
 import { getTeams } from "@/lib/db/teams";
 import { getTournaments } from "@/lib/db/tournaments";
-import { DashboardHeader } from "@/components/dashboard-header";
-import { QuickStats } from "@/components/quick-stats";
-import { UpcomingMatches } from "@/components/upcoming-matches";
-import { MyForm } from "@/components/my-form";
-import { RecentResults } from "@/components/recent-results";
-import { TournamentsBanner } from "@/components/tournaments-banner";
-import { FindPlayersBanner } from "@/components/find-players-banner";
+import { DashboardHeader } from "@/components/layout/dashboard-header";
+import { QuickStats } from "@/components/layout/quick-stats";
+import { UpcomingMatches } from "@/components/ui/upcoming-matches";
+import { MyForm } from "@/components/matches/my-form";
+import { RecentResults } from "@/components/ui/recent-results";
+import { TournamentsBanner } from "@/components/tournaments/tournaments-banner";
+import { FindPlayersBanner } from "@/components/find-players/find-players-banner";
 
 export default async function DashboardPage() {
   const supabase = await createClient();

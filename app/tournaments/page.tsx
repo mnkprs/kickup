@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/db/profiles";
 import { getTournaments } from "@/lib/db/tournaments";
-import { TournamentsPageClient } from "@/components/tournaments-page-client";
+import { TournamentsPageClient } from "@/components/tournaments/tournaments-page-client";
 
 export default async function TournamentsPage() {
   const supabase = await createClient();

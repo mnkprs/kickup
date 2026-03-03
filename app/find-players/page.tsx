@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getFreelancers } from "@/lib/db/profiles";
 import { getCaptainTeam } from "@/lib/db/teams";
-import { FindPlayersClient } from "@/components/find-players-client";
+import { FindPlayersClient } from "@/components/find-players/find-players-client";
 
 export default async function FindPlayersPage() {
   const supabase = await createClient();

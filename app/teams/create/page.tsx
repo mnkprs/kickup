@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { CreateTeamForm } from "@/components/create-team-form";
+import dynamic from "next/dynamic";
+
+const CreateTeamForm = dynamic(
+  () => import("@/components/teams/create-team-form").then((m) => ({ default: m.CreateTeamForm })),
+);
 
 export default async function CreateTeamPage() {
   const supabase = await createClient();

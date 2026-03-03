@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getTeams, getUserTeam } from "@/lib/db/teams";
-import { SendChallengeForm } from "@/components/send-challenge-form";
+import dynamic from "next/dynamic";
+
+const SendChallengeForm = dynamic(
+  () => import("@/components/matches/send-challenge-form").then((m) => ({ default: m.SendChallengeForm })),
+);
 
 export default async function SendChallengePage() {
   const supabase = await createClient();

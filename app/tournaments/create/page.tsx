@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/db/profiles";
-import { CreateTournamentForm } from "@/components/create-tournament-form";
+import dynamic from "next/dynamic";
+
+const CreateTournamentForm = dynamic(
+  () => import("@/components/tournaments/create-tournament-form").then((m) => ({ default: m.CreateTournamentForm })),
+);
 
 export default async function CreateTournamentPage() {
   const supabase = await createClient();

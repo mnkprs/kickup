@@ -7,12 +7,12 @@ import {
   getTournamentTopScorers,
 } from "@/lib/db/tournaments";
 import { getProfile } from "@/lib/db/profiles";
-import { LiveDot } from "@/components/live-dot";
-import { BackButton } from "@/components/back-button";
+import { LiveDot } from "@/components/ui/live-dot";
+import { BackButton } from "@/components/ui/back-button";
 import { createClient } from "@/lib/supabase/server";
-import { TournamentEditButton } from "@/components/tournament-edit-button";
-import { RegisterTournamentButton } from "@/components/register-tournament-button";
-import { TournamentDetailClient } from "@/components/tournament-detail-client";
+import { TournamentEditButton } from "@/components/tournaments/tournament-edit-button";
+import { RegisterTournamentButton } from "@/components/tournaments/register-tournament-button";
+import { TournamentDetailClient } from "@/components/tournaments/tournament-detail-client";
 
 function getStatusStyle(status: string) {
   switch (status) {

@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
-import { NotificationsProvider } from "@/components/notifications-provider";
-import { LayoutNav } from "@/components/layout-nav";
+import { ThemeProvider } from "@/components/layout/theme-provider";
+import { NotificationsProvider } from "@/components/notifications/notifications-provider";
+import { LayoutNav } from "@/components/layout/layout-nav";
 import { getPreferredThemeAction, getNotificationsAction } from "@/app/actions/profile";
 import "./globals.css";
 

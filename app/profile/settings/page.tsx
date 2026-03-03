@@ -1,7 +1,11 @@
+import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getProfile } from "@/lib/db/profiles";
-import { ProfileSettings } from "@/components/profile-settings";
+
+const ProfileSettings = dynamic(
+  () => import("@/components/profile/profile-settings").then((m) => ({ default: m.ProfileSettings })),
+);
 
 export default async function ProfileSettingsPage() {
   const supabase = await createClient();

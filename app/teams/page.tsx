@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getTeams, getUserTeam } from "@/lib/db/teams";
-import { TeamsListClient } from "@/components/teams-list-client";
+import { TeamsListClient } from "@/components/teams/teams-list-client";
 
 export default async function TeamsPage() {
   const supabase = await createClient();

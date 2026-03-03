@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/db/profiles";
 import { getUpcomingMatches, getRecentResults } from "@/lib/db/matches";
-import { MatchesPageClient } from "@/components/matches-page-client";
+import { MatchesPageClient } from "@/components/matches/matches-page-client";
 import type { AreaGroup } from "@/lib/types";
 
 export default async function MatchesPage() {
