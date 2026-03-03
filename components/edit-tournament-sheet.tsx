@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X, Trophy, Loader2 } from "lucide-react";
 import { AreaGroupSelect } from "@/components/area-group-select";
@@ -53,6 +53,26 @@ export function EditTournamentSheet({
   const [prize, setPrize] = useState(tournament.prize);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Sync form state when drawer opens so it reflects latest tournament data (e.g. after save + router.refresh())
+  useEffect(() => {
+    if (open) {
+      setName(tournament.name);
+      setDescription(tournament.description);
+      setMatchFormat(tournament.match_format);
+      setMaxTeams(tournament.max_teams);
+      setBracketFormat(
+        (tournament.format as "group_stage" | "round_robin" | "knockout") || "group_stage"
+      );
+      setTeamsPerGroup(tournament.teams_per_group ?? 4);
+      setKnockoutMode((tournament.knockout_mode as "auto" | "custom") ?? "auto");
+      setVenue(tournament.venue);
+      setArea(tournament.area);
+      setStartDate(tournament.start_date ?? "");
+      setEndDate(tournament.end_date ?? "");
+      setPrize(tournament.prize);
+    }
+  }, [open, tournament]);
 
   const canSubmit = name.trim().length > 0 && matchFormat && !loading;
 

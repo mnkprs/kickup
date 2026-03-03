@@ -65,7 +65,7 @@ export default async function TournamentDetailPage({
 
   if (!tournament) notFound();
 
-  // Check user's team + registration status (only captains can register)
+  // User's team (for W/L badges, registration)
   let userTeamId: string | null = null;
   let registrationStatus: "none" | "pending" | "approved" | "rejected" = "none";
 
@@ -77,15 +77,17 @@ export default async function TournamentDetailPage({
       .eq("status", "active")
       .maybeSingle();
 
-    if (membership?.team_id && membership?.role === "captain") {
+    if (membership?.team_id) {
       userTeamId = membership.team_id;
-      const { data: reg } = await supabase
-        .from("tournament_registrations")
-        .select("status")
-        .eq("tournament_id", id)
-        .eq("team_id", userTeamId)
-        .maybeSingle();
-      if (reg) registrationStatus = reg.status as typeof registrationStatus;
+      if (membership.role === "captain") {
+        const { data: reg } = await supabase
+          .from("tournament_registrations")
+          .select("status")
+          .eq("tournament_id", id)
+          .eq("team_id", userTeamId)
+          .maybeSingle();
+        if (reg) registrationStatus = reg.status as typeof registrationStatus;
+      }
     }
   }
 
@@ -137,13 +139,14 @@ export default async function TournamentDetailPage({
 
       <Suspense fallback={<div className="h-32 animate-pulse bg-muted/30 rounded-xl mx-5" />}>
         <TournamentDetailClient
-        tournamentId={id}
-        tournament={tournament}
-        standings={standings}
-        matches={matches}
-        scorers={scorers}
-        canManageRegistrations={canManageRegistrations}
-      />
+          tournamentId={id}
+          tournament={tournament}
+          standings={standings}
+          matches={matches}
+          scorers={scorers}
+          canManageRegistrations={canManageRegistrations}
+          userTeamId={userTeamId}
+        />
       </Suspense>
     </div>
   );

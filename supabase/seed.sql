@@ -1,7 +1,7 @@
 -- ═══════════════════════════════════════════════════════════════════
 --  KICKUP — Seed
 --  Runs on: supabase db reset
---  Wipes all user data and inserts dummy data.
+--  Wipes app data, deletes all users/profiles except ac4167a1-be96-4852-9655-d520227e2d70, inserts dummy data.
 --  100 players · 16 teams · 25 completed matches · 1 tournament (4 groups of 4)
 --  Password for all accounts: kickup123
 -- ═══════════════════════════════════════════════════════════════════
@@ -18,9 +18,10 @@ DELETE FROM tournaments;
 DELETE FROM matches;
 DELETE FROM team_members;
 DELETE FROM teams;
-DELETE FROM profiles;
 DELETE FROM owner_applications;
-DELETE FROM auth.users WHERE aud = 'authenticated';
+DELETE FROM auth.users
+WHERE aud = 'authenticated'
+  AND id != 'ac4167a1-be96-4852-9655-d520227e2d70'::uuid;
 
 -- ─── 2. AUTH USERS (DO block — 100 players) ───────────────────────
 DO $$
@@ -198,7 +199,9 @@ INSERT INTO teams (id, name, short_name, format, area, emoji, color, description
   ('00000000-0000-0000-0001-000000000013','Galatsi Gunners','GAG','7v7','Galatsi','⚔️','#2E7D32','Technical midfield. Possession-based play.',true,'00000000-0000-0000-0000-000000000080'),
   ('00000000-0000-0000-0001-000000000014','Chalandri Chargers','CHC','7v7','Chalandri','⚡','#6A1B9A','Fast counter-attacking style. North suburbs pride.',false,'00000000-0000-0000-0000-000000000086'),
   ('00000000-0000-0000-0001-000000000015','Vyronas Vipers','VVR','7v7','Vyronas','🐍','#E65100','Aggressive pressing. Never give up.',true,'00000000-0000-0000-0000-000000000091'),
-  ('00000000-0000-0000-0001-000000000016','Psyrri Panthers','PSP','7v7','Psyrri','🐆','#00695C','Night owls. Weekend warriors from the heart of Athens.',false,'00000000-0000-0000-0000-000000000096');
+  ('00000000-0000-0000-0001-000000000016','Psyrri Panthers','PSP','7v7','Psyrri','🐆','#00695C','Night owls. Weekend warriors from the heart of Athens.',false,'00000000-0000-0000-0000-000000000096'),
+  ('a0000000-0000-0000-0000-000000000001','TBD (Home)','TBD','7v7','System','❓','#9E9E9E','Placeholder for unassigned knockout slot',false,null),
+  ('a0000000-0000-0000-0000-000000000002','TBD (Away)','TBD','7v7','System','❓','#9E9E9E','Placeholder for unassigned knockout slot',false,null);
 
 -- ─── 6. TEAM MEMBERS ───────────────────────────────────────────────
 INSERT INTO team_members (team_id, player_id, role, status) VALUES

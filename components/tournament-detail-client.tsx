@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LayoutGrid, Trophy, Swords, GitBranch } from "lucide-react";
 import type { TournamentStandingsGroup } from "@/lib/types";
 import type { TournamentMatchWithStage } from "@/lib/db/tournaments";
@@ -38,6 +38,7 @@ interface TournamentDetailClientProps {
   matches: TournamentMatchWithStage[];
   scorers: TopScorer[];
   canManageRegistrations: boolean;
+  userTeamId?: string | null;
 }
 
 function parseTabFromParam(
@@ -60,7 +61,9 @@ export function TournamentDetailClient({
   matches,
   scorers,
   canManageRegistrations,
+  userTeamId,
 }: TournamentDetailClientProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const showBracketTab = tournament.raw_status === "knockout_stage";
 
@@ -208,7 +211,7 @@ export function TournamentDetailClient({
                         Next fixture
                       </span>
                       <p className="text-sm font-medium text-foreground mt-1">
-                        {nextFixture.home_team.short_name} vs {nextFixture.away_team.short_name}
+                        {nextFixture.home_team.name} vs {nextFixture.away_team.name}
                       </p>
                       <span className="text-xs text-accent font-medium">View all fixtures →</span>
                     </button>
@@ -295,6 +298,7 @@ export function TournamentDetailClient({
               matches={matches}
               tournamentId={tournamentId}
               canManageSchedule={canManageRegistrations && tournament.status === "in_progress"}
+              userTeamId={userTeamId}
             />
           </div>
         )}
@@ -305,7 +309,20 @@ export function TournamentDetailClient({
             role="tabpanel"
             aria-labelledby="tournament-tab-bracket"
           >
-            <TournamentBracket matches={matches} />
+            <TournamentBracket
+              matches={matches}
+              tournamentId={tournamentId}
+              canManage={canManageRegistrations}
+              knockoutMode={tournament.knockout_mode}
+              advancingTeams={standings.flatMap((g) =>
+                g.standings.slice(0, 2).map((s) => ({
+                  id: s.team_id,
+                  name: s.team.name,
+                  short_name: s.team.short_name,
+                }))
+              )}
+              onAssignSuccess={() => router.refresh()}
+            />
           </div>
         )}
       </main>

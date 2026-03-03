@@ -198,6 +198,23 @@ export async function createKnockoutMatchAction(data: {
   return { success: true, matchId };
 }
 
+export async function assignTeamsToMatchAction(data: {
+  matchId: string;
+  tournamentId: string;
+  homeTeamId: string;
+  awayTeamId: string;
+}) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("assign_teams_to_tournament_match", {
+    p_match_id: data.matchId,
+    p_home_team_id: data.homeTeamId,
+    p_away_team_id: data.awayTeamId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/tournaments/${data.tournamentId}`);
+  return { success: true };
+}
+
 export async function completeTournamentAction(tournamentId: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("complete_tournament", {

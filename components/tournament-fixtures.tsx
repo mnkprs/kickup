@@ -100,12 +100,14 @@ interface TournamentFixturesProps {
   matches: Match[];
   tournamentId?: string;
   canManageSchedule?: boolean;
+  userTeamId?: string | null;
 }
 
 export function TournamentFixtures({
   matches,
   tournamentId,
   canManageSchedule,
+  userTeamId,
 }: TournamentFixturesProps) {
   const live = matches.filter((m) => m.status === "live");
   const upcoming = matches.filter((m) => m.status === "upcoming");
@@ -153,6 +155,7 @@ export function TournamentFixtures({
           <div className="tournament-fixtures__subsection">
             <RecentResults
               matches={matches}
+              teamId={userTeamId}
               variant="embedded"
               maxItems={undefined}
             />

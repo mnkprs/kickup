@@ -1,0 +1,124 @@
+"use client";
+
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { assignTeamsToMatchAction } from "@/app/actions/tournaments";
+
+const TBD_TEAM_IDS = [
+  "a0000000-0000-0000-0000-000000000001",
+  "a0000000-0000-0000-0000-000000000002",
+];
+
+function isTbdTeam(teamId: string): boolean {
+  return TBD_TEAM_IDS.includes(teamId);
+}
+
+interface AssignTeamsToMatchFormProps {
+  matchId: string;
+  tournamentId: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  advancingTeams: { id: string; name: string; short_name: string }[];
+  onSuccess: () => void;
+  onCancel: () => void;
+}
+
+export function AssignTeamsToMatchForm({
+  matchId,
+  tournamentId,
+  homeTeamId,
+  awayTeamId,
+  advancingTeams,
+  onSuccess,
+  onCancel,
+}: AssignTeamsToMatchFormProps) {
+  const [newHomeId, setNewHomeId] = useState(isTbdTeam(homeTeamId) ? "" : homeTeamId);
+  const [newAwayId, setNewAwayId] = useState(isTbdTeam(awayTeamId) ? "" : awayTeamId);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const canSubmit =
+    newHomeId && newAwayId && newHomeId !== newAwayId && advancingTeams.length >= 2;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    setLoading(true);
+    setError(null);
+    const result = await assignTeamsToMatchAction({
+      matchId,
+      tournamentId,
+      homeTeamId: newHomeId,
+      awayTeamId: newAwayId,
+    });
+    setLoading(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    onSuccess();
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3 pt-3 border-t border-border">
+      <div className="flex items-center justify-between mb-2">
+        <h4 className="text-xs font-semibold text-foreground">Assign teams</h4>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          Cancel
+        </button>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium text-muted-foreground block mb-1">Home team</label>
+        <select
+          value={newHomeId}
+          onChange={(e) => setNewHomeId(e.target.value)}
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
+        >
+          <option value="">Select team</option>
+          {advancingTeams.map((t) => (
+            <option key={t.id} value={t.id} disabled={t.id === newAwayId}>
+              {t.short_name || t.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs font-medium text-muted-foreground block mb-1">Away team</label>
+        <select
+          value={newAwayId}
+          onChange={(e) => setNewAwayId(e.target.value)}
+          className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
+        >
+          <option value="">Select team</option>
+          {advancingTeams.map((t) => (
+            <option key={t.id} value={t.id} disabled={t.id === newHomeId}>
+              {t.short_name || t.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {error && <p className="text-destructive text-sm">{error}</p>}
+
+      <button
+        type="submit"
+        disabled={!canSubmit || loading}
+        className="w-full flex items-center justify-center gap-2 h-9 rounded-lg bg-accent text-accent-foreground font-medium text-sm hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? (
+          <Loader2 size={16} className="animate-spin" />
+        ) : (
+          "Assign teams"
+        )}
+      </button>
+    </form>
+  );
+}
+
+export { isTbdTeam, TBD_TEAM_IDS };
