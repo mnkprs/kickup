@@ -163,6 +163,42 @@ export async function getRecentResults(teamId?: string | null): Promise<Match[]>
   return rows.map((r) => mapMatch(r, tournamentMap.get(r.id as string) ?? null));
 }
 
+/** Action history for a match (captain/admin/organizer score submissions) */
+export async function getMatchActionHistory(
+  matchId: string
+): Promise<{ actor_type: string; actor_name: string; score_home: number; score_away: number; created_at: string }[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("match_action_history")
+    .select("actor_type, actor_id, score_home, score_away, created_at")
+    .eq("match_id", matchId)
+    .order("created_at", { ascending: true });
+
+  if (!data || data.length === 0) return [];
+
+  const actorIds = [...new Set((data as { actor_id: string | null }[]).map((r) => r.actor_id).filter(Boolean))] as string[];
+  const nameMap = new Map<string, string>();
+  if (actorIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", actorIds);
+    for (const p of profiles ?? []) {
+      nameMap.set((p as { id: string; full_name: string }).id, (p as { id: string; full_name: string }).full_name ?? "Unknown");
+    }
+  }
+
+  return (data as { actor_type: string; actor_id: string | null; score_home: number; score_away: number; created_at: string }[]).map(
+    (r) => ({
+      actor_type: r.actor_type,
+      actor_name: (r.actor_id && nameMap.get(r.actor_id)) ?? "Unknown",
+      score_home: r.score_home,
+      score_away: r.score_away,
+      created_at: r.created_at,
+    })
+  );
+}
+
 /** Goals per player (scorer_id) for a specific match */
 export async function getMatchGoalsByPlayer(matchId: string): Promise<Map<string, number>> {
   const supabase = await createClient();

@@ -1,13 +1,26 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { X } from "lucide-react";
 import type { TournamentStandingsGroup } from "@/lib/types";
 import { TeamAvatar } from "@/components/team-avatar";
+import { removeTeamFromTournamentAction } from "@/app/actions/tournaments";
+import { ConfirmModal } from "@/components/confirm-modal";
 
 interface TournamentStandingsProps {
   standingsGroups: TournamentStandingsGroup[];
   title?: string;
+  /** When set, show remove button for each team (registration phase only) */
+  canRemoveTeam?: boolean;
+  tournamentId?: string;
 }
 
 function StandingsTable({
   rows,
+  canRemove,
+  tournamentId,
+  onRemove,
 }: {
   rows: {
     rank: number;
@@ -21,10 +34,16 @@ function StandingsTable({
     goals_against: number;
     points: number;
   }[];
+  canRemove?: boolean;
+  tournamentId?: string;
+  onRemove?: (teamId: string, teamName: string) => void;
 }) {
+  const gridCols = canRemove
+    ? "grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem_2rem]"
+    : "grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem]";
   return (
     <>
-      <div className="tournament-standings__header-row grid grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem] gap-0.5 px-2 py-1.5 border-b border-border">
+      <div className={`tournament-standings__header-row grid ${gridCols} gap-0.5 px-2 py-1.5 border-b border-border`}>
         <span className="text-muted-foreground text-[10px] font-medium">#</span>
         <span className="text-muted-foreground text-[10px] font-medium">Team</span>
         <span className="text-muted-foreground text-[10px] font-medium text-center">P</span>
@@ -33,13 +52,14 @@ function StandingsTable({
         <span className="text-muted-foreground text-[10px] font-medium text-center">L</span>
         <span className="text-muted-foreground text-[10px] font-medium text-center">GD</span>
         <span className="text-muted-foreground text-[10px] font-medium text-right">PTS</span>
+        {canRemove && <span className="w-8" />}
       </div>
       {rows.map((row, i) => {
         const gd = row.goals_for - row.goals_against;
         return (
           <div
             key={row.team_id}
-            className="tournament-standings__row grid grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem] gap-0.5 px-2 py-1.5 items-center border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
+            className={`tournament-standings__row grid ${gridCols} gap-0.5 px-2 py-1.5 items-center border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors`}
           >
             <span className={`text-xs font-medium ${i < 2 ? "text-accent" : "text-muted-foreground"}`}>
               {row.rank}
@@ -63,6 +83,15 @@ function StandingsTable({
               {gd > 0 ? `+${gd}` : gd}
             </span>
             <span className="text-foreground text-xs font-bold text-right">{row.points}</span>
+            {canRemove && onRemove && (
+              <button
+                onClick={() => onRemove(row.team_id, row.team.name)}
+                className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-loss/15 hover:text-loss transition-colors pressable"
+                aria-label={`Remove ${row.team.name} from tournament`}
+              >
+                <X size={14} strokeWidth={2.5} />
+              </button>
+            )}
           </div>
         );
       })}
@@ -70,7 +99,25 @@ function StandingsTable({
   );
 }
 
-export function TournamentStandings({ standingsGroups, title = "Standings" }: TournamentStandingsProps) {
+export function TournamentStandings({
+  standingsGroups,
+  title = "Standings",
+  canRemoveTeam = false,
+  tournamentId,
+}: TournamentStandingsProps) {
+  const router = useRouter();
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<{ teamId: string; teamName: string } | null>(null);
+
+  async function handleRemove(teamId: string, teamName: string) {
+    if (!tournamentId) return;
+    setRemovingId(teamId);
+    const result = await removeTeamFromTournamentAction(tournamentId, teamId);
+    setRemovingId(null);
+    setConfirmRemove(null);
+    if (result.error) return;
+    router.refresh();
+  }
   const hasAny = standingsGroups.some((g) => g.standings.length > 0);
 
   return (
@@ -84,16 +131,38 @@ export function TournamentStandings({ standingsGroups, title = "Standings" }: To
             <p className="text-muted-foreground text-sm">No teams enrolled yet</p>
           </div>
         ) : (
-          standingsGroups.map((group) => (
-            <div key={group.groupLabel || "all"}>
-              {group.groupLabel && (
-                <div className="px-3 py-2 bg-muted/30 border-b border-border">
-                  <span className="text-xs font-semibold text-foreground">{group.groupLabel}</span>
-                </div>
-              )}
-              <StandingsTable rows={group.standings} />
-            </div>
-          ))
+          <>
+            {standingsGroups.map((group) => (
+              <div key={group.groupLabel || "all"}>
+                {group.groupLabel && (
+                  <div className="px-3 py-2 bg-muted/30 border-b border-border">
+                    <span className="text-xs font-semibold text-foreground">{group.groupLabel}</span>
+                  </div>
+                )}
+                <StandingsTable
+                  rows={group.standings}
+                  canRemove={canRemoveTeam && !group.groupLabel}
+                  tournamentId={tournamentId}
+                  onRemove={canRemoveTeam && !group.groupLabel ? (id, name) => setConfirmRemove({ teamId: id, teamName: name }) : undefined}
+                />
+              </div>
+            ))}
+            <ConfirmModal
+              open={!!confirmRemove}
+              onClose={() => setConfirmRemove(null)}
+              onConfirm={async () => {
+                if (confirmRemove) await handleRemove(confirmRemove.teamId, confirmRemove.teamName);
+              }}
+              title="Remove team from tournament?"
+              message={
+                confirmRemove
+                  ? `${confirmRemove.teamName} will be removed. They can register again before registration closes.`
+                  : ""
+              }
+              buttons={{ confirmLabel: "Remove", variant: "destructive" }}
+              loading={removingId !== null}
+            />
+          </>
         )}
       </div>
     </section>

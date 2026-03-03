@@ -130,6 +130,7 @@ export interface Tournament {
   format: string; // bracket format: knockout | round_robin | group_stage
   match_format: string; // playing format: 5v5 | 7v7 | 11v11
   max_teams: number;
+  teams_per_group?: number;
   prize: string;
   entry_fee: string;
   start_date: string | null;

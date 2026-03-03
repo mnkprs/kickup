@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "seed:tournament": "node scripts/run-seed.mjs",
-    "db:reset-fresh": "node scripts/reset-db-fresh.mjs"
+    "db:reset-fresh": "node scripts/reset-db-fresh.mjs",
+    "db:reset-fresh:push": "supabase db push && node scripts/reset-db-fresh.mjs",
+    "db:wipe-cloud": "node scripts/wipe-cloud-data.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6",

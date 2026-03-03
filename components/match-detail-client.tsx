@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Clock, Calendar, Check, ChevronRight, Trophy, Minus, Plus, Pencil, X } from "lucide-react";
 import Link from "next/link";
@@ -44,6 +44,14 @@ interface MatchProposal {
   team_name?: string;
 }
 
+interface MatchActionHistoryItem {
+  actor_type: string;
+  actor_name: string;
+  score_home: number;
+  score_away: number;
+  created_at: string;
+}
+
 interface MatchDetailClientProps {
   match: Match;
   userTeamId: string | null;
@@ -55,6 +63,7 @@ interface MatchDetailClientProps {
   goalsByPlayer?: Record<string, number>;
   isTournamentOrganizer?: boolean;
   isAdmin?: boolean;
+  matchActionHistory?: MatchActionHistoryItem[];
 }
 
 function TeamBlock({
@@ -260,6 +269,7 @@ export function MatchDetailClient({
   goalsByPlayer = {},
   isTournamentOrganizer = false,
   isAdmin = false,
+  matchActionHistory = [],
 }: MatchDetailClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -299,10 +309,39 @@ export function MatchDetailClient({
   const isPendingChallenge = rawStatus === "pending_challenge";
   const isScheduling = rawStatus === "scheduling";
   const isPreMatch = rawStatus === "pre_match";
+  const isDisputed = rawStatus === "disputed";
+  const canResolveDispute = isDisputed && (isTournamentOrganizer || isAdmin);
 
   const isAwayTeam = userTeamId === match.away_team_id;
   const isParticipant = userTeamId !== null;
   const canSubmitResult = (isParticipant && isCaptain) || isTournamentOrganizer;
+
+  // Auto-sync score from goals per player (only when user has added goals)
+  const isOrganizerFull = isTournamentOrganizer && !isParticipant;
+  const hasFormGoals = Object.values(formGoalsByPlayer).some((c) => c > 0);
+  const resolvingDispute = rawStatus === "disputed" && (isTournamentOrganizer || isAdmin);
+  useEffect(() => {
+    if (!showResult || !hasFormGoals) return;
+    const syncBoth = isOrganizerFull || resolvingDispute;
+    const syncHome = syncBoth || userTeamId === match.home_team_id;
+    const syncAway = syncBoth || userTeamId === match.away_team_id;
+    if (syncHome && homeRoster.length > 0) {
+      const h = homeRoster.reduce((s, p) => s + (formGoalsByPlayer[p.player_id] ?? 0), 0);
+      setHomeScore(h.toString());
+    }
+    if (syncAway && awayRoster.length > 0) {
+      const a = awayRoster.reduce((s, p) => s + (formGoalsByPlayer[p.player_id] ?? 0), 0);
+      setAwayScore(a.toString());
+    }
+  }, [formGoalsByPlayer, showResult, hasFormGoals, isOrganizerFull, resolvingDispute, userTeamId, match.home_team_id, match.away_team_id, homeRoster, awayRoster]);
+
+  useEffect(() => {
+    if (!showAdminEdit || (homeRoster.length === 0 && awayRoster.length === 0)) return;
+    const h = homeRoster.reduce((s, p) => s + (adminGoalsByPlayer[p.player_id] ?? 0), 0);
+    const a = awayRoster.reduce((s, p) => s + (adminGoalsByPlayer[p.player_id] ?? 0), 0);
+    setAdminHomeScore(h.toString());
+    setAdminAwayScore(a.toString());
+  }, [adminGoalsByPlayer, showAdminEdit, homeRoster, awayRoster]);
   const myTeamHasSubmitted =
     (userTeamId === match.home_team_id && match.home_result_status === "confirmed") ||
     (userTeamId === match.away_team_id && match.away_result_status === "confirmed");
@@ -324,6 +363,8 @@ export function MatchDetailClient({
   const statusClass = isCompleted
     ? "bg-muted text-muted-foreground"
     : isLive
+    ? "bg-destructive/15 text-destructive"
+    : isDisputed
     ? "bg-destructive/15 text-destructive"
     : isPendingChallenge
     ? "bg-accent/15 text-accent"
@@ -375,6 +416,50 @@ export function MatchDetailClient({
     const result = await acceptProposalAction(proposalId, userTeamId, match.id);
     setLoading(false);
     if (result.error) { setError(result.error); return; }
+    router.refresh();
+  }
+
+  async function handleResolveDispute() {
+    setLoading(true);
+    setError("");
+    const h = parseInt(homeScore) || 0;
+    const a = parseInt(awayScore) || 0;
+    const goalsPayload = {
+      home: Object.fromEntries(
+        homeRoster
+          .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
+          .filter(([, c]) => Number(c) > 0)
+      ),
+      away: Object.fromEntries(
+        awayRoster
+          .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
+          .filter(([, c]) => Number(c) > 0)
+      ),
+    };
+    const result =
+      isAdmin
+        ? await adminUpdateMatchResultAction({
+            matchId: match.id,
+            homeScore: h,
+            awayScore: a,
+            mvpId,
+            notes,
+            goals: goalsPayload,
+          })
+        : await organizerSubmitResultAction({
+            matchId: match.id,
+            homeScore: h,
+            awayScore: a,
+            mvpId,
+            notes,
+            goals: goalsPayload,
+          });
+    setLoading(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setShowResult(false);
     router.refresh();
   }
 
@@ -592,6 +677,39 @@ export function MatchDetailClient({
           </div>
         </div>
 
+        {/* Action history */}
+        {matchActionHistory.length > 0 && (
+          <div className="px-5">
+            <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-border bg-muted/30">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Actions history</p>
+              </div>
+              <div className="divide-y divide-border">
+                {matchActionHistory.map((item, idx) => {
+                  const roleLabel =
+                    item.actor_type === "captain"
+                      ? "Captain"
+                      : item.actor_type === "admin"
+                        ? "Admin"
+                        : "Organiser";
+                  return (
+                    <div key={idx} className="flex items-center justify-between gap-3 px-4 py-3">
+                      <span className="text-sm text-foreground">
+                        <span className="font-medium">{roleLabel} {item.actor_name}</span>
+                        <span className="text-muted-foreground"> submitted score </span>
+                        <span className="font-semibold">&apos;{item.score_home}-{item.score_away}&apos;</span>
+                      </span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        {format(parseISO(item.created_at), "d MMM, HH:mm")}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Error */}
         {error && (
           <div className="px-5">
@@ -769,43 +887,14 @@ export function MatchDetailClient({
           <div className="px-5 flex flex-col gap-4">
             <div className="p-4 rounded-xl bg-card border border-border shadow-card">
               <p className="text-foreground font-semibold text-sm mb-1">Submit Result</p>
-              <p className="text-muted-foreground text-xs">Enter the final score for this match.</p>
+              <p className="text-muted-foreground text-xs">
+                {homeRoster.length > 0 || awayRoster.length > 0
+                  ? "Add goals per player — the score updates automatically."
+                  : "Enter the final score for this match."}
+              </p>
             </div>
 
-            {/* Scores */}
-            <div className="grid grid-cols-3 gap-3 items-center">
-              <div className="flex flex-col items-center gap-1.5">
-                <span className="text-xs text-muted-foreground font-medium truncate max-w-full">
-                  {match.home_team.short_name}
-                </span>
-                <input
-                  type="number"
-                  value={homeScore}
-                  onChange={(e) => setHomeScore(e.target.value)}
-                  min={0}
-                  max={99}
-                  className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-2xl font-bold text-foreground focus:outline-none focus:border-accent/50 transition-colors"
-                />
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="text-muted-foreground font-bold text-lg">—</span>
-              </div>
-              <div className="flex flex-col items-center gap-1.5">
-                <span className="text-xs text-muted-foreground font-medium truncate max-w-full">
-                  {match.away_team.short_name}
-                </span>
-                <input
-                  type="number"
-                  value={awayScore}
-                  onChange={(e) => setAwayScore(e.target.value)}
-                  min={0}
-                  max={99}
-                  className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-2xl font-bold text-foreground focus:outline-none focus:border-accent/50 transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Goals per player */}
+            {/* Goals per player — primary flow when rosters exist */}
             {(homeRoster.length > 0 || awayRoster.length > 0) && (
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
@@ -858,6 +947,44 @@ export function MatchDetailClient({
                   ) : null}
                 </div>
               </div>
+            )}
+
+            {/* Score — compact display when goals exist, full inputs otherwise */}
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="text-xs text-muted-foreground font-medium truncate max-w-full">
+                  {match.home_team.short_name}
+                </span>
+                <input
+                  type="number"
+                  value={homeScore}
+                  onChange={(e) => setHomeScore(e.target.value)}
+                  min={0}
+                  max={99}
+                  className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-2xl font-bold text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+                />
+              </div>
+              <div className="flex items-center justify-center">
+                <span className="text-muted-foreground font-bold text-lg">—</span>
+              </div>
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="text-xs text-muted-foreground font-medium truncate max-w-full">
+                  {match.away_team.short_name}
+                </span>
+                <input
+                  type="number"
+                  value={awayScore}
+                  onChange={(e) => setAwayScore(e.target.value)}
+                  min={0}
+                  max={99}
+                  className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-2xl font-bold text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+                />
+              </div>
+            </div>
+            {(homeRoster.length > 0 || awayRoster.length > 0) && (
+              <p className="text-xs text-muted-foreground text-center -mt-2">
+                Score updates automatically when you add goals above. You can also edit manually.
+              </p>
             )}
 
             {/* MVP selection */}
@@ -933,6 +1060,191 @@ export function MatchDetailClient({
           </div>
         )}
 
+        {/* Disputed: organizer or admin can resolve by entering final score */}
+        {canResolveDispute && !showResult && (
+          <div className="px-5">
+            <div className={`p-4 rounded-xl border ${isAdmin ? "bg-card border-border" : "bg-destructive/10 border-destructive/20"}`}>
+              {isAdmin ? (
+                <>
+                  <p className="text-foreground font-semibold text-sm">Enter match result</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">
+                    Enter the correct final score to complete this match.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-foreground font-semibold text-sm">Captains submitted different scores</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">
+                    Enter the correct final score to resolve this dispute.
+                  </p>
+                </>
+              )}
+            </div>
+            <button
+              onClick={() => setShowResult(true)}
+              className="w-full mt-3 py-3.5 rounded-xl bg-accent text-accent-foreground font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 pressable"
+            >
+              {isAdmin ? "Enter Result" : "Resolve Dispute"}
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+
+        {canResolveDispute && showResult && (
+          <div className="px-5 flex flex-col gap-4">
+            <div className="p-4 rounded-xl bg-card border border-border shadow-card">
+              <p className="text-foreground font-semibold text-sm mb-1">{isAdmin ? "Enter Result" : "Resolve Dispute"}</p>
+              <p className="text-muted-foreground text-xs">
+                {homeRoster.length > 0 || awayRoster.length > 0
+                  ? "Add goals per player — the score updates automatically."
+                  : isAdmin ? "Enter the final score to complete this match." : "Enter the final score to resolve this match."}
+              </p>
+            </div>
+
+            {/* Goals per player — primary flow when rosters exist */}
+            {(homeRoster.length > 0 || awayRoster.length > 0) && (
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                  Goals per player
+                </label>
+                <div className="flex flex-col gap-3">
+                  <GoalsRosterSection
+                    roster={homeRoster}
+                    team={match.home_team}
+                    goals={formGoalsByPlayer}
+                    onUpdate={(playerId, delta) =>
+                      setFormGoalsByPlayer((prev) => ({
+                        ...prev,
+                        [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                      }))
+                    }
+                  />
+                  <GoalsRosterSection
+                    roster={awayRoster}
+                    team={match.away_team}
+                    goals={formGoalsByPlayer}
+                    onUpdate={(playerId, delta) =>
+                      setFormGoalsByPlayer((prev) => ({
+                        ...prev,
+                        [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Score */}
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="text-xs text-muted-foreground font-medium truncate max-w-full">
+                  {match.home_team.short_name}
+                </span>
+                <input
+                  type="number"
+                  value={homeScore}
+                  onChange={(e) => setHomeScore(e.target.value)}
+                  min={0}
+                  max={99}
+                  className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-2xl font-bold text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+                />
+              </div>
+              <div className="flex items-center justify-center">
+                <span className="text-muted-foreground font-bold text-lg">—</span>
+              </div>
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="text-xs text-muted-foreground font-medium truncate max-w-full">
+                  {match.away_team.short_name}
+                </span>
+                <input
+                  type="number"
+                  value={awayScore}
+                  onChange={(e) => setAwayScore(e.target.value)}
+                  min={0}
+                  max={99}
+                  className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-2xl font-bold text-foreground focus:outline-none focus:border-accent/50 transition-colors"
+                />
+              </div>
+            </div>
+            {(homeRoster.length > 0 || awayRoster.length > 0) && (
+              <p className="text-xs text-muted-foreground text-center -mt-2">
+                Score updates automatically when you add goals above. You can also edit manually.
+              </p>
+            )}
+
+            {/* MVP selection */}
+            {teamMembers.length > 0 && (
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                  Man of the Match (optional)
+                </label>
+                <div className="flex flex-col gap-1 rounded-xl bg-card border border-border shadow-card overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setMvpId(null)}
+                    className={`flex items-center gap-3 px-4 py-2.5 text-left transition-colors pressable ${!mvpId ? "bg-accent/10" : "hover:bg-muted/50"}`}
+                  >
+                    <span className="text-sm text-muted-foreground">None</span>
+                  </button>
+                  {teamMembers.map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setMvpId(m.id)}
+                      className={`flex items-center gap-3 px-4 py-2.5 text-left border-t border-border transition-colors pressable ${mvpId === m.id ? "bg-accent/10" : "hover:bg-muted/50"}`}
+                    >
+                      <Avatar
+                        avatar_url={m.avatar_url}
+                        avatar_initials={m.avatar_initials}
+                        avatar_color={m.avatar_color}
+                        full_name={m.full_name}
+                        size="xs"
+                      />
+                      <span className="text-sm text-foreground">{m.full_name}</span>
+                      {mvpId === m.id && <Check size={14} className="text-accent ml-auto" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                Notes (optional)
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                maxLength={200}
+                rows={2}
+                placeholder="Any notes about the match..."
+                className="w-full rounded-xl bg-card border border-border px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowResult(false)}
+                className="flex-1 py-3 rounded-xl bg-card border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors pressable"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResolveDispute}
+                disabled={loading}
+                className="flex-1 py-3 rounded-xl bg-accent text-accent-foreground text-sm font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center pressable"
+              >
+                {loading ? (
+                  <span className="h-4 w-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
+                ) : (
+                  isAdmin ? "Confirm Result" : "Confirm Resolution"
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Admin: Edit match — full-screen drawer */}
         {isAdmin && showAdminEdit && (
           <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-hidden">
@@ -990,32 +1302,6 @@ export function MatchDetailClient({
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Result
                   </p>
-                  <div className="grid grid-cols-3 gap-3 items-center">
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-xs text-muted-foreground">{match.home_team.short_name}</span>
-                      <input
-                        type="number"
-                        value={adminHomeScore}
-                        onChange={(e) => setAdminHomeScore(e.target.value)}
-                        min={0}
-                        max={99}
-                        className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-xl font-bold text-foreground focus:outline-none focus:border-accent/50"
-                      />
-                    </div>
-                    <div className="text-center text-muted-foreground font-bold">—</div>
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-xs text-muted-foreground">{match.away_team.short_name}</span>
-                      <input
-                        type="number"
-                        value={adminAwayScore}
-                        onChange={(e) => setAdminAwayScore(e.target.value)}
-                        min={0}
-                        max={99}
-                        className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-xl font-bold text-foreground focus:outline-none focus:border-accent/50"
-                      />
-                    </div>
-                  </div>
-
                   {homeRoster.length > 0 || awayRoster.length > 0 ? (
                     <div className="space-y-2">
                       <label className="text-xs text-muted-foreground">Goals per player</label>
@@ -1043,8 +1329,35 @@ export function MatchDetailClient({
                           }
                         />
                       </div>
+                      <p className="text-xs text-muted-foreground">Score updates automatically from goals above.</p>
                     </div>
                   ) : null}
+
+                  <div className="grid grid-cols-3 gap-3 items-center">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-xs text-muted-foreground">{match.home_team.short_name}</span>
+                      <input
+                        type="number"
+                        value={adminHomeScore}
+                        onChange={(e) => setAdminHomeScore(e.target.value)}
+                        min={0}
+                        max={99}
+                        className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-xl font-bold text-foreground focus:outline-none focus:border-accent/50"
+                      />
+                    </div>
+                    <div className="text-center text-muted-foreground font-bold">—</div>
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-xs text-muted-foreground">{match.away_team.short_name}</span>
+                      <input
+                        type="number"
+                        value={adminAwayScore}
+                        onChange={(e) => setAdminAwayScore(e.target.value)}
+                        min={0}
+                        max={99}
+                        className="w-full rounded-xl bg-card border border-border px-3 py-3 text-center text-xl font-bold text-foreground focus:outline-none focus:border-accent/50"
+                      />
+                    </div>
+                  </div>
 
                   {teamMembers.length > 0 && (
                     <div>

@@ -1,6 +1,6 @@
 -- Reusable function: seed dummy data for any tournament.
 -- Run from SQL Editor: SELECT seed_tournament_dummy_data('your-tournament-id');
--- Prerequisites: seed_v2.sql (teams 1-8 with players).
+-- Prerequisites: seed.sql (teams 1-8 with players).
 
 CREATE OR REPLACE FUNCTION seed_tournament_dummy_data(p_tournament_id uuid)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import {
   getTournament,
   getTournamentStandings,
-  getTournamentMatches,
+  getTournamentMatchesWithStage,
   getTournamentTopScorers,
 } from "@/lib/db/tournaments";
 import { getProfile } from "@/lib/db/profiles";
@@ -11,6 +11,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TournamentStandings } from "@/components/tournament-standings";
 import { TournamentFixtures } from "@/components/tournament-fixtures";
+import { TournamentBracket } from "@/components/tournament-bracket";
 import { LiveDot } from "@/components/live-dot";
 import { TournamentScorers } from "@/components/tournament-scorers";
 import { TournamentPendingRegistrations } from "@/components/tournament-pending-registrations";
@@ -54,7 +55,7 @@ export default async function TournamentDetailPage({
   const [tournament, standings, matches, scorers, profile, areasRes] = await Promise.all([
     getTournament(id),
     getTournamentStandings(id),
-    getTournamentMatches(id),
+    getTournamentMatchesWithStage(id),
     getTournamentTopScorers(id),
     user ? getProfile(user.id) : null,
     supabase.from("areas").select("name, city").order("city").order("sort"),
@@ -139,6 +140,7 @@ export default async function TournamentDetailPage({
             teamId={userTeamId}
             registrationStatus={registrationStatus}
             isFull={tournament.teams_count >= tournament.max_teams}
+            canWithdraw={tournament.raw_status === "registration"}
           />
         </div>
       )}
@@ -180,7 +182,12 @@ export default async function TournamentDetailPage({
         <TournamentStandings
           standingsGroups={standings}
           title={tournament.status === "upcoming" ? "Enrolled Teams" : "Standings"}
+          canRemoveTeam={canManageRegistrations && tournament.raw_status === "registration"}
+          tournamentId={canManageRegistrations && tournament.raw_status === "registration" ? id : undefined}
         />
+        {tournament.raw_status === "knockout_stage" && (
+          <TournamentBracket matches={matches} />
+        )}
         <TournamentFixtures
           matches={matches}
           tournamentId={id}

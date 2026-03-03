@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+I use supabase in the cloud. I run sql scripts manually in the supabase's sql editor in the dashboard. db connection string is in the .env.local

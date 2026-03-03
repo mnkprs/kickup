@@ -62,6 +62,8 @@ alter table match_events drop column if exists assist_id;
 alter table profiles drop column if exists stat_assists;
 
 -- 4. Update get_player_scoreboard: remove assists column and stat_assists
+-- Must drop first: PostgreSQL cannot change return type with create or replace
+drop function if exists get_player_scoreboard(text);
 create or replace function get_player_scoreboard(p_area text default null)
 returns table (
   rank      bigint,

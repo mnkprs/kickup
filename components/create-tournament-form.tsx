@@ -11,6 +11,12 @@ import { createTournamentAction } from "@/app/actions/tournaments";
 
 const FORMAT_OPTIONS = ["5v5", "6v6", "7v7", "8v8", "11v11"];
 const MAX_TEAMS_OPTIONS = [4, 8, 16, 32];
+const BRACKET_FORMAT_OPTIONS = [
+  { value: "group_stage", label: "Groups + Knockout" },
+  { value: "round_robin", label: "Round Robin only" },
+  { value: "knockout", label: "Knockout only" },
+] as const;
+const TEAMS_PER_GROUP_OPTIONS = [2, 3, 4];
 
 interface CreateTournamentFormProps {
   areaGroups: AreaGroup[];
@@ -22,6 +28,8 @@ export function CreateTournamentForm({ areaGroups }: CreateTournamentFormProps) 
   const [description, setDescription] = useState("");
   const [matchFormat, setMatchFormat] = useState("7v7");
   const [maxTeams, setMaxTeams] = useState(8);
+  const [bracketFormat, setBracketFormat] = useState<"group_stage" | "round_robin" | "knockout">("group_stage");
+  const [teamsPerGroup, setTeamsPerGroup] = useState(4);
   const [venue, setVenue] = useState("");
   const [area, setArea] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -42,6 +50,8 @@ export function CreateTournamentForm({ areaGroups }: CreateTournamentFormProps) 
       description,
       match_format: matchFormat,
       max_teams: maxTeams,
+      bracket_format: bracketFormat,
+      teams_per_group: bracketFormat === "group_stage" ? teamsPerGroup : undefined,
       venue,
       area,
       start_date: startDate,
@@ -134,6 +144,57 @@ export function CreateTournamentForm({ areaGroups }: CreateTournamentFormProps) 
             ))}
           </div>
         </div>
+
+        {/* Bracket Format */}
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+            Bracket Format
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {BRACKET_FORMAT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setBracketFormat(opt.value)}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all border ${
+                  bracketFormat === opt.value
+                    ? "bg-accent text-accent-foreground border-accent"
+                    : "bg-card text-muted-foreground border-border hover:text-foreground"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-muted-foreground text-xs mt-1">
+            Groups + Knockout is the most common format.
+          </p>
+        </div>
+
+        {/* Teams per group (only when group_stage) */}
+        {bracketFormat === "group_stage" && (
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+              Teams per Group
+            </label>
+            <div className="flex gap-2">
+              {TEAMS_PER_GROUP_OPTIONS.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setTeamsPerGroup(n)}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all border ${
+                    teamsPerGroup === n
+                      ? "bg-accent text-accent-foreground border-accent"
+                      : "bg-card text-muted-foreground border-border hover:text-foreground"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Venue */}
         <div>

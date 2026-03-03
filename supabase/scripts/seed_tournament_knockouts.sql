@@ -8,7 +8,7 @@
 --  (requires POSTGRES_URL in .env.local; use node --env-file=.env.local
 --  if env not loaded)
 --
---  Prerequisites: seed_v2.sql, migration 20260302000023
+--  Prerequisites: seed.sql, migration 20260302000023
 -- ═══════════════════════════════════════════════════════════════════
 
 SELECT seed_tournament_dummy_data('YOUR-TOURNAMENT-ID'::uuid);

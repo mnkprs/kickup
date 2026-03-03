@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, Clock, Loader2 } from "lucide-react";
+import { Calendar, Clock, Loader2, MapPin } from "lucide-react";
 import { setTournamentMatchScheduleAction } from "@/app/actions/tournaments";
 
 interface ScheduleTournamentMatchFormProps {
@@ -10,6 +10,7 @@ interface ScheduleTournamentMatchFormProps {
   tournamentId: string;
   currentDate: string | null;
   currentTime: string | null;
+  currentLocation?: string | null;
   onClose: () => void;
 }
 
@@ -18,6 +19,7 @@ export function ScheduleTournamentMatchForm({
   tournamentId,
   currentDate,
   currentTime,
+  currentLocation,
   onClose,
 }: ScheduleTournamentMatchFormProps) {
   const router = useRouter();
@@ -25,6 +27,7 @@ export function ScheduleTournamentMatchForm({
   const [time, setTime] = useState(
     currentTime ? currentTime.slice(0, 5) : ""
   );
+  const [location, setLocation] = useState(currentLocation || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +44,7 @@ export function ScheduleTournamentMatchForm({
       tournamentId,
       date,
       time: time.trim() || "",
+      location: location.trim() || undefined,
     });
     setLoading(false);
     if (result.error) {
@@ -84,6 +88,25 @@ export function ScheduleTournamentMatchForm({
             value={time}
             onChange={(e) => setTime(e.target.value)}
             className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-card text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+          Location (optional)
+        </label>
+        <div className="relative">
+          <MapPin
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="e.g. Main pitch"
+            maxLength={100}
+            className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent"
           />
         </div>
       </div>

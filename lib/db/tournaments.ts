@@ -149,6 +149,7 @@ export async function getTournament(id: string): Promise<Tournament | null> {
     format: (row.bracket_format as string) ?? "knockout",
     match_format: row.match_format as string,
     max_teams: (row.max_teams as number) ?? 8,
+    teams_per_group: (row.teams_per_group as number) ?? 4,
     prize: (row.prize as string) ?? "",
     entry_fee: (row.entry_fee as string) ?? "",
     start_date: row.start_date as string | null,
@@ -273,13 +274,29 @@ export async function getTournamentStandings(
   return [{ groupLabel: "", standings }];
 }
 
+export interface TournamentMatchWithStage extends Match {
+  stage?: "group" | "semi_final" | "final";
+  group_label?: string | null;
+  match_order?: number;
+}
+
 export async function getTournamentMatches(
   tournamentId: string
 ): Promise<Match[]> {
+  const withStage = await getTournamentMatchesWithStage(tournamentId);
+  return withStage;
+}
+
+export async function getTournamentMatchesWithStage(
+  tournamentId: string
+): Promise<TournamentMatchWithStage[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("tournament_matches")
     .select(`
+      stage,
+      group_label,
+      match_order,
       matches(
         *,
         home_team:teams!home_team_id(*),
@@ -291,30 +308,32 @@ export async function getTournamentMatches(
 
   if (error || !data) return [];
 
-  return (data as Record<string, unknown>[])
-    .map((row) => {
-      const m = row.matches as Record<string, unknown>;
-      if (!m) return null;
-      return {
-        id: m.id as string,
-        home_team_id: m.home_team_id as string,
-        away_team_id: m.away_team_id as string,
-        home_team: mapTeam(m.home_team as Record<string, unknown>),
-        away_team: mapTeam(m.away_team as Record<string, unknown>),
-        format: m.format as string,
-        status:
-          m.status === "completed"
-            ? "completed"
-            : ("upcoming" as Match["status"]),
-        date: m.match_date as string | null,
-        time: m.match_time as string | null,
-        location: m.location as string | null,
-        home_score: m.home_score as number | null,
-        away_score: m.away_score as number | null,
-        created_at: m.created_at as string,
-      };
-    })
-    .filter((m): m is Match => m !== null);
+  const results: TournamentMatchWithStage[] = [];
+  for (const row of data as Record<string, unknown>[]) {
+    const m = row.matches as Record<string, unknown>;
+    if (!m) continue;
+    const dbStatus = m.status as string;
+    results.push({
+      id: m.id as string,
+      home_team_id: m.home_team_id as string,
+      away_team_id: m.away_team_id as string,
+      home_team: mapTeam(m.home_team as Record<string, unknown>),
+      away_team: mapTeam(m.away_team as Record<string, unknown>),
+      format: m.format as string,
+      status: dbStatus === "completed" ? "completed" : ("upcoming" as Match["status"]),
+      raw_status: dbStatus,
+      date: m.match_date as string | null,
+      time: m.match_time as string | null,
+      location: m.location as string | null,
+      home_score: m.home_score as number | null,
+      away_score: m.away_score as number | null,
+      created_at: m.created_at as string,
+      stage: row.stage as TournamentMatchWithStage["stage"],
+      group_label: row.group_label as string | null,
+      match_order: row.match_order as number,
+    });
+  }
+  return results;
 }
 
 export async function getTournamentTopScorers(

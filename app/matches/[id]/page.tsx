@@ -1,4 +1,4 @@
-import { getMatch, getMatchGoalsByPlayer, getMatchRoster } from "@/lib/db/matches";
+import { getMatch, getMatchGoalsByPlayer, getMatchRoster, getMatchActionHistory } from "@/lib/db/matches";
 import { createClient } from "@/lib/supabase/server";
 import { getTeamMembers } from "@/lib/db/teams";
 import { MatchDetailClient } from "@/components/match-detail-client";
@@ -66,7 +66,11 @@ export default async function MatchDetailPage({
 
     // Load team members for MVP selection when submitting result (captain, organizer, or admin)
     // Include players from BOTH teams so MVP can be selected from either side
-    if ((userTeamId || isTournamentOrganizer || isAdmin) && (match.raw_status === "pre_match" || isAdmin)) {
+    // Also load for disputed matches so organizer/admin can resolve
+    if (
+      (userTeamId || isTournamentOrganizer || isAdmin) &&
+      (match.raw_status === "pre_match" || match.raw_status === "disputed" || isAdmin)
+    ) {
       const [homeMembers, awayMembers] = await Promise.all([
         getTeamMembers(match.home_team_id),
         getTeamMembers(match.away_team_id),
@@ -140,7 +144,7 @@ export default async function MatchDetailPage({
     awayRoster = away;
     goalsByPlayer = goals;
   } else if (
-    match.raw_status === "pre_match" &&
+    (match.raw_status === "pre_match" || match.raw_status === "disputed") &&
     (userTeamId || isTournamentOrganizer || isAdmin)
   ) {
     const [home, away] = await Promise.all([
@@ -181,6 +185,8 @@ export default async function MatchDetailPage({
     }
   }
 
+  const matchActionHistory = await getMatchActionHistory(id);
+
   return (
     <MatchDetailClient
       match={match}
@@ -193,6 +199,7 @@ export default async function MatchDetailPage({
       goalsByPlayer={Object.fromEntries(goalsByPlayer)}
       isTournamentOrganizer={isTournamentOrganizer}
       isAdmin={isAdmin}
+      matchActionHistory={matchActionHistory}
     />
   );
 }

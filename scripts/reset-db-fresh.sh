@@ -15,8 +15,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SUPABASE_DIR="$PROJECT_ROOT/supabase"
 
-# DB_URL: local default, or set for cloud (from .env.local, Dashboard, etc.)
-DB_URL="${DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
+# Load POSTGRES_URL/DATABASE_URL from .env.local (last occurrence wins if multiple)
+if [[ -f "$PROJECT_ROOT/.env.local" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source <(grep -E '^(POSTGRES_URL|DATABASE_URL)=' "$PROJECT_ROOT/.env.local" 2>/dev/null | tail -1 | sed 's/^/export /') 2>/dev/null || true
+  set +a
+fi
+
+# DB_URL: from env, .env.local, or local default
+DB_URL="${POSTGRES_URL:-${DATABASE_URL:-${DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}}}"
 IS_CLOUD=false
 [[ "$DB_URL" == *"supabase.com"* || "$DB_URL" == *"pooler"* ]] && IS_CLOUD=true
 

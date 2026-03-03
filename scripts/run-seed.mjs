@@ -6,7 +6,7 @@
  *   TOURNAMENT_ID=your-uuid node scripts/run-seed.mjs
  *   npm run seed:tournament -- YOUR-TOURNAMENT-ID
  *
- * Prerequisites: seed_v2.sql, migration 20260302000023
+ * Prerequisites: seed.sql, migration 20260302000023
  */
 import pg from "pg";
 

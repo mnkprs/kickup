@@ -65,6 +65,7 @@ function UpcomingFixture({ match, tournamentId, canManageSchedule }: UpcomingFix
                 tournamentId={tournamentId}
                 currentDate={match.date}
                 currentTime={match.time}
+                currentLocation={match.location}
                 onClose={() => setShowScheduleForm(false)}
               />
             </div>

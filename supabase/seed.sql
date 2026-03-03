@@ -1,354 +1,443 @@
 -- ═══════════════════════════════════════════════════════════════════
---  KICKUP — Seed Data
---  Run automatically by: supabase db reset
---  Mirrors the mockData.ts so the UI looks populated on first boot.
+--  KICKUP — Seed
+--  Runs on: supabase db reset
+--  Wipes all user data and inserts dummy data.
+--  100 players · 10 teams (5v5/6v6/7v7) · 13 completed matches · 1 tournament
+--  Password for all accounts: kickup123
 -- ═══════════════════════════════════════════════════════════════════
 
--- ─── Seed auth users (local dev only) ─────────────────────────────
--- Password for all seed users: "kickup123"
--- supabase start creates these in the auth schema via the GoTrue API,
--- but for migrations we insert directly into auth.users.
+-- ─── 1. WIPE ───────────────────────────────────────────────────────
+DELETE FROM notifications;
+DELETE FROM match_events;
+DELETE FROM match_lineups;
+DELETE FROM match_proposals;
+DELETE FROM tournament_matches;
+DELETE FROM tournament_groups;
+DELETE FROM tournament_registrations;
+DELETE FROM tournaments;
+DELETE FROM matches;
+DELETE FROM team_members;
+DELETE FROM teams;
+DELETE FROM profiles;
+DELETE FROM owner_applications;
+DELETE FROM auth.users WHERE aud = 'authenticated';
 
-insert into auth.users (
-  id, instance_id, email, encrypted_password, email_confirmed_at,
-  created_at, updated_at, raw_app_meta_data, raw_user_meta_data,
-  is_super_admin, role, aud,
-  confirmation_token, email_change, email_change_token_new, recovery_token
-) values
-  (
-    '11111111-0001-0001-0001-000000000001',
-    '00000000-0000-0000-0000-000000000000',
-    'nikos@kickup.app',
-    crypt('kickup123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Nikos Papadopoulos","position":"FWD","area":"Kolonaki","avatar_color":"#2E7D32"}',
-    false, 'authenticated', 'authenticated',
-    '', '', '', ''
-  ),
-  (
-    '11111111-0002-0002-0002-000000000002',
-    '00000000-0000-0000-0000-000000000000',
-    'giorgos@kickup.app',
-    crypt('kickup123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Giorgos Stavros","position":"GK","area":"Piraeus","avatar_color":"#1565C0"}',
-    false, 'authenticated', 'authenticated',
-    '', '', '', ''
-  ),
-  (
-    '11111111-0003-0003-0003-000000000003',
-    '00000000-0000-0000-0000-000000000000',
-    'alexis@kickup.app',
-    crypt('kickup123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Alexis Dimos","position":"MID","area":"Exarcheia","avatar_color":"#6A1B9A"}',
-    false, 'authenticated', 'authenticated',
-    '', '', '', ''
-  ),
-  (
-    '11111111-0004-0004-0004-000000000004',
-    '00000000-0000-0000-0000-000000000000',
-    'kostas@kickup.app',
-    crypt('kickup123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Kostas Nikolaou","position":"DEF","area":"Glyfada","avatar_color":"#BF360C"}',
-    false, 'authenticated', 'authenticated',
-    '', '', '', ''
-  ),
-  (
-    '11111111-0005-0005-0005-000000000005',
-    '00000000-0000-0000-0000-000000000000',
-    'yiannis@kickup.app',
-    crypt('kickup123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Yiannis Tzanakis","position":"MID","area":"Kifisia","avatar_color":"#E65100"}',
-    false, 'authenticated', 'authenticated',
-    '', '', '', ''
-  ),
-  (
-    '11111111-0006-0006-0006-000000000006',
-    '00000000-0000-0000-0000-000000000000',
-    'spyros@kickup.app',
-    crypt('kickup123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Spyros Athanasiou","position":"FWD","area":"Pangrati","avatar_color":"#00695C"}',
-    false, 'authenticated', 'authenticated',
-    '', '', '', ''
-  ),
-  (
-    '11111111-0007-0007-0007-000000000007',
-    '00000000-0000-0000-0000-000000000000',
-    'christos@kickup.app',
-    crypt('kickup123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Christos Melas","position":"GK","area":"Nea Smyrni","avatar_color":"#37474F"}',
-    false, 'authenticated', 'authenticated',
-    '', '', '', ''
-  ),
-  (
-    '11111111-0008-0008-0008-000000000008',
-    '00000000-0000-0000-0000-000000000000',
-    'petros@kickup.app',
-    crypt('kickup123', gen_salt('bf')),
-    now(), now(), now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"full_name":"Petros Katsaros","position":"DEF","area":"Chalandri","avatar_color":"#558B2F"}',
-    false, 'authenticated', 'authenticated',
-    '', '', '', ''
-  )
-on conflict (id) do nothing;
+-- ─── 2. AUTH USERS (DO block — 100 players) ───────────────────────
+DO $$
+DECLARE
+  names      text[] := ARRAY[
+    -- Team 1 – Kolonaki Kings 7v7 (p01-07)
+    'Nikos Papadopoulos','Giorgos Athanasiou','Dimitris Karamanlis',
+    'Kostas Petridis','Alexis Panagiotou','Stelios Kyriakidis','Yannis Tsoukalas',
+    -- Team 2 – Piraeus Sharks 7v7 (p08-14)
+    'Giorgos Stavridis','Manos Nikolaou','Tasos Giannakis',
+    'Christos Bouras','Vasilis Karagiannis','Lefteris Antonopoulos','Spyros Sioutis',
+    -- Team 3 – Athens Warriors 7v7 (p15-21)
+    'Alexis Dimos','Thanos Theodorakis','Stratos Mavridis',
+    'Makis Papadakis','Pantelis Galanis','Fotis Ziogas','Aris Tsakalidis',
+    -- Team 4 – South Eagles 7v7 (p22-28)
+    'Kostas Balasis','Petros Lamprou','Sakis Papanikolaou',
+    'Takis Zacharopoulos','Miltos Hatzigiannakis','Andreas Deligiannis','Vangelis Manolas',
+    -- Team 5 – North Stars 7v7 (p29-35)
+    'Yannis Kontogiannis','Apostolis Vassilakis','Nikos Kolokythas',
+    'Haris Triantafyllou','Giorgos Papageorgiou','Christos Kaklamanis','Dimitris Karanikolas',
+    -- Team 6 – Pangrati FC 7v7 (p36-42)
+    'Spyros Dimou','Stavros Alexiou','Manos Christopoulos',
+    'Tasos Mitsos','Thanasis Vassilakis','Pavlos Giannakis','Vangelis Kyriakidis',
+    -- Team 7 – Old City Wolves 7v7 (p43-49)
+    'Petros Stavros','Nikos Athanasiou','Kostas Triantafyllou',
+    'Giorgos Sioutis','Alexis Theodorakis','Miltos Lamprou','Takis Manolas',
+    -- Team 8 – Southside United 7v7 (p50-56)
+    'Yannis Papageorgiou','Haris Karagiannis','Christos Nikolaou',
+    'Vasilis Dimos','Stratos Kontogiannis','Lefteris Kaklamanis','Sakis Panagiotou',
+    -- Team 9 – Maroussi Strikers 5v5 (p57-61)
+    'Aris Vassilakis','Fotis Petridis','Apostolis Bouras','Manos Tsakalidis','Stavros Ziogas',
+    -- Team 10 – Kallithea FC 6v6 (p62-67)
+    'Makis Papadopoulos','Thanos Galanis','Andreas Mavridis',
+    'Ntelis Balasis','Giorgos Karanikolas','Petros Deligiannis',
+    -- Freelancers (p68-100)
+    'Spyros Theodoropoulos','Nikos Vamvakousis','Giorgos Mavroudis','Alexis Sourlas',
+    'Dimitris Fountas','Kostas Skouloudelis','Yannis Metaxas','Petros Katsaros',
+    'Stelios Panopoulos','Manos Konstantinou','Tasos Athanasiadis','Christos Papadimitriou',
+    'Vasilis Sotiropoulos','Lefteris Ekonomou','Spyros Katsikis','Haris Skordas',
+    'Giorgos Vrettakos','Nikos Mouratidis','Apostolis Oikonomou','Miltos Chatzipetros',
+    'Takis Sarantidis','Pantelis Bampalis','Stratos Georgopoulos','Thanos Boukouvalas',
+    'Makis Sideris','Andreas Raptis','Aris Kourelas','Fotis Douros',
+    'Vangelis Stathis','Stavros Kapetanakis','Pavlos Nikopoulos','Yannis Mourtzis',
+    'Christos Katsoulas'
+  ];
+  positions  text[] := ARRAY[
+    'FWD','MID','DEF','GK','MID','FWD','DEF',   -- t1
+    'GK','DEF','MID','FWD','MID','DEF','FWD',   -- t2
+    'MID','FWD','DEF','GK','MID','DEF','FWD',   -- t3
+    'GK','DEF','MID','FWD','DEF','MID','FWD',   -- t4
+    'MID','DEF','FWD','GK','MID','DEF','FWD',   -- t5
+    'FWD','GK','DEF','MID','FWD','DEF','MID',   -- t6
+    'MID','FWD','DEF','GK','MID','DEF','FWD',   -- t7
+    'DEF','FWD','MID','GK','DEF','FWD','MID',   -- t8
+    'FWD','GK','DEF','MID','FWD',               -- t9
+    'MID','DEF','FWD','GK','MID','DEF',         -- t10
+    -- freelancers: varied
+    'MID','FWD','DEF','GK','MID','FWD','DEF','MID',
+    'GK','FWD','DEF','MID','FWD','DEF','GK','MID',
+    'FWD','DEF','MID','GK','FWD','MID','DEF','FWD',
+    'MID','DEF','FWD','GK','MID','FWD','DEF','MID',
+    'FWD'
+  ];
+  areas      text[] := ARRAY[
+    'Kolonaki','Kolonaki','Kolonaki','Syntagma','Plaka','Kolonaki','Monastiraki', -- t1
+    'Piraeus','Piraeus','Piraeus','Nikaia','Keratsini','Piraeus','Koridallos',     -- t2
+    'Exarcheia','Exarcheia','Omonia','Exarcheia','Omonia','Exarcheia','Exarcheia', -- t3
+    'Glyfada','Glyfada','Voula','Glyfada','Alimos','Elliniko','Glyfada',          -- t4
+    'Kifisia','Kifisia','Chalandri','Maroussi','Kifisia','Ekali','Vrilissia',      -- t5
+    'Pangrati','Pangrati','Pangrati','Mets','Pangrati','Kaisariani','Vyronas',    -- t6
+    'Monastiraki','Psyrri','Monastiraki','Thissio','Kerameikos','Monastiraki','Gazi', -- t7
+    'Nea Smyrni','Nea Smyrni','Kallithea','Nea Smyrni','Agios Dimitrios','Nea Smyrni','Moschato', -- t8
+    'Maroussi','Maroussi','Chalandri','Maroussi','Maroussi',                      -- t9
+    'Kallithea','Kallithea','Nea Smyrni','Kallithea','Kallithea','Alimos',        -- t10
+    -- freelancers
+    'Zografou','Nea Ionia','Peristeri','Galatsi','Kifisia','Glyfada','Pangrati','Chalandri',
+    'Exarcheia','Piraeus','Kolonaki','Maroussi','Nea Smyrni','Kallithea','Vyronas','Psyrri',
+    'Thissio','Omonia','Kifisia','Glyfada','Exarcheia','Pangrati','Piraeus','Maroussi',
+    'Nea Smyrni','Chalandri','Kolonaki','Galatsi','Zografou','Peristeri','Nea Ionia','Kifisia',
+    'Glyfada'
+  ];
+  colors     text[] := ARRAY['#2E7D32','#1565C0','#6A1B9A','#E65100','#00695C','#BF360C','#37474F','#F9A825'];
+  i int;
+  uid uuid;
+  pos_val text;
+BEGIN
+  FOR i IN 1..array_length(names, 1) LOOP
+    uid := ('00000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid;
+    pos_val := positions[i];
+    INSERT INTO auth.users (
+      id, instance_id, email, encrypted_password, email_confirmed_at,
+      created_at, updated_at, raw_app_meta_data, raw_user_meta_data,
+      is_super_admin, role, aud,
+      confirmation_token, email_change, email_change_token_new, recovery_token
+    ) VALUES (
+      uid,
+      '00000000-0000-0000-0000-000000000000',
+      'player' || lpad(i::text, 3, '0') || '@kickup.app',
+      crypt('kickup123', gen_salt('bf')),
+      now(), now(), now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      json_build_object(
+        'full_name',    names[i],
+        'position',     pos_val,
+        'area',         areas[i],
+        'avatar_color', colors[((i-1) % 8) + 1]
+      )::jsonb,
+      false, 'authenticated', 'authenticated',
+      '', '', '', ''
+    );
+  END LOOP;
+END$$;
 
--- Profiles are auto-created by the trigger above.
--- But since we're seeding, we also set extra fields the trigger doesn't handle.
-update profiles set
-  bio           = 'Striker with a nose for goal. Left foot wizard. Free on weekends.',
-  stat_matches  = 42, stat_goals = 28, stat_wins = 24, stat_mvp = 5
-where id = '11111111-0001-0001-0001-000000000001';
+-- ─── 3. ENRICH PROFILES ────────────────────────────────────────────
+DO $$
+DECLARE
+  nationalities text[] := ARRAY['Greek','Greek','Greek','Greek','Greek','Greek','Greek','Greek','Greek','Greek'];
+  i int;
+  uid uuid;
+  nat text;
+  dob date;
+  ht  int;
+  ft  text;
+  feet text[] := ARRAY['right','left','both','right','right','left','right','both'];
+BEGIN
+  FOR i IN 1..100 LOOP
+    uid := ('00000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid;
+    dob := (DATE '1985-01-01' + (((i * 137 + 41) % (365*15)))::int);  -- ages 24-39
+    ht  := 165 + ((i * 7 + 3) % 25);  -- 165-189 cm
+    ft  := feet[((i-1) % 8) + 1];
+    UPDATE profiles SET
+      nationality    = 'Greek',
+      date_of_birth  = dob,
+      height         = ht,
+      preferred_foot = ft,
+      bio            = CASE (i % 5)
+        WHEN 0 THEN 'Passionate about the game. Looking for good competition.'
+        WHEN 1 THEN 'Playing since childhood. Love attacking football.'
+        WHEN 2 THEN 'Defensive midfielder who reads the game well.'
+        WHEN 3 THEN 'Weekend warrior. Football is life.'
+        ELSE 'Always give 100%. Team player first.'
+      END
+    WHERE id = uid;
+  END LOOP;
+END$$;
 
-update profiles set
-  bio           = 'Shot-stopper since 2012. Captain of Piraeus Pirates. Organizer.',
-  stat_matches  = 55, stat_goals = 0, stat_wins = 30, stat_mvp = 8
-where id = '11111111-0002-0002-0002-000000000002';
+-- ─── 4. ADMIN + FREELANCERS ────────────────────────────────────────
+-- p01 is admin
+UPDATE profiles SET is_admin = true
+WHERE id = '00000000-0000-0000-0000-000000000001';
 
-update profiles set
-  bio           = 'Box-to-box midfielder. Vision and stamina. Weekly 5-a-side veteran.',
-  stat_matches  = 38, stat_goals = 9, stat_wins = 18, stat_mvp = 4
-where id = '11111111-0003-0003-0003-000000000003';
-
-update profiles set
-  bio           = 'Centre-back. Reads the game well. Tall and aggressive in the air.',
-  stat_matches  = 29, stat_goals = 3, stat_wins = 17, stat_mvp = 2
-where id = '11111111-0004-0004-0004-000000000004';
-
-update profiles set
-  bio              = 'Freelancer. Available every Saturday. Quick with good technique.',
+-- p68-p100 are freelancers (available to join teams)
+UPDATE profiles SET
   is_freelancer    = true,
-  freelancer_until = '2026-03-01',
-  stat_matches     = 61, stat_goals = 14, stat_wins = 35, stat_mvp = 7
-where id = '11111111-0005-0005-0005-000000000005';
+  freelancer_until = CURRENT_DATE + 30
+WHERE id IN (
+  SELECT ('00000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid
+  FROM generate_series(68, 100) AS i
+);
 
-update profiles set
-  bio              = 'Tricky winger. Fast and direct. Looking for a 5v5 team.',
-  is_freelancer    = true,
-  freelancer_until = '2026-03-02',
-  stat_matches     = 22, stat_goals = 18, stat_wins = 12, stat_mvp = 3
-where id = '11111111-0006-0006-0006-000000000006';
+-- ─── 5. TEAMS ──────────────────────────────────────────────────────
+INSERT INTO teams (id, name, short_name, format, area, emoji, color, description, searching_for_opponent, created_by) VALUES
+  ('00000000-0000-0000-0001-000000000001','Kolonaki Kings','KKI','7v7','Kolonaki','🦁','#2E7D32','Top 7v7 squad from Kolonaki. Technically sharp, tactically disciplined.',true,'00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0001-000000000002','Piraeus Sharks','PSH','7v7','Piraeus','🌊','#1565C0','Physical and direct. We press hard and score harder.',false,'00000000-0000-0000-0000-000000000008'),
+  ('00000000-0000-0000-0001-000000000003','Athens Warriors','AWR','7v7','Exarcheia','🔥','#E65100','Street football roots, tournament ambitions.',true,'00000000-0000-0000-0000-000000000015'),
+  ('00000000-0000-0000-0001-000000000004','South Eagles','SEA','7v7','Glyfada','🦅','#6A1B9A','South side pride. Fast wingers, solid defense.',false,'00000000-0000-0000-0000-000000000022'),
+  ('00000000-0000-0000-0001-000000000005','North Stars','NST','7v7','Kifisia','⚡','#00695C','High-energy pressing game from the north suburbs.',true,'00000000-0000-0000-0000-000000000029'),
+  ('00000000-0000-0000-0001-000000000006','Pangrati FC','PFC','7v7','Pangrati','🏹','#BF360C','Old school club with modern tactics.',false,'00000000-0000-0000-0000-000000000036'),
+  ('00000000-0000-0000-0001-000000000007','Old City Wolves','OCW','7v7','Monastiraki','🐺','#37474F','Central Athens crew. Play together every weekend.',true,'00000000-0000-0000-0000-000000000043'),
+  ('00000000-0000-0000-0001-000000000008','Southside United','SUN','7v7','Nea Smyrni','🌟','#F9A825','United from the south. Tournament regulars.',false,'00000000-0000-0000-0000-000000000050'),
+  ('00000000-0000-0000-0001-000000000009','Maroussi Strikers','MST','5v5','Maroussi','🦊','#0D47A1','Quick 5v5 specialists. All about pace and pressing.',true,'00000000-0000-0000-0000-000000000057'),
+  ('00000000-0000-0000-0001-000000000010','Kallithea FC','KFC','6v6','Kallithea','🐉','#4E342E','6v6 purists. Technical play, patient build-up.',false,'00000000-0000-0000-0000-000000000062');
 
-update profiles set
-  bio              = 'Experienced keeper. Good with feet too. Free agent since Jan.',
-  is_freelancer    = true,
-  stat_matches     = 47, stat_goals = 0, stat_wins = 28, stat_mvp = 9
-where id = '11111111-0007-0007-0007-000000000007';
+-- ─── 6. TEAM MEMBERS ───────────────────────────────────────────────
+INSERT INTO team_members (team_id, player_id, role, status) VALUES
+  ('00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000001','captain','active'),
+  ('00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000002','player','active'),
+  ('00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000003','player','active'),
+  ('00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000004','player','active'),
+  ('00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000005','player','active'),
+  ('00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000006','player','active'),
+  ('00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000007','player','active'),
+  ('00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000008','captain','active'),
+  ('00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000009','player','active'),
+  ('00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000010','player','active'),
+  ('00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000011','player','active'),
+  ('00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000012','player','active'),
+  ('00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000013','player','active'),
+  ('00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000014','player','active'),
+  ('00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000015','captain','active'),
+  ('00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000016','player','active'),
+  ('00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000017','player','active'),
+  ('00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000018','player','active'),
+  ('00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000019','player','active'),
+  ('00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000020','player','active'),
+  ('00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000021','player','active'),
+  ('00000000-0000-0000-0001-000000000004','00000000-0000-0000-0000-000000000022','captain','active'),
+  ('00000000-0000-0000-0001-000000000004','00000000-0000-0000-0000-000000000023','player','active'),
+  ('00000000-0000-0000-0001-000000000004','00000000-0000-0000-0000-000000000024','player','active'),
+  ('00000000-0000-0000-0001-000000000004','00000000-0000-0000-0000-000000000025','player','active'),
+  ('00000000-0000-0000-0001-000000000004','00000000-0000-0000-0000-000000000026','player','active'),
+  ('00000000-0000-0000-0001-000000000004','00000000-0000-0000-0000-000000000027','player','active'),
+  ('00000000-0000-0000-0001-000000000004','00000000-0000-0000-0000-000000000028','player','active'),
+  ('00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000029','captain','active'),
+  ('00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000030','player','active'),
+  ('00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000031','player','active'),
+  ('00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000032','player','active'),
+  ('00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000033','player','active'),
+  ('00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000034','player','active'),
+  ('00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000035','player','active'),
+  ('00000000-0000-0000-0001-000000000006','00000000-0000-0000-0000-000000000036','captain','active'),
+  ('00000000-0000-0000-0001-000000000006','00000000-0000-0000-0000-000000000037','player','active'),
+  ('00000000-0000-0000-0001-000000000006','00000000-0000-0000-0000-000000000038','player','active'),
+  ('00000000-0000-0000-0001-000000000006','00000000-0000-0000-0000-000000000039','player','active'),
+  ('00000000-0000-0000-0001-000000000006','00000000-0000-0000-0000-000000000040','player','active'),
+  ('00000000-0000-0000-0001-000000000006','00000000-0000-0000-0000-000000000041','player','active'),
+  ('00000000-0000-0000-0001-000000000006','00000000-0000-0000-0000-000000000042','player','active'),
+  ('00000000-0000-0000-0001-000000000007','00000000-0000-0000-0000-000000000043','captain','active'),
+  ('00000000-0000-0000-0001-000000000007','00000000-0000-0000-0000-000000000044','player','active'),
+  ('00000000-0000-0000-0001-000000000007','00000000-0000-0000-0000-000000000045','player','active'),
+  ('00000000-0000-0000-0001-000000000007','00000000-0000-0000-0000-000000000046','player','active'),
+  ('00000000-0000-0000-0001-000000000007','00000000-0000-0000-0000-000000000047','player','active'),
+  ('00000000-0000-0000-0001-000000000007','00000000-0000-0000-0000-000000000048','player','active'),
+  ('00000000-0000-0000-0001-000000000007','00000000-0000-0000-0000-000000000049','player','active'),
+  ('00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000050','captain','active'),
+  ('00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000051','player','active'),
+  ('00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000052','player','active'),
+  ('00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000053','player','active'),
+  ('00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000054','player','active'),
+  ('00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000055','player','active'),
+  ('00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000056','player','active'),
+  ('00000000-0000-0000-0001-000000000009','00000000-0000-0000-0000-000000000057','captain','active'),
+  ('00000000-0000-0000-0001-000000000009','00000000-0000-0000-0000-000000000058','player','active'),
+  ('00000000-0000-0000-0001-000000000009','00000000-0000-0000-0000-000000000059','player','active'),
+  ('00000000-0000-0000-0001-000000000009','00000000-0000-0000-0000-000000000060','player','active'),
+  ('00000000-0000-0000-0001-000000000009','00000000-0000-0000-0000-000000000061','player','active'),
+  ('00000000-0000-0000-0001-000000000010','00000000-0000-0000-0000-000000000062','captain','active'),
+  ('00000000-0000-0000-0001-000000000010','00000000-0000-0000-0000-000000000063','player','active'),
+  ('00000000-0000-0000-0001-000000000010','00000000-0000-0000-0000-000000000064','player','active'),
+  ('00000000-0000-0000-0001-000000000010','00000000-0000-0000-0000-000000000065','player','active'),
+  ('00000000-0000-0000-0001-000000000010','00000000-0000-0000-0000-000000000066','player','active'),
+  ('00000000-0000-0000-0001-000000000010','00000000-0000-0000-0000-000000000067','player','active');
 
-update profiles set
-  bio           = 'Solid left back. Set-piece delivery specialist.',
-  stat_matches  = 33, stat_goals = 4, stat_wins = 20, stat_mvp = 1
-where id = '11111111-0008-0008-0008-000000000008';
+-- Set captain_id and home_ground for teams (captains = first member of each team)
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000001', home_ground='Kolonaki Sports Center' WHERE id='00000000-0000-0000-0001-000000000001';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000008', home_ground='Piraeus Municipal Stadium' WHERE id='00000000-0000-0000-0001-000000000002';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000015', home_ground='Exarcheia Community Pitch' WHERE id='00000000-0000-0000-0001-000000000003';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000022', home_ground='Glyfada Sports Complex' WHERE id='00000000-0000-0000-0001-000000000004';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000029', home_ground='Kifisia Athletic Club' WHERE id='00000000-0000-0000-0001-000000000005';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000036', home_ground='Pangrati Stadium' WHERE id='00000000-0000-0000-0001-000000000006';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000043', home_ground='Monastiraki Square Pitch' WHERE id='00000000-0000-0000-0001-000000000007';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000050', home_ground='Nea Smyrni Arena' WHERE id='00000000-0000-0000-0001-000000000008';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000057', home_ground='Maroussi Indoor Arena' WHERE id='00000000-0000-0000-0001-000000000009';
+UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000062', home_ground='Kallithea Sports Hall' WHERE id='00000000-0000-0000-0001-000000000010';
 
--- ─── TEAMS ────────────────────────────────────────────────────────
-insert into teams (id, name, short_name, area, format, emoji, color, banner_url, description, open_spots, searching_for_opponent, record_w, record_d, record_l, record_gf, record_ga, created_by)
-values
-  ('aaaaaaaa-0001-0001-0001-000000000001', 'Kolonaki Kings',    'KKG', 'Kolonaki',  '5v5',  '👑', '#2E7D32', 'https://images.unsplash.com/photo-1601788505117-18947ac4f2e6?w=800&q=80', 'The original Kings of Kolonaki. We play hard, celebrate harder. Thursdays & Saturdays.', 1, true,  14, 3, 2, 54, 22, '11111111-0001-0001-0001-000000000001'),
-  ('aaaaaaaa-0002-0002-0002-000000000002', 'Piraeus Pirates',   'PPR', 'Piraeus',   '7v7',  '⚡', '#1565C0', 'https://images.unsplash.com/photo-1764438246710-83c535cada80?w=800&q=80', 'Harbourside warriors. Any weather, any pitch. Just show up with boots.', 2, true,  9,  4, 6, 38, 31, '11111111-0002-0002-0002-000000000002'),
-  ('aaaaaaaa-0003-0003-0003-000000000003', 'Glyfada Gladiators','GGL', 'Glyfada',   '6v6',  '🛡️','#BF360C', null,                                                                          'Coastal warriors. Beachside training, pitch-ready always.',                             0, false, 10, 3, 4, 44, 27, '11111111-0004-0004-0004-000000000004'),
-  ('aaaaaaaa-0004-0004-0004-000000000004', 'Exarcheia United',  'EXU', 'Exarcheia', '5v5',  '✊', '#6A1B9A', null,                                                                          'Neighbourhood club. Everyone plays, everyone wins together.',                            2, true,  7,  5, 6, 29, 32, '11111111-0003-0003-0003-000000000003'),
-  ('aaaaaaaa-0005-0005-0005-000000000005', 'Kifisia FC',        'KFC', 'Kifisia',   '7v7',  '🌿','#33691E', null,                                                                          'Northern Athens finest. Well-organized, technical play preferred.',                      3, true,  16, 3, 1, 62, 14, null),
-  ('aaaaaaaa-0006-0006-0006-000000000006', 'Nea Smyrni Stars',  'NSS', 'Nea Smyrni','6v6',  '⭐', '#F9A825', null,                                                                          'Southern Athens crew. Playing every Sunday morning rain or shine.',                      0, false, 5,  7, 8, 25, 38, null),
-  ('aaaaaaaa-0007-0007-0007-000000000007', 'Pangrati Panthers', 'PGP', 'Pangrati',  '5v5',  '🐆', '#4E342E', null,                                                                          'Fast and furious. The old-timers of Pangrati. Est. 2015.',                              1, true,  11, 4, 5, 47, 30, '11111111-0006-0006-0006-000000000006'),
-  ('aaaaaaaa-0008-0008-0008-000000000008', 'Chalandri Chiefs',  'CHC', 'Chalandri', '8v8',  '🔥', '#B71C1C', null,                                                                          'Northeast Athens stronghold. Big pitch, big ambitions.',                                4, true,  6,  2, 7, 22, 30, '11111111-0008-0008-0008-000000000008')
-on conflict (id) do nothing;
+-- ─── 7. TOURNAMENT ─────────────────────────────────────────────────
+-- organizer = p01 (admin)
+INSERT INTO tournaments (id, name, description, organizer_id, venue, area, match_format, max_teams, teams_per_group, prize, entry_fee, bracket_format, start_date, end_date, status)
+VALUES (
+  '00000000-0000-0000-0003-000000000001',
+  'Athens 7v7 Summer Cup 2026',
+  'Annual 7v7 tournament gathering the best amateur clubs from across Athens. Group stage followed by knockout rounds.',
+  '00000000-0000-0000-0000-000000000001',
+  'Pedion Areos Sports Complex',
+  'Exarcheia',
+  '7v7', 8, 4,
+  '€500 + Trophy',
+  '€50',
+  'group_stage',
+  '2026-03-15',
+  '2026-04-12',
+  'group_stage'
+);
 
--- ─── TEAM MEMBERS ─────────────────────────────────────────────────
-insert into team_members (team_id, player_id, role) values
-  ('aaaaaaaa-0001-0001-0001-000000000001', '11111111-0001-0001-0001-000000000001', 'captain'),
-  ('aaaaaaaa-0001-0001-0001-000000000001', '11111111-0004-0004-0004-000000000004', 'player'),
-  ('aaaaaaaa-0002-0002-0002-000000000002', '11111111-0002-0002-0002-000000000002', 'captain'),
-  ('aaaaaaaa-0003-0003-0003-000000000003', '11111111-0004-0004-0004-000000000004', 'captain'),
-  ('aaaaaaaa-0004-0004-0004-000000000004', '11111111-0003-0003-0003-000000000003', 'captain'),
-  ('aaaaaaaa-0007-0007-0007-000000000007', '11111111-0006-0006-0006-000000000006', 'captain'),
-  ('aaaaaaaa-0008-0008-0008-000000000008', '11111111-0008-0008-0008-000000000008', 'captain')
-on conflict (team_id, player_id) do nothing;
+-- Registrations: teams 1-8 approved (7v7 tournament), teams 9-10 not in it
+INSERT INTO tournament_registrations (tournament_id, team_id, status) VALUES
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000001','approved'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000002','approved'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000003','approved'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000004','approved'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000005','approved'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000006','approved'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000007','approved'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000008','approved');
 
--- ─── MATCHES ──────────────────────────────────────────────────────
-insert into matches (
-  id, home_team_id, away_team_id, format, status,
-  match_date, match_time, location, area,
-  home_score, away_score, bet, notes, mvp_id
-) values
-  (
-    'bbbbbbbb-0001-0001-0001-000000000001',
-    'aaaaaaaa-0001-0001-0001-000000000001',
-    'aaaaaaaa-0002-0002-0002-000000000002',
-    '5v5', 'completed',
-    '2026-02-12', '19:00', 'SEGAS Indoor, Kolonaki', 'Kolonaki',
-    3, 1,
-    'Losers buy souvlaki for the whole team!',
-    'Dominant win. Defensive unit was solid.',
-    '11111111-0001-0001-0001-000000000001'
-  ),
-  (
-    'bbbbbbbb-0002-0002-0002-000000000002',
-    'aaaaaaaa-0003-0003-0003-000000000003',
-    'aaaaaaaa-0004-0004-0004-000000000004',
-    '6v6', 'completed',
-    '2026-02-10', '20:30', 'Glyfada Sports Center', 'Glyfada',
-    2, 2,
-    null, null,
-    '11111111-0003-0003-0003-000000000003'
-  ),
-  (
-    'bbbbbbbb-0003-0003-0003-000000000003',
-    'aaaaaaaa-0001-0001-0001-000000000001',
-    'aaaaaaaa-0005-0005-0005-000000000005',
-    '5v5', 'pre_match',
-    '2026-03-01', '18:00', 'SEGAS Indoor, Kolonaki', 'Kolonaki',
-    null, null,
-    'Losers buy coffee for winners',
-    null, null
-  ),
-  (
-    'bbbbbbbb-0004-0004-0004-000000000004',
-    'aaaaaaaa-0002-0002-0002-000000000002',
-    'aaaaaaaa-0007-0007-0007-000000000007',
-    '7v7', 'scheduling',
-    null, null, null, null,
-    null, null, null, null, null
-  ),
-  (
-    'bbbbbbbb-0005-0005-0005-000000000005',
-    'aaaaaaaa-0004-0004-0004-000000000004',
-    'aaaaaaaa-0008-0008-0008-000000000008',
-    '5v5', 'pending_challenge',
-    null, null, null, null,
-    null, null, null, null, null
-  ),
-  (
-    'bbbbbbbb-0006-0006-0006-000000000006',
-    'aaaaaaaa-0005-0005-0005-000000000005',
-    'aaaaaaaa-0006-0006-0006-000000000006',
-    '7v7', 'completed',
-    '2026-02-05', '17:00', 'Kifisia Sports Complex', 'Kifisia',
-    5, 0,
-    null, null, null
-  ),
-  (
-    'bbbbbbbb-0007-0007-0007-000000000007',
-    'aaaaaaaa-0003-0003-0003-000000000003',
-    'aaaaaaaa-0001-0001-0001-000000000001',
-    '6v6', 'disputed',
-    '2026-02-15', null, null, null,
-    null, null,
-    null,
-    'Score disagreement: Gladiators claim 3-2, Kings claim 2-3. Pending admin review.',
-    null
-  )
-on conflict (id) do nothing;
+-- Groups: A = t1-t4, B = t5-t8
+INSERT INTO tournament_groups (tournament_id, team_id, group_label) VALUES
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000001','A'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000002','A'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000003','A'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000004','A'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000005','B'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000006','B'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000007','B'),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0001-000000000008','B');
 
--- ─── MATCH PROPOSALS ──────────────────────────────────────────────
-insert into match_proposals (id, match_id, proposed_by_team_id, proposed_date, proposed_time, location, accepted)
-values
-  (
-    'cccccccc-0001-0001-0001-000000000001',
-    'bbbbbbbb-0004-0004-0004-000000000004',
-    'aaaaaaaa-0002-0002-0002-000000000002',
-    '2026-03-02', '19:00', 'Piraeus Municipal Field', false
-  ),
-  (
-    'cccccccc-0002-0002-0002-000000000002',
-    'bbbbbbbb-0004-0004-0004-000000000004',
-    'aaaaaaaa-0007-0007-0007-000000000007',
-    '2026-03-05', '20:00', 'Pangrati Synthetic Pitch', false
-  ),
-  (
-    'cccccccc-0003-0003-0003-000000000003',
-    'bbbbbbbb-0004-0004-0004-000000000004',
-    'aaaaaaaa-0002-0002-0002-000000000002',
-    '2026-03-07', '18:30', 'Piraeus Municipal Field', false
-  )
-on conflict (id) do nothing;
+-- ─── 8. MATCHES (pre_match first, completed last via trigger) ───────
+-- IDs: m01-m12 = tournament group stage, m13 = 5v5 friendly, m14 = upcoming
+INSERT INTO matches (id, home_team_id, away_team_id, format, status, match_date, match_time, location, area, created_by) VALUES
+  ('00000000-0000-0000-0002-000000000001','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0001-000000000002','7v7','pre_match','2026-03-15','11:00','Pedion Areos Field A','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000002','00000000-0000-0000-0001-000000000003','00000000-0000-0000-0001-000000000004','7v7','pre_match','2026-03-15','13:00','Pedion Areos Field A','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000003','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0001-000000000003','7v7','pre_match','2026-03-22','11:00','Pedion Areos Field A','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000004','00000000-0000-0000-0001-000000000002','00000000-0000-0000-0001-000000000004','7v7','pre_match','2026-03-22','13:00','Pedion Areos Field A','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000005','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0001-000000000004','7v7','pre_match','2026-03-29','11:00','Pedion Areos Field A','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000006','00000000-0000-0000-0001-000000000002','00000000-0000-0000-0001-000000000003','7v7','pre_match','2026-03-29','13:00','Pedion Areos Field A','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000007','00000000-0000-0000-0001-000000000005','00000000-0000-0000-0001-000000000006','7v7','pre_match','2026-03-15','11:00','Pedion Areos Field B','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000008','00000000-0000-0000-0001-000000000007','00000000-0000-0000-0001-000000000008','7v7','pre_match','2026-03-15','13:00','Pedion Areos Field B','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000009','00000000-0000-0000-0001-000000000005','00000000-0000-0000-0001-000000000007','7v7','pre_match','2026-03-22','11:00','Pedion Areos Field B','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000010','00000000-0000-0000-0001-000000000006','00000000-0000-0000-0001-000000000008','7v7','pre_match','2026-03-22','13:00','Pedion Areos Field B','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000011','00000000-0000-0000-0001-000000000005','00000000-0000-0000-0001-000000000008','7v7','pre_match','2026-03-29','11:00','Pedion Areos Field B','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000012','00000000-0000-0000-0001-000000000006','00000000-0000-0000-0001-000000000007','7v7','pre_match','2026-03-29','13:00','Pedion Areos Field B','Exarcheia','00000000-0000-0000-0000-000000000001'),
+  ('00000000-0000-0000-0002-000000000013','00000000-0000-0000-0001-000000000009','00000000-0000-0000-0001-000000000010','5v5','pre_match','2026-03-10','10:00','Maroussi Indoor Arena','Maroussi','00000000-0000-0000-0000-000000000057'),
+  ('00000000-0000-0000-0002-000000000014','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0001-000000000005','7v7','scheduling',NULL,NULL,NULL,'Exarcheia','00000000-0000-0000-0000-000000000001');
 
--- ─── MATCH LINEUPS ────────────────────────────────────────────────
-insert into match_lineups (match_id, team_id, player_id)
-values
-  ('bbbbbbbb-0003-0003-0003-000000000003', 'aaaaaaaa-0001-0001-0001-000000000001', '11111111-0001-0001-0001-000000000001'),
-  ('bbbbbbbb-0003-0003-0003-000000000003', 'aaaaaaaa-0001-0001-0001-000000000001', '11111111-0004-0004-0004-000000000004')
-on conflict (match_id, player_id) do nothing;
+-- ─── 9. TOURNAMENT MATCHES ─────────────────────────────────────────
+INSERT INTO tournament_matches (tournament_id, match_id, stage, group_label, match_order) VALUES
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000001','group','A',1),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000002','group','A',2),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000003','group','A',3),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000004','group','A',4),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000005','group','A',5),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000006','group','A',6),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000007','group','B',7),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000008','group','B',8),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000009','group','B',9),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000010','group','B',10),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000011','group','B',11),
+  ('00000000-0000-0000-0003-000000000001','00000000-0000-0000-0002-000000000012','group','B',12);
 
--- ─── MATCH EVENTS (goals in completed matches) ────────────────────
-insert into match_events (match_id, team_id, scorer_id, minute)
-values
-  -- m1: KKG 3-1 PPR
-  ('bbbbbbbb-0001-0001-0001-000000000001', 'aaaaaaaa-0001-0001-0001-000000000001', '11111111-0001-0001-0001-000000000001', 12),
-  ('bbbbbbbb-0001-0001-0001-000000000001', 'aaaaaaaa-0001-0001-0001-000000000001', '11111111-0001-0001-0001-000000000001', 31),
-  ('bbbbbbbb-0001-0001-0001-000000000001', 'aaaaaaaa-0001-0001-0001-000000000001', '11111111-0004-0004-0004-000000000004', 44),
-  -- m2: GGL 2-2 EXU
-  ('bbbbbbbb-0002-0002-0002-000000000002', 'aaaaaaaa-0004-0004-0004-000000000004', '11111111-0003-0003-0003-000000000003', 20),
-  ('bbbbbbbb-0002-0002-0002-000000000002', 'aaaaaaaa-0004-0004-0004-000000000004', '11111111-0003-0003-0003-000000000003', 38)
-on conflict do nothing;
+-- ─── 10. LINEUPS ───────────────────────────────────────────────────
+DO $$
+DECLARE
+  match_teams int[][] := ARRAY[
+    ARRAY[1,2], ARRAY[3,4], ARRAY[1,3], ARRAY[2,4],
+    ARRAY[1,4], ARRAY[2,3], ARRAY[5,6], ARRAY[7,8],
+    ARRAY[5,7], ARRAY[6,8], ARRAY[5,8], ARRAY[6,7],
+    ARRAY[9,10]
+  ];
+  starts int[] := ARRAY[1,8,15,22,29,36,43,50,57,62];
+  counts int[] := ARRAY[7,7,7,7,7,7,7,7,5,6];
+  m int; side int; tidx int; match_id uuid; team_id uuid; player_id uuid; p_start int; p_n int; i int;
+BEGIN
+  FOR m IN 1..13 LOOP
+    match_id := ('00000000-0000-0000-0002-' || lpad(m::text, 12, '0'))::uuid;
+    FOR side IN 1..2 LOOP
+      tidx   := match_teams[m][side];
+      team_id := ('00000000-0000-0000-0001-' || lpad(tidx::text, 12, '0'))::uuid;
+      p_start := starts[tidx];
+      p_n     := counts[tidx];
+      FOR i IN 0..(p_n - 1) LOOP
+        player_id := ('00000000-0000-0000-0000-' || lpad((p_start + i)::text, 12, '0'))::uuid;
+        INSERT INTO match_lineups (match_id, team_id, player_id)
+        VALUES (match_id, team_id, player_id)
+        ON CONFLICT DO NOTHING;
+      END LOOP;
+    END LOOP;
+  END LOOP;
+END$$;
 
--- ─── NOTIFICATIONS ────────────────────────────────────────────────
--- Nikos (user 1) notifications
-insert into notifications (id, user_id, type, title, body, read, team_id, match_id, avatar_emoji, avatar_color)
-values
-  (
-    'dddddddd-0001-0001-0001-000000000001',
-    '11111111-0001-0001-0001-000000000001',
-    'challenge', 'Challenge received!',
-    'Pangrati Panthers want to face Kolonaki Kings in a 5v5 match.',
-    false,
-    'aaaaaaaa-0007-0007-0007-000000000007', null,
-    '🐆', '#4E342E'
-  ),
-  (
-    'dddddddd-0002-0002-0002-000000000002',
-    '11111111-0001-0001-0001-000000000001',
-    'result_confirmed', 'Result confirmed ✅',
-    'Kolonaki Kings 3 – 1 Piraeus Pirates. Match result agreed by both teams.',
-    false,
-    null, 'bbbbbbbb-0001-0001-0001-000000000001',
-    '✅', '#2E7D32'
-  ),
-  (
-    'dddddddd-0003-0003-0003-000000000003',
-    '11111111-0001-0001-0001-000000000001',
-    'scheduling', 'New time slot proposed',
-    'Piraeus Pirates propose 7 Mar @ 18:30 – Piraeus Municipal Field.',
-    false,
-    null, 'bbbbbbbb-0004-0004-0004-000000000004',
-    '⚡', '#1565C0'
-  ),
-  (
-    'dddddddd-0004-0004-0004-000000000004',
-    '11111111-0001-0001-0001-000000000001',
-    'spot_applied', 'Player applied for open spot',
-    'Spyros Athanasiou (FWD) applied to join Kolonaki Kings.',
-    true,
-    'aaaaaaaa-0001-0001-0001-000000000001', null,
-    '🏃', '#00695C'
-  ),
-  (
-    'dddddddd-0005-0005-0005-000000000005',
-    '11111111-0001-0001-0001-000000000001',
-    'bet_reminder', 'Bet reminder ☕',
-    'Don''t forget: Piraeus Pirates owe souvlaki for the whole team!',
-    true,
-    null, 'bbbbbbbb-0001-0001-0001-000000000001',
-    '🍖', '#E65100'
-  ),
-  (
-    'dddddddd-0006-0006-0006-000000000006',
-    '11111111-0001-0001-0001-000000000001',
-    'match_reminder', 'Match in 2 days!',
-    'Kolonaki Kings vs Kifisia FC — 1 Mar @ 18:00, SEGAS Indoor.',
-    true,
-    null, 'bbbbbbbb-0003-0003-0003-000000000003',
-    '⚽', '#2E7D32'
-  )
-on conflict (id) do nothing;
+-- ─── 11. MATCH EVENTS (goals) ────────────────────────────────────────
+INSERT INTO match_events (match_id, team_id, scorer_id, minute) VALUES
+  ('00000000-0000-0000-0002-000000000001','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000001',12),
+  ('00000000-0000-0000-0002-000000000001','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000006',34),
+  ('00000000-0000-0000-0002-000000000001','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000001',67),
+  ('00000000-0000-0000-0002-000000000001','00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000014',55),
+  ('00000000-0000-0000-0002-000000000002','00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000016',23),
+  ('00000000-0000-0000-0002-000000000002','00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000021',58),
+  ('00000000-0000-0000-0002-000000000002','00000000-0000-0000-0001-000000000004','00000000-0000-0000-0000-000000000025',31),
+  ('00000000-0000-0000-0002-000000000002','00000000-0000-0000-0001-000000000004','00000000-0000-0000-0000-000000000028',72),
+  ('00000000-0000-0000-0002-000000000003','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000002',18),
+  ('00000000-0000-0000-0002-000000000003','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000006',62),
+  ('00000000-0000-0000-0002-000000000003','00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000016',44),
+  ('00000000-0000-0000-0002-000000000004','00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000011',9),
+  ('00000000-0000-0000-0002-000000000004','00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000014',37),
+  ('00000000-0000-0000-0002-000000000004','00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000011',70),
+  ('00000000-0000-0000-0002-000000000005','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000001',7),
+  ('00000000-0000-0000-0002-000000000005','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000001',29),
+  ('00000000-0000-0000-0002-000000000005','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000006',51),
+  ('00000000-0000-0000-0002-000000000005','00000000-0000-0000-0001-000000000001','00000000-0000-0000-0000-000000000002',78),
+  ('00000000-0000-0000-0002-000000000005','00000000-0000-0000-0001-000000000004','00000000-0000-0000-0000-000000000025',43),
+  ('00000000-0000-0000-0002-000000000006','00000000-0000-0000-0001-000000000002','00000000-0000-0000-0000-000000000014',26),
+  ('00000000-0000-0000-0002-000000000006','00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000015',14),
+  ('00000000-0000-0000-0002-000000000006','00000000-0000-0000-0001-000000000003','00000000-0000-0000-0000-000000000021',63),
+  ('00000000-0000-0000-0002-000000000007','00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000031',55),
+  ('00000000-0000-0000-0002-000000000008','00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000051',33),
+  ('00000000-0000-0000-0002-000000000008','00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000055',61),
+  ('00000000-0000-0000-0002-000000000009','00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000029',19),
+  ('00000000-0000-0000-0002-000000000009','00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000035',68),
+  ('00000000-0000-0000-0002-000000000009','00000000-0000-0000-0001-000000000007','00000000-0000-0000-0000-000000000044',41),
+  ('00000000-0000-0000-0002-000000000009','00000000-0000-0000-0001-000000000007','00000000-0000-0000-0000-000000000049',77),
+  ('00000000-0000-0000-0002-000000000010','00000000-0000-0000-0001-000000000006','00000000-0000-0000-0000-000000000036',22),
+  ('00000000-0000-0000-0002-000000000010','00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000051',11),
+  ('00000000-0000-0000-0002-000000000010','00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000055',48),
+  ('00000000-0000-0000-0002-000000000010','00000000-0000-0000-0001-000000000008','00000000-0000-0000-0000-000000000052',74),
+  ('00000000-0000-0000-0002-000000000011','00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000031',15),
+  ('00000000-0000-0000-0002-000000000011','00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000035',44),
+  ('00000000-0000-0000-0002-000000000011','00000000-0000-0000-0001-000000000005','00000000-0000-0000-0000-000000000029',79),
+  ('00000000-0000-0000-0002-000000000012','00000000-0000-0000-0001-000000000006','00000000-0000-0000-0000-000000000040',28),
+  ('00000000-0000-0000-0002-000000000012','00000000-0000-0000-0001-000000000006','00000000-0000-0000-0000-000000000036',65),
+  ('00000000-0000-0000-0002-000000000012','00000000-0000-0000-0001-000000000007','00000000-0000-0000-0000-000000000044',52),
+  ('00000000-0000-0000-0002-000000000013','00000000-0000-0000-0001-000000000009','00000000-0000-0000-0000-000000000057',8),
+  ('00000000-0000-0000-0002-000000000013','00000000-0000-0000-0001-000000000009','00000000-0000-0000-0000-000000000061',31),
+  ('00000000-0000-0000-0002-000000000013','00000000-0000-0000-0001-000000000009','00000000-0000-0000-0000-000000000057',54),
+  ('00000000-0000-0000-0002-000000000013','00000000-0000-0000-0001-000000000010','00000000-0000-0000-0000-000000000064',20),
+  ('00000000-0000-0000-0002-000000000013','00000000-0000-0000-0001-000000000010','00000000-0000-0000-0000-000000000062',47);
+
+-- ─── 12. COMPLETE MATCHES (triggers update all stats) ──────────────
+UPDATE matches SET status='completed', home_score=3, away_score=1 WHERE id='00000000-0000-0000-0002-000000000001';
+UPDATE matches SET status='completed', home_score=2, away_score=2 WHERE id='00000000-0000-0000-0002-000000000002';
+UPDATE matches SET status='completed', home_score=2, away_score=1 WHERE id='00000000-0000-0000-0002-000000000003';
+UPDATE matches SET status='completed', home_score=3, away_score=0 WHERE id='00000000-0000-0000-0002-000000000004';
+UPDATE matches SET status='completed', home_score=4, away_score=1 WHERE id='00000000-0000-0000-0002-000000000005';
+UPDATE matches SET status='completed', home_score=1, away_score=2 WHERE id='00000000-0000-0000-0002-000000000006';
+UPDATE matches SET status='completed', home_score=1, away_score=0 WHERE id='00000000-0000-0000-0002-000000000007';
+UPDATE matches SET status='completed', home_score=0, away_score=2 WHERE id='00000000-0000-0000-0002-000000000008';
+UPDATE matches SET status='completed', home_score=2, away_score=2 WHERE id='00000000-0000-0000-0002-000000000009';
+UPDATE matches SET status='completed', home_score=1, away_score=3 WHERE id='00000000-0000-0000-0002-000000000010';
+UPDATE matches SET status='completed', home_score=3, away_score=0 WHERE id='00000000-0000-0000-0002-000000000011';
+UPDATE matches SET status='completed', home_score=2, away_score=1 WHERE id='00000000-0000-0000-0002-000000000012';
+UPDATE matches SET status='completed', home_score=3, away_score=2 WHERE id='00000000-0000-0000-0002-000000000013';
