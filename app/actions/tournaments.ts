@@ -166,6 +166,16 @@ export async function advanceToKnockoutsAction(tournamentId: string) {
   return { success: true };
 }
 
+export async function advanceToFinalAction(tournamentId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("advance_to_final", {
+    p_tournament_id: tournamentId,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/tournaments/${tournamentId}`);
+  return { success: true };
+}
+
 export async function completeTournamentAction(tournamentId: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("complete_tournament", {

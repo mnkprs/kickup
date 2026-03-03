@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { Profile, AreaGroup } from "@/lib/types";
+import { BackButton } from "@/components/back-button";
 import { NotificationsButton } from "@/components/notifications-button";
 import { ColorSwatchPicker } from "@/components/color-swatch-picker";
 import { AreaGroupSelect } from "@/components/area-group-select";
@@ -229,12 +230,7 @@ export function ProfileSettings({
       <div className="profile-settings">
         <header className="profile-settings__header px-5 pt-12 pb-4 flex items-center justify-between">
           <div className="profile-settings__header-left flex items-center gap-3">
-            <Link
-              href="/profile"
-              className="profile-settings__back-link h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
-            >
-              <ArrowLeft size={18} className="text-muted-foreground" />
-            </Link>
+            <BackButton />
             <h1 className="profile-settings__title text-foreground font-semibold text-lg">Settings</h1>
           </div>
           <NotificationsButton />

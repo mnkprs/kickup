@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, MapPin, Clock, Calendar, Check, ChevronRight, Trophy, Minus, Plus, Pencil, X } from "lucide-react";
 import Link from "next/link";
+import { BackButton } from "@/components/back-button";
 import { format, parseISO } from "date-fns";
 import { NotificationsButton } from "@/components/notifications-button";
 import type { Match } from "@/lib/types";
@@ -390,7 +391,7 @@ export function MatchDetailClient({
     const result = await declineChallengeAction(match.id);
     setLoading(false);
     if (result.error) { setError(result.error); return; }
-    router.push("/matches");
+    router.back();
   }
 
   async function handlePropose() {
@@ -567,12 +568,7 @@ export function MatchDetailClient({
     <>
       <header className="match-detail-header px-5 pt-12 pb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link
-            href="/matches"
-            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
-          >
-            <ArrowLeft size={18} className="text-muted-foreground" />
-          </Link>
+          <BackButton />
           <h1 className="text-foreground font-semibold text-lg">Match</h1>
         </div>
         <div className="flex items-center gap-2">

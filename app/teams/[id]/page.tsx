@@ -3,7 +3,6 @@ import { getTeam, getTeamMembers, getPendingJoinRequests } from "@/lib/db/teams"
 import { getMatchesForTeam } from "@/lib/db/matches";
 import type { Team, Profile, Match, TeamMember } from "@/lib/types";
 import {
-  ArrowLeft,
   MapPin,
   Users,
   Crown,
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
+import { BackButton } from "@/components/back-button";
 import { NotificationsButton } from "@/components/notifications-button";
 import { TeamSettingsButton } from "@/components/team-settings-button";
 import { TeamAvatar } from "@/components/team-avatar";
@@ -199,12 +199,7 @@ export default async function TeamDetailPage({
       <header className="team-detail-header px-5 pt-12 pb-2">
         <div className="team-detail-header__top flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <Link
-              href="/teams"
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
-            >
-              <ArrowLeft size={18} className="text-muted-foreground" />
-            </Link>
+            <BackButton />
             <h1 className="text-foreground font-semibold text-lg">Team Detail</h1>
           </div>
           <div className="flex items-center gap-2">

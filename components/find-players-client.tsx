@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react";
 import type { Profile } from "@/lib/types";
 import {
-  ArrowLeft,
   Search,
   UserPlus,
   MapPin,
@@ -11,6 +10,7 @@ import {
   Crosshair,
 } from "lucide-react";
 import Link from "next/link";
+import { BackButton } from "@/components/back-button";
 import { NotificationsButton } from "@/components/notifications-button";
 import { Avatar } from "@/components/avatar";
 import { invitePlayerToTeamAction } from "@/app/actions/teams";
@@ -60,12 +60,7 @@ export function FindPlayersClient({
       <header className="find-players-header px-5 pt-12 pb-2">
         <div className="find-players-header__top flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
-            >
-              <ArrowLeft size={18} className="text-muted-foreground" />
-            </Link>
+            <BackButton />
             <h1 className="text-foreground font-semibold text-lg">Find Players</h1>
           </div>
           <div className="flex items-center gap-2">

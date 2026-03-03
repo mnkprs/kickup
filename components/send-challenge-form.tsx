@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Swords, Search, Check } from "lucide-react";
-import Link from "next/link";
+import { BackButton } from "@/components/back-button";
 import { TeamAvatar } from "@/components/team-avatar";
 import { NotificationsButton } from "@/components/notifications-button";
 import type { Team } from "@/lib/types";
@@ -52,12 +52,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
       <header className="send-challenge-form__header px-5 pt-12 pb-4 flex items-center justify-between">
         <div className="send-challenge-form__header-left flex items-center gap-3">
           {step === 0 ? (
-            <Link
-              href="/matches"
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
-            >
-              <ArrowLeft size={18} className="text-muted-foreground" />
-            </Link>
+            <BackButton />
           ) : (
             <button
               onClick={() => setStep((s) => s - 1)}

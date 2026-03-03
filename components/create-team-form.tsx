@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Users } from "lucide-react";
-import Link from "next/link";
+import { Users } from "lucide-react";
+import { BackButton } from "@/components/back-button";
 import { NotificationsButton } from "@/components/notifications-button";
 import { ColorSwatchPicker } from "@/components/color-swatch-picker";
 import { AreaGroupSelect } from "@/components/area-group-select";
@@ -64,12 +64,7 @@ export function CreateTeamForm({ areaGroups, emojis, colors }: CreateTeamFormPro
     <div className="create-team-form">
       <header className="create-team-form__header px-5 pt-12 pb-4 flex items-center justify-between">
         <div className="create-team-form__header-left flex items-center gap-3">
-          <Link
-            href="/teams"
-            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
-          >
-            <ArrowLeft size={18} className="text-muted-foreground" />
-          </Link>
+          <BackButton />
           <h1 className="text-foreground font-semibold text-lg">Create Team</h1>
         </div>
         <NotificationsButton />

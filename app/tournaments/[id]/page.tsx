@@ -6,8 +6,9 @@ import {
   getTournamentTopScorers,
 } from "@/lib/db/tournaments";
 import { getProfile } from "@/lib/db/profiles";
-import { ArrowLeft, Trophy } from "lucide-react";
+import { Trophy } from "lucide-react";
 import Link from "next/link";
+import { BackButton } from "@/components/back-button";
 import { createClient } from "@/lib/supabase/server";
 import { TournamentStandings } from "@/components/tournament-standings";
 import { TournamentFixtures } from "@/components/tournament-fixtures";
@@ -105,12 +106,7 @@ export default async function TournamentDetailPage({
     <div className="tournament-detail-page">
       <header className="tournament-detail-header px-5 pt-12 pb-4">
         <div className="tournament-detail-header__top flex items-center gap-3 mb-5">
-          <Link
-            href="/tournaments"
-            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors shrink-0"
-          >
-            <ArrowLeft size={18} className="text-muted-foreground" />
-          </Link>
+          <BackButton />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
               {tournament.status === "in_progress" && <LiveDot className="shrink-0" />}
@@ -176,6 +172,9 @@ export default async function TournamentDetailPage({
             tournamentId={id}
             rawStatus={tournament.raw_status}
             teamsCount={tournament.teams_count}
+            knockoutMatches={matches.filter(
+              (m) => m.stage === "semi_final" || m.stage === "final"
+            )}
           />
         )}
 

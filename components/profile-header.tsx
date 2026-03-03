@@ -1,23 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import type { Profile, Team } from "@/lib/types";
-import { Settings, Share2, Crown, ArrowLeft } from "lucide-react";
-import { AvatarUpload } from "@/components/avatar-upload";
-
-function BackButton() {
-  const router = useRouter();
-  return (
-    <button
-      onClick={() => router.back()}
-      className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
-      aria-label="Go back"
-    >
-      <ArrowLeft size={18} className="text-muted-foreground" />
-    </button>
-  );
-}
+import { Settings, Share2, Crown } from "lucide-react";
 import Link from "next/link";
+import { BackButton } from "@/components/back-button";
+import { AvatarUpload } from "@/components/avatar-upload";
 import { NotificationsButton } from "@/components/notifications-button";
 
 interface ProfileHeaderProps {

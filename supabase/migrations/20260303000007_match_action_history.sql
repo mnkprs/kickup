@@ -1,8 +1,8 @@
 -- KICKUP — Match action history
 -- Log score submissions (captain, admin, organizer) for audit trail under match details.
 
--- 1. Create match_action_history table
-create table match_action_history (
+-- 1. Create match_action_history table (idempotent: skip if already exists)
+create table if not exists match_action_history (
   id          uuid        primary key default gen_random_uuid(),
   match_id    uuid        not null references matches(id) on delete cascade,
   actor_id    uuid        references profiles(id) on delete set null,
@@ -12,14 +12,15 @@ create table match_action_history (
   created_at  timestamptz not null default now()
 );
 
-create index match_action_history_match_idx on match_action_history (match_id);
-create index match_action_history_created_idx on match_action_history (match_id, created_at desc);
+create index if not exists match_action_history_match_idx on match_action_history (match_id);
+create index if not exists match_action_history_created_idx on match_action_history (match_id, created_at desc);
 
 comment on table match_action_history is 'Audit log of score submissions per match (captain, admin, organizer)';
 
 alter table match_action_history enable row level security;
 
 -- Public read (matches are public; history is shown on match detail)
+drop policy if exists "match_action_history_select_public" on match_action_history;
 create policy "match_action_history_select_public"
   on match_action_history for select using (true);
 
