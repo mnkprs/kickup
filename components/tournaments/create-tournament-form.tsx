@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trophy } from "lucide-react";
+import { Info, Trophy } from "lucide-react";
 import { BackButton } from "@/components/ui/back-button";
 import Link from "next/link";
 import { NotificationsButton } from "@/components/notifications/notifications-button";
@@ -168,9 +168,15 @@ export function CreateTournamentForm({ areaGroups }: CreateTournamentFormProps) 
               </button>
             ))}
           </div>
-          <p className="text-muted-foreground text-xs mt-1">
-            Groups + Knockout is the most common format.
-          </p>
+          {bracketFormat === "round_robin" && (
+            <div className="mt-3 p-3 rounded-xl bg-info/10 border border-info/20 flex gap-2">
+              <Info className="h-4 w-4 shrink-0 text-info mt-0.5" />
+              <p className="text-xs text-foreground">
+                Round robin is a tournament format where every participant plays
+                every other participant at least once and is a single ladder.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Teams per group (only when group_stage) */}
