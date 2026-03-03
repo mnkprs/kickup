@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import {
   getTournament,
@@ -6,20 +7,12 @@ import {
   getTournamentTopScorers,
 } from "@/lib/db/tournaments";
 import { getProfile } from "@/lib/db/profiles";
-import { Trophy } from "lucide-react";
-import Link from "next/link";
+import { LiveDot } from "@/components/live-dot";
 import { BackButton } from "@/components/back-button";
 import { createClient } from "@/lib/supabase/server";
-import { TournamentStandings } from "@/components/tournament-standings";
-import { TournamentFixtures } from "@/components/tournament-fixtures";
-import { TournamentBracket } from "@/components/tournament-bracket";
-import { LiveDot } from "@/components/live-dot";
-import { TournamentScorers } from "@/components/tournament-scorers";
-import { TournamentPendingRegistrations } from "@/components/tournament-pending-registrations";
-import { TournamentOrganizerControls } from "@/components/tournament-organizer-controls";
 import { TournamentEditButton } from "@/components/tournament-edit-button";
-import { TournamentDetailsAccordion } from "@/components/tournament-details-accordion";
 import { RegisterTournamentButton } from "@/components/register-tournament-button";
+import { TournamentDetailClient } from "@/components/tournament-detail-client";
 
 function getStatusStyle(status: string) {
   switch (status) {
@@ -142,83 +135,16 @@ export default async function TournamentDetailPage({
       )}
       </header>
 
-      <main className="tournament-detail__main flex flex-col gap-6 pb-24 pt-2">
-        <TournamentDetailsAccordion
-          details={{
-            organizerId: tournament.organizer_id,
-            organizer: tournament.organizer,
-            bracketFormat: tournament.format,
-            matchFormat: tournament.match_format,
-            startDate: tournament.start_date,
-            endDate: tournament.end_date,
-            area: tournament.area,
-            venue: tournament.venue,
-            teamsCount: tournament.teams_count,
-            maxTeams: tournament.max_teams,
-            prize: tournament.prize,
-            description: tournament.description,
-          }}
-        />
-
-        {canManageRegistrations && tournament.pending_registrations.length > 0 && (
-          <TournamentPendingRegistrations
-            registrations={tournament.pending_registrations}
-            tournamentId={id}
-          />
-        )}
-
-        {canManageRegistrations && tournament.raw_status && tournament.raw_status !== "completed" && (
-          <TournamentOrganizerControls
-            tournamentId={id}
-            rawStatus={tournament.raw_status}
-            teamsCount={tournament.teams_count}
-            knockoutMode={tournament.knockout_mode}
-            knockoutMatches={matches.filter(
-              (m) =>
-                m.stage === "round_of_16" ||
-                m.stage === "quarter_final" ||
-                m.stage === "semi_final" ||
-                m.stage === "final"
-            )}
-            advancingTeams={standings.flatMap((g) =>
-              g.standings.slice(0, 2).map((s) => ({
-                id: s.team_id,
-                name: s.team.name,
-                short_name: s.team.short_name,
-              }))
-            )}
-          />
-        )}
-
-        <TournamentStandings
-          standingsGroups={standings}
-          title={tournament.status === "upcoming" ? "Enrolled Teams" : "Standings"}
-          canRemoveTeam={canManageRegistrations && tournament.raw_status === "registration"}
-          tournamentId={canManageRegistrations && tournament.raw_status === "registration" ? id : undefined}
-        />
-        {tournament.raw_status === "knockout_stage" && (
-          <TournamentBracket matches={matches} />
-        )}
-        <TournamentFixtures
-          matches={matches}
-          tournamentId={id}
-          canManageSchedule={canManageRegistrations && tournament.status === "in_progress"}
-        />
-        <TournamentScorers scorers={scorers} />
-
-        {standings.every((g) => g.standings.length === 0) && matches.length === 0 && scorers.length === 0 && (
-          <section className="tournament-detail__empty px-5 py-8 flex flex-col items-center gap-3 text-center">
-            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-              <Trophy size={20} className="text-muted-foreground" />
-            </div>
-            <p className="text-muted-foreground text-sm">
-              {tournament.status === "upcoming"
-                ? "Waiting for teams to join. Start the tournament when ready."
-                : "No data available yet"}
-            </p>
-          </section>
-        )}
-      </main>
+      <Suspense fallback={<div className="h-32 animate-pulse bg-muted/30 rounded-xl mx-5" />}>
+        <TournamentDetailClient
+        tournamentId={id}
+        tournament={tournament}
+        standings={standings}
+        matches={matches}
+        scorers={scorers}
+        canManageRegistrations={canManageRegistrations}
+      />
+      </Suspense>
     </div>
   );
 }
