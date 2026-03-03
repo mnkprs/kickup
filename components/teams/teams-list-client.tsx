@@ -111,14 +111,14 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
             <NotificationsButton />
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
+              className="teams-list-header__search-btn h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <Search size={18} className="text-muted-foreground" />
             </button>
             {!userTeamId && (
               <Link
                 href="/teams/create"
-                className="h-10 w-10 rounded-full bg-accent flex items-center justify-center hover:opacity-90 transition-opacity"
+                className="teams-list-header__create-link h-10 w-10 rounded-full bg-accent flex items-center justify-center hover:opacity-90 transition-opacity"
               >
                 <UserPlus size={18} className="text-accent-foreground" />
               </Link>
@@ -134,7 +134,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
               autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl bg-card border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
+              className="teams-list-header__search-input w-full rounded-xl bg-card border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
             />
           </div>
         )}
@@ -169,7 +169,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
             record.total > 0 ? Math.round((team.wins / record.total) * 100) : 0;
 
           return (
-            <Link key={team.id} href={`/teams/${team.id}`} className="team-card-link">
+            <Link key={team.id} href={`/teams/${team.id}`} className="teams-list__team-card-link team-card-link">
               <div
                 className={`team-card rounded-xl bg-card border border-border shadow-card p-4 cursor-pointer group hover:border-accent/40 transition-colors pressable ${isMyTeam ? "team-card--my-team" : ""} ${
                   isMyTeam ? "border-accent/30" : "border-border"
@@ -182,7 +182,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
                     className={isMyTeam ? "ring-2 ring-accent/30" : ""}
                   />
 
-                  <div className="flex-1 min-w-0">
+                  <div className="team-card__title-block flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-foreground font-semibold text-sm truncate">
                         {team.name}
@@ -214,7 +214,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
                 </div>
 
                 {/* Record + Win rate */}
-                <div className="flex items-center gap-3 mb-2.5">
+                <div className="team-card__record flex items-center gap-3 mb-2.5">
                   <span className="text-xs text-muted-foreground">
                     <span className="font-bold text-win">{team.wins}</span>W
                   </span>
@@ -226,14 +226,14 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
                   </span>
                 </div>
 
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden mb-2.5">
+                <div className="team-card__win-bar h-1.5 rounded-full bg-muted overflow-hidden mb-2.5">
                   <div
                     className="h-full rounded-full bg-accent transition-all"
                     style={{ width: `${winRate}%` }}
                   />
                 </div>
 
-                <div className="flex items-center justify-between pt-2.5 border-t border-border">
+                <div className="team-card__footer flex items-center justify-between pt-2.5 border-t border-border">
                   <div className="flex items-center gap-1.5">
                     <Trophy size={11} className="text-draw" />
                     <span className="text-draw text-[11px] font-medium">

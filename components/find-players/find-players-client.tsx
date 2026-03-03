@@ -178,7 +178,7 @@ export function FindPlayersClient({
             <NotificationsButton />
             <button
               onClick={() => setShowSearch(!showSearch)}
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
+              className="find-players-header__search-btn h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <Search size={18} className="text-muted-foreground" />
             </button>
@@ -190,27 +190,27 @@ export function FindPlayersClient({
         </p>
 
         {showSearch && (
-          <div className="mb-4">
+          <div className="find-players-header__search mb-4">
             <input
               type="text"
               placeholder="Search by name, position, area..."
               autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl bg-card border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
+              className="find-players-header__search-input w-full rounded-xl bg-card border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
             />
           </div>
         )}
 
         {/* Position filter pills */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+        <div className="find-players-header__position-filters flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
           {POSITIONS.map((pos) => {
             const isActive = positionFilter === pos;
             return (
               <button
                 key={pos}
                 onClick={() => setPositionFilter(pos)}
-                className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                className={`find-players-header__position-pill shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${isActive ? "find-players-header__position-pill--active" : ""} ${
                   isActive
                     ? "bg-accent text-accent-foreground"
                     : "bg-card border border-border text-muted-foreground hover:text-foreground"
@@ -223,14 +223,14 @@ export function FindPlayersClient({
         </div>
 
         {/* Looking + Area filters */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+        <div className="find-players-header__looking-filters flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
           {LOOKING_FILTERS.map((opt) => {
             const isActive = lookingFilter === opt;
             return (
               <button
                 key={opt}
                 onClick={() => setLookingFilter(opt)}
-                className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                className={`find-players-header__looking-pill shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${isActive ? "find-players-header__looking-pill--active" : ""} ${
                   isActive
                     ? "bg-accent text-accent-foreground"
                     : "bg-card border border-border text-muted-foreground hover:text-foreground"
@@ -254,7 +254,7 @@ export function FindPlayersClient({
 
       <main className="find-players__main px-5 flex flex-col gap-3 pb-24">
         {inviteError && (
-          <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+          <div className="find-players__invite-error rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
             {inviteError}
           </div>
         )}
@@ -269,10 +269,10 @@ export function FindPlayersClient({
               key={player.id}
               className="find-players__player-card rounded-xl bg-card border border-border shadow-card p-4"
             >
-              <div className="flex items-center gap-2">
+              <div className="find-players__player-card-inner flex items-center gap-2">
                 <Link
                   href={`/profile/${player.id}`}
-                  className="flex items-center gap-3 flex-1 min-w-0"
+                  className="find-players__player-card-link flex items-center gap-3 flex-1 min-w-0"
                 >
                   <Avatar
                     avatar_url={player.avatar_url}
@@ -282,18 +282,18 @@ export function FindPlayersClient({
                     size="lg"
                     colorOpacity="30"
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
+                  <div className="find-players__player-card-info flex-1 min-w-0">
+                    <div className="find-players__player-card-name-row flex items-center gap-2 flex-wrap">
                       <h3 className="text-foreground font-semibold text-sm truncate">
                         {player.full_name}
                       </h3>
                       {isSelf && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded-full shrink-0">
+                        <span className="find-players__player-card-badge text-[9px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded-full shrink-0">
                           You
                         </span>
                       )}
                       {playerLooking && (
-                        <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-full shrink-0">
+                        <span className="find-players__player-card-badge flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-destructive bg-destructive/10 px-1.5 py-0.5 rounded-full shrink-0">
                           <span className="relative flex h-1.5 w-1.5 shrink-0">
                             <span className="absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75 animate-ping" />
                             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
@@ -302,7 +302,7 @@ export function FindPlayersClient({
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                    <div className="find-players__player-card-meta flex items-center gap-3 mt-0.5 flex-wrap">
                       {player.position && (
                         <span className="text-xs font-medium text-accent bg-accent/10 px-2 py-0.5 rounded-full">
                           {player.position}
@@ -322,7 +322,7 @@ export function FindPlayersClient({
                   <button
                     onClick={() => handleInvite(player.id)}
                     disabled={!!invitingId}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-accent-foreground text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0 pressable"
+                    className="find-players__player-card-invite-btn flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent text-accent-foreground text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0 pressable"
                   >
                     {invitingId === player.id ? (
                       <span className="h-3.5 w-3.5 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
@@ -337,7 +337,7 @@ export function FindPlayersClient({
               </div>
 
               <div className="flex items-center justify-between gap-4 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="find-players__player-card-stats flex items-center gap-2 shrink-0">
                   <span title="Matches">{player.matches_played} matches</span>
                   {player.position === "GK" ? (
                     <span title="Avg goals against per match">
@@ -359,7 +359,7 @@ export function FindPlayersClient({
                   </span>
                 </div>
                 {(player.height != null || age != null || !!player.preferred_foot) && (
-                  <div className="flex items-center gap-3 shrink-0 text-muted-foreground">
+                  <div className="find-players__player-card-traits flex items-center gap-3 shrink-0 text-muted-foreground">
                     {player.height != null && (
                       <span title="Height" className="flex items-center gap-1">
                         <Ruler size={11} />
@@ -386,7 +386,7 @@ export function FindPlayersClient({
         })}
 
         {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <div className="find-players__empty flex flex-col items-center justify-center py-12 gap-3">
             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
               <UserPlus size={20} className="text-muted-foreground" />
             </div>
