@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LayoutGrid, Trophy, Swords, GitBranch } from "lucide-react";
+import { LayoutGrid, Trophy, Swords, GitBranch, Target } from "lucide-react";
 import type { TournamentStandingsGroup } from "@/lib/types";
 import type { TournamentMatchWithStage } from "@/lib/db/tournaments";
 import type { TopScorer } from "@/lib/types";
@@ -18,10 +18,11 @@ import { Trophy as TrophyIcon } from "lucide-react";
 
 const TAB_OVERVIEW = "overview";
 const TAB_STANDINGS = "standings";
+const TAB_SCORERS = "scorers";
 const TAB_FIXTURES = "fixtures";
 const TAB_BRACKET = "bracket";
 
-const VALID_TABS = [TAB_OVERVIEW, TAB_STANDINGS, TAB_FIXTURES, TAB_BRACKET] as const;
+const VALID_TABS = [TAB_OVERVIEW, TAB_STANDINGS, TAB_SCORERS, TAB_FIXTURES, TAB_BRACKET] as const;
 
 type TabId = (typeof VALID_TABS)[number];
 
@@ -43,12 +44,14 @@ interface TournamentDetailClientProps {
 
 function parseTabFromParam(
   param: string | null,
-  showBracketTab: boolean
+  showBracketTab: boolean,
+  hasScorers: boolean
 ): TabId {
-  if (param === "scorers") return TAB_STANDINGS;
+  if (param === "scorers") return hasScorers ? TAB_SCORERS : TAB_STANDINGS;
   if (VALID_TABS.includes(param as TabId)) {
     const t = param as TabId;
     if (t === TAB_BRACKET && !showBracketTab) return TAB_OVERVIEW;
+    if (t === TAB_SCORERS && !hasScorers) return TAB_STANDINGS;
     return t;
   }
   return TAB_OVERVIEW;
@@ -66,21 +69,24 @@ export function TournamentDetailClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const showBracketTab = tournament.raw_status === "knockout_stage";
+  const hasScorers = scorers.length > 0;
 
   const [activeTab, setActiveTabState] = useState<TabId>(() =>
-    parseTabFromParam(searchParams.get("tab"), showBracketTab)
+    parseTabFromParam(searchParams.get("tab"), showBracketTab, hasScorers)
   );
 
   const tabs: TabConfig[] = useMemo(() => {
     const bracketTab: TabConfig = { id: TAB_BRACKET, label: "Bracket", icon: GitBranch };
+    const scorersTab: TabConfig = { id: TAB_SCORERS, label: "Top Scorers", icon: Target };
     const list: TabConfig[] = [
       { id: TAB_OVERVIEW, label: "Overview", icon: LayoutGrid },
       { id: TAB_STANDINGS, label: "Standings", icon: Trophy },
+      ...(hasScorers ? [scorersTab] : []),
       { id: TAB_FIXTURES, label: "Fixtures", icon: Swords },
       ...(showBracketTab ? [bracketTab] : []),
     ];
     return list;
-  }, [showBracketTab]);
+  }, [showBracketTab, hasScorers]);
 
   const setTab = useCallback((tab: TabId) => {
     setActiveTabState(tab);
@@ -91,12 +97,12 @@ export function TournamentDetailClient({
   useEffect(() => {
     const handler = () => {
       const params = new URLSearchParams(window.location.search);
-      const tab = parseTabFromParam(params.get("tab"), showBracketTab);
+      const tab = parseTabFromParam(params.get("tab"), showBracketTab, hasScorers);
       setActiveTabState(tab);
     };
     window.addEventListener("popstate", handler);
     return () => window.removeEventListener("popstate", handler);
-  }, [showBracketTab]);
+  }, [showBracketTab, hasScorers]);
 
   const knockoutMatches = matches.filter(
     (m) =>
@@ -219,7 +225,7 @@ export function TournamentDetailClient({
                   {topScorersPreview.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setTab(TAB_STANDINGS)}
+                      onClick={() => setTab(TAB_SCORERS)}
                       className="w-full text-left rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors pressable"
                     >
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -230,7 +236,7 @@ export function TournamentDetailClient({
                           .map((s, i) => `${i + 1}. ${s.player.full_name} (${s.goals})`)
                           .join(" · ")}
                       </p>
-                      <span className="text-xs text-accent font-medium">View in Standings →</span>
+                      <span className="text-xs text-accent font-medium">View top scorers →</span>
                     </button>
                   )}
                   {hasStandings && (
@@ -289,6 +295,16 @@ export function TournamentDetailClient({
                   : undefined
               }
             />
+          </div>
+        )}
+
+        {activeTab === TAB_SCORERS && (
+          <div
+            id="tournament-tabpanel-scorers"
+            role="tabpanel"
+            aria-labelledby="tournament-tab-scorers"
+            className="flex flex-col gap-6"
+          >
             <TournamentScorers scorers={scorers} />
           </div>
         )}
@@ -303,6 +319,16 @@ export function TournamentDetailClient({
               matches={matches}
               tournamentId={tournamentId}
               canManageSchedule={canManageRegistrations && tournament.status === "in_progress"}
+              canManageKnockout={canManageRegistrations && tournament.raw_status === "knockout_stage"}
+              knockoutMatches={knockoutMatches}
+              advancingTeams={standings.flatMap((g) =>
+                g.standings.slice(0, 2).map((s) => ({
+                  id: s.team_id,
+                  name: s.team.name,
+                  short_name: s.team.short_name,
+                }))
+              )}
+              onAssignSuccess={() => router.refresh()}
               userTeamId={userTeamId}
             />
           </div>

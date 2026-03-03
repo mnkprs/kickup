@@ -1,24 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { assignTeamsToMatchAction } from "@/app/actions/tournaments";
-
-const TBD_TEAM_IDS = [
-  "a0000000-0000-0000-0000-000000000001",
-  "a0000000-0000-0000-0000-000000000002",
-];
-
-function isTbdTeam(teamId: string): boolean {
-  return TBD_TEAM_IDS.includes(teamId);
-}
+import type { TournamentMatchWithStage } from "@/lib/db/tournaments";
+import { isTbdTeam } from "@/lib/constants";
 
 interface AssignTeamsToMatchFormProps {
   matchId: string;
   tournamentId: string;
+  stage?: string;
   homeTeamId: string;
   awayTeamId: string;
   advancingTeams: { id: string; name: string; short_name: string }[];
+  knockoutMatches?: TournamentMatchWithStage[];
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -26,9 +21,11 @@ interface AssignTeamsToMatchFormProps {
 export function AssignTeamsToMatchForm({
   matchId,
   tournamentId,
+  stage,
   homeTeamId,
   awayTeamId,
   advancingTeams,
+  knockoutMatches = [],
   onSuccess,
   onCancel,
 }: AssignTeamsToMatchFormProps) {
@@ -36,6 +33,23 @@ export function AssignTeamsToMatchForm({
   const [newAwayId, setNewAwayId] = useState(isTbdTeam(awayTeamId) ? "" : awayTeamId);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const teamsAlreadyInOtherMatches = useMemo(() => {
+    if (!stage) return new Set<string>();
+    const otherMatches = knockoutMatches.filter(
+      (m) =>
+        m.stage === stage &&
+        m.id !== matchId &&
+        m.status !== "completed" &&
+        m.raw_status !== "completed"
+    );
+    const ids = new Set<string>();
+    for (const m of otherMatches) {
+      if (!isTbdTeam(m.home_team_id)) ids.add(m.home_team_id);
+      if (!isTbdTeam(m.away_team_id)) ids.add(m.away_team_id);
+    }
+    return ids;
+  }, [knockoutMatches, stage, matchId]);
 
   const canSubmit =
     newHomeId && newAwayId && newHomeId !== newAwayId && advancingTeams.length >= 2;
@@ -73,7 +87,7 @@ export function AssignTeamsToMatchForm({
       </div>
 
       <div>
-        <label className="text-xs font-medium text-muted-foreground block mb-1">Home team</label>
+        <label className="text-xs font-medium text-muted-foreground block mb-1">Team 1</label>
         <select
           value={newHomeId}
           onChange={(e) => setNewHomeId(e.target.value)}
@@ -81,15 +95,20 @@ export function AssignTeamsToMatchForm({
         >
           <option value="">Select team</option>
           {advancingTeams.map((t) => (
-            <option key={t.id} value={t.id} disabled={t.id === newAwayId}>
+            <option
+              key={t.id}
+              value={t.id}
+              disabled={t.id === newAwayId || teamsAlreadyInOtherMatches.has(t.id)}
+            >
               {t.short_name || t.name}
+              {teamsAlreadyInOtherMatches.has(t.id) ? " (in match)" : ""}
             </option>
           ))}
         </select>
       </div>
 
       <div>
-        <label className="text-xs font-medium text-muted-foreground block mb-1">Away team</label>
+        <label className="text-xs font-medium text-muted-foreground block mb-1">Team 2</label>
         <select
           value={newAwayId}
           onChange={(e) => setNewAwayId(e.target.value)}
@@ -97,8 +116,13 @@ export function AssignTeamsToMatchForm({
         >
           <option value="">Select team</option>
           {advancingTeams.map((t) => (
-            <option key={t.id} value={t.id} disabled={t.id === newHomeId}>
+            <option
+              key={t.id}
+              value={t.id}
+              disabled={t.id === newHomeId || teamsAlreadyInOtherMatches.has(t.id)}
+            >
               {t.short_name || t.name}
+              {teamsAlreadyInOtherMatches.has(t.id) ? " (in match)" : ""}
             </option>
           ))}
         </select>
@@ -120,5 +144,3 @@ export function AssignTeamsToMatchForm({
     </form>
   );
 }
-
-export { isTbdTeam, TBD_TEAM_IDS };

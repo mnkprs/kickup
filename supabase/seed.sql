@@ -200,8 +200,8 @@ INSERT INTO teams (id, name, short_name, format, area, emoji, color, description
   ('00000000-0000-0000-0001-000000000014','Chalandri Chargers','CHC','7v7','Chalandri','⚡','#6A1B9A','Fast counter-attacking style. North suburbs pride.',false,'00000000-0000-0000-0000-000000000086'),
   ('00000000-0000-0000-0001-000000000015','Vyronas Vipers','VVR','7v7','Vyronas','🐍','#E65100','Aggressive pressing. Never give up.',true,'00000000-0000-0000-0000-000000000091'),
   ('00000000-0000-0000-0001-000000000016','Psyrri Panthers','PSP','7v7','Psyrri','🐆','#00695C','Night owls. Weekend warriors from the heart of Athens.',false,'00000000-0000-0000-0000-000000000096'),
-  ('a0000000-0000-0000-0000-000000000001','TBD (Home)','TBD','7v7','System','❓','#9E9E9E','Placeholder for unassigned knockout slot',false,null),
-  ('a0000000-0000-0000-0000-000000000002','TBD (Away)','TBD','7v7','System','❓','#9E9E9E','Placeholder for unassigned knockout slot',false,null);
+  ('a0000000-0000-0000-0000-000000000001','TBD','TBD','7v7','System','❓','#9E9E9E','Placeholder for unassigned knockout slot',false,null),
+  ('a0000000-0000-0000-0000-000000000002','TBD','TBD','7v7','System2','❓','#9E9E9E','Placeholder for unassigned knockout slot',false,null);
 
 -- ─── 6. TEAM MEMBERS ───────────────────────────────────────────────
 INSERT INTO team_members (team_id, player_id, role, status) VALUES

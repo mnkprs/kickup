@@ -2,17 +2,23 @@ import type { Match } from "@/lib/types";
 import { format, parseISO } from "date-fns";
 import Link from "next/link";
 import { TeamAvatar } from "@/components/team-avatar";
+import { KNOCKOUT_STAGE_LABELS } from "@/lib/constants";
+
+const KNOCKOUT_STAGES = ["round_of_16", "quarter_final", "semi_final", "final"] as const;
 
 interface CompletedMatchRowProps {
-  match: Match;
+  match: Match & { stage?: string };
 }
 
 function CompletedMatchRow({ match }: CompletedMatchRowProps) {
+  const isKnockout =
+    match.stage && KNOCKOUT_STAGES.includes(match.stage as (typeof KNOCKOUT_STAGES)[number]);
+
   return (
     <div className="recent-results__row recent-results__row--interactive flex items-center gap-3 py-3 border-b border-border last:border-b-0 -mx-5 px-5 rounded-lg cursor-pointer hover:bg-muted/30 transition-colors pressable">
       <div className="recent-results__row-inner flex-1 min-w-0">
         <div className="recent-results__teams flex items-center gap-2 min-w-0">
-          <div className="recent-results__team recent-results__team--home flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
+          <div className="recent-results__team recent-results__team--team1 flex items-center gap-1.5 min-w-0 flex-1 overflow-hidden">
             <TeamAvatar team={match.home_team} size="xs" className="recent-results__team-avatar" />
             <span className="recent-results__team-name text-foreground text-sm font-medium truncate" title={match.home_team.name}>
               {match.home_team.name}
@@ -26,9 +32,17 @@ function CompletedMatchRow({ match }: CompletedMatchRowProps) {
             </div>
             <span className="recent-results__date text-muted-foreground text-xs mt-0.5">
               {match.date ? format(parseISO(match.date), "d MMM yyyy") : ""}
+              {isKnockout && match.stage && (
+                <>
+                  {" · "}
+                  <span className="text-muted-foreground">
+                    {KNOCKOUT_STAGE_LABELS[match.stage] ?? match.stage}
+                  </span>
+                </>
+              )}
             </span>
           </div>
-          <div className="recent-results__team recent-results__team--away flex items-center gap-1.5 min-w-0 flex-1 justify-end overflow-hidden">
+          <div className="recent-results__team recent-results__team--team2 flex items-center gap-1.5 min-w-0 flex-1 justify-end overflow-hidden">
             <span className="recent-results__team-name text-foreground text-sm font-medium truncate text-right" title={match.away_team.name}>
               {match.away_team.name}
             </span>

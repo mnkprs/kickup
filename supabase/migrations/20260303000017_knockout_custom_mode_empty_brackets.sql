@@ -4,8 +4,8 @@
 -- ─── TBD placeholder teams ─────────────────────────────────────────
 INSERT INTO teams (id, name, short_name, area, format, emoji, color, description)
 VALUES
-  ('a0000000-0000-0000-0000-000000000001'::uuid, 'TBD (Home)', 'TBD', 'System', '7v7', '❓', '#9E9E9E', 'Placeholder for unassigned knockout slot'),
-  ('a0000000-0000-0000-0000-000000000002'::uuid, 'TBD (Away)', 'TBD', 'System', '7v7', '❓', '#9E9E9E', 'Placeholder for unassigned knockout slot')
+  ('a0000000-0000-0000-0000-000000000001'::uuid, 'TBD', 'TBD', 'System', '7v7', '❓', '#9E9E9E', 'Placeholder for unassigned knockout slot'),
+  ('a0000000-0000-0000-0000-000000000002'::uuid, 'TBD', 'TBD', 'System2', '7v7', '❓', '#9E9E9E', 'Placeholder for unassigned knockout slot')
 ON CONFLICT (id) DO NOTHING;
 
 -- ─── advance_to_knockouts: custom mode creates empty bracket ─────────

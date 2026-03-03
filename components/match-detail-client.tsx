@@ -21,6 +21,7 @@ import {
 import { LiveDot } from "@/components/live-dot";
 import { Avatar } from "@/components/avatar";
 import { TeamAvatar } from "@/components/team-avatar";
+import { isTbdTeam, KNOCKOUT_STAGE_LABELS } from "@/lib/constants";
 
 interface TeamMemberMin {
   id: string;
@@ -76,11 +77,8 @@ function TeamBlock({
   score: number | null;
   isWinner: boolean;
 }) {
-  return (
-    <Link
-      href={`/teams/${team.id}`}
-      className="flex flex-col items-center gap-2 flex-1 hover:opacity-90 transition-opacity"
-    >
+  const content = (
+    <>
       <TeamAvatar
         avatar_url={team.avatar_url}
         emoji={team.emoji}
@@ -105,6 +103,15 @@ function TeamBlock({
           {score}
         </span>
       )}
+    </>
+  );
+  const className = "flex flex-col items-center gap-2 flex-1";
+  if (isTbdTeam(team.id)) {
+    return <div className={className}>{content}</div>;
+  }
+  return (
+    <Link href={`/teams/${team.id}`} className={`${className} hover:opacity-90 transition-opacity`}>
+      {content}
     </Link>
   );
 }
@@ -642,7 +649,15 @@ export function MatchDetailClient({
                 className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors pressable"
               >
                 <Trophy size={15} className="text-draw shrink-0" />
-                <span className="text-foreground text-sm font-medium">{match.tournament.name}</span>
+                <span className="text-foreground text-sm font-medium">
+                  {match.tournament.name}
+                  {match.tournament.stage && (
+                    <span className="text-muted-foreground font-normal">
+                      {" · "}
+                      {KNOCKOUT_STAGE_LABELS[match.tournament.stage] ?? match.tournament.stage}
+                    </span>
+                  )}
+                </span>
                 <ChevronRight size={14} className="text-muted-foreground ml-auto shrink-0" />
               </Link>
             )}
@@ -715,7 +730,7 @@ export function MatchDetailClient({
 
         {/* ─── Actions ─────────────────────────────────────────────────── */}
 
-        {/* Accept / Decline challenge (away team only) */}
+        {/* Accept / Decline challenge (Team 2 only) */}
         {isPendingChallenge && isAwayTeam && (
           <div className="px-5 flex flex-col gap-3">
             <p className="text-muted-foreground text-xs text-center">

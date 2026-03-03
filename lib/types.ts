@@ -70,9 +70,14 @@ export interface TeamMember {
   profile?: Profile;
 }
 
+/** Knockout stage when match belongs to a knockout phase (not group stage) */
+export type KnockoutStage = "round_of_16" | "quarter_final" | "semi_final" | "final";
+
 export interface MatchTournament {
   id: string;
   name: string;
+  /** Set when match is in knockout phase (semi_final, final, etc.) */
+  stage?: KnockoutStage | null;
 }
 
 export interface Match {

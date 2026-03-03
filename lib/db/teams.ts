@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Team, Profile, TeamMember } from "@/lib/types";
+import { isTbdTeam } from "@/lib/constants";
 
 function mapTeam(row: Record<string, unknown>): Team {
   const w = (row.record_w as number) ?? 0;
@@ -68,10 +69,13 @@ export async function getTeams(): Promise<Team[]> {
     .order("name", { ascending: true });
 
   if (error || !data) return [];
-  return (data as Record<string, unknown>[]).map(mapTeam);
+  return (data as Record<string, unknown>[])
+    .map(mapTeam)
+    .filter((t) => !isTbdTeam(t.id));
 }
 
 export async function getTeam(id: string): Promise<Team | null> {
+  if (isTbdTeam(id)) return null;
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("teams")

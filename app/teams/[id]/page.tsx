@@ -1,5 +1,7 @@
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getTeam, getTeamMembers, getPendingJoinRequests } from "@/lib/db/teams";
+import { isTbdTeam } from "@/lib/constants";
 import { getMatchesForTeam } from "@/lib/db/matches";
 import type { Team, Profile, Match, TeamMember } from "@/lib/types";
 import {
@@ -85,7 +87,7 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
                   <span className="flex items-center gap-1.5">
                     {match.status === "live" && <LiveDot className="shrink-0" />}
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      {isHome ? "Home" : "Away"}
+                      {isHome ? "Team 1" : "Team 2"}
                     </span>
                   </span>
                   <span className="text-muted-foreground text-xs">
@@ -126,7 +128,7 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
               </span>
               <div className="flex-1 min-w-0">
                 <span className="text-foreground text-sm font-medium block truncate">
-                  {isHome ? "vs" : "@"} {opponent.name}
+                  vs {opponent.name}
                 </span>
                 <span className="text-muted-foreground text-xs">
                   {match.date ? format(parseISO(match.date), "d MMM yyyy") : ""}
@@ -147,6 +149,7 @@ export default async function TeamDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (isTbdTeam(id)) notFound();
   const supabase = await createClient();
   const {
     data: { user },

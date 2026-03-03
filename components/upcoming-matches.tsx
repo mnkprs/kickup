@@ -29,14 +29,14 @@ function UpcomingMatchCard({ match }: { match: Match }) {
         />
       </div>
       <div className="upcoming-match-card__teams flex items-center justify-between">
-        <div className="upcoming-match-card__home flex items-center gap-2.5 flex-1 min-w-0">
+        <div className="upcoming-match-card__team1 flex items-center gap-2.5 flex-1 min-w-0">
           <TeamAvatar team={match.home_team} size="lg" />
           <span className="text-foreground text-sm font-medium truncate">
             {match.home_team.name}
           </span>
         </div>
         <span className="upcoming-match-card__vs text-muted-foreground text-xs font-bold px-3 shrink-0">VS</span>
-        <div className="upcoming-match-card__away flex items-center gap-2.5 flex-1 min-w-0 justify-end">
+        <div className="upcoming-match-card__team2 flex items-center gap-2.5 flex-1 min-w-0 justify-end">
           <span className="text-foreground text-sm font-medium truncate text-right">
             {match.away_team.name}
           </span>

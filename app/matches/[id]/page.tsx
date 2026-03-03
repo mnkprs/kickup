@@ -1,5 +1,7 @@
+import { notFound } from "next/navigation";
 import { getMatch, getMatchGoalsByPlayer, getMatchRoster, getMatchActionHistory } from "@/lib/db/matches";
 import { createClient } from "@/lib/supabase/server";
+import { isTbdMatch } from "@/lib/constants";
 import { getTeamMembers } from "@/lib/db/teams";
 import { MatchDetailClient } from "@/components/match-detail-client";
 
@@ -15,12 +17,8 @@ export default async function MatchDetailPage({
 
   const match = await getMatch(id);
 
-  if (!match) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground text-sm">Match not found</p>
-      </div>
-    );
+  if (!match || isTbdMatch(match)) {
+    notFound();
   }
 
   // Determine which team the current user belongs to in this match

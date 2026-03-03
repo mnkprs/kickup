@@ -6,10 +6,11 @@ import { X, Bell, Swords, CalendarClock, Trophy, Clock, CheckCircle2, Users, Use
 import { format, parseISO } from "date-fns";
 import type { Notification } from "@/lib/types";
 import { markNotificationsReadAction } from "@/app/actions/profile";
+import { isTbdTeam } from "@/lib/constants";
 
 function getNotificationHref(notif: Notification): string | null {
   if (notif.match_id) return `/matches/${notif.match_id}`;
-  if (notif.team_id) return `/teams/${notif.team_id}`;
+  if (notif.team_id && !isTbdTeam(notif.team_id)) return `/teams/${notif.team_id}`;
   if (notif.tournament_id) return `/tournaments/${notif.tournament_id}`;
   return null;
 }

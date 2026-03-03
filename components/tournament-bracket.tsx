@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
-import { MapPin, Clock, Trophy, UserPlus } from "lucide-react";
+import { MapPin, Clock, Trophy } from "lucide-react";
 import type { TournamentMatchWithStage } from "@/lib/db/tournaments";
 import { TeamAvatar } from "@/components/team-avatar";
-import { AssignTeamsToMatchForm, isTbdTeam } from "@/components/assign-teams-to-match-form";
+import { isTbdTeam } from "@/lib/constants";
 
 const STAGE_LABELS: Record<string, string> = {
   round_of_16: "Round of 16",
@@ -27,27 +26,12 @@ interface TournamentBracketProps {
 function BracketMatch({
   match,
   label,
-  tournamentId,
-  canManage,
-  knockoutMode,
-  advancingTeams = [],
-  onAssignSuccess,
 }: {
   match: TournamentMatchWithStage;
   label?: string;
-  tournamentId?: string;
-  canManage?: boolean;
-  knockoutMode?: "auto" | "custom";
-  advancingTeams?: { id: string; name: string; short_name: string }[];
-  onAssignSuccess?: () => void;
 }) {
-  const [showAssignForm, setShowAssignForm] = useState(false);
   const hasScore = match.home_score !== null && match.away_score !== null;
-  const isTbd =
-    canManage &&
-    knockoutMode === "custom" &&
-    (isTbdTeam(match.home_team_id) || isTbdTeam(match.away_team_id)) &&
-    advancingTeams.length >= 2;
+  const isTbd = isTbdTeam(match.home_team_id) || isTbdTeam(match.away_team_id);
 
   const cardContent = (
     <>
@@ -104,36 +88,6 @@ function BracketMatch({
           </span>
         </div>
       )}
-      {isTbd && !showAssignForm && (
-        <div className="mt-4 pt-4 border-t border-border">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setShowAssignForm(true);
-            }}
-            className="flex items-center gap-2 text-sm font-medium text-accent hover:text-accent/80"
-          >
-            <UserPlus size={14} />
-            Assign teams
-          </button>
-        </div>
-      )}
-      {isTbd && showAssignForm && tournamentId && (
-        <AssignTeamsToMatchForm
-          matchId={match.id}
-          tournamentId={tournamentId}
-          homeTeamId={match.home_team_id}
-          awayTeamId={match.away_team_id}
-          advancingTeams={advancingTeams}
-          onSuccess={() => {
-            setShowAssignForm(false);
-            onAssignSuccess?.();
-          }}
-          onCancel={() => setShowAssignForm(false)}
-        />
-      )}
     </>
   );
 
@@ -173,8 +127,33 @@ export function TournamentBracket({
     if (!byRound.has(order)) byRound.set(order, []);
     byRound.get(order)!.push(m);
   }
-  // Latest bracket (Final) on top, earlier rounds scrolling downwards
-  const rounds = [...byRound.entries()].sort(([a], [b]) => b - a);
+
+  // Only show rounds that have been reached. Hide future rounds until organiser advances.
+  // First round always shown. Later rounds shown only when previous round has completed matches.
+  const roundOrdersAsc = [...byRound.keys()].sort((a, b) => a - b);
+  const visibleOrders = new Set<number>();
+  for (const order of roundOrdersAsc) {
+    if (order === roundOrdersAsc[0]) {
+      visibleOrders.add(order);
+    } else {
+      const prevMatches = byRound.get(order - 1);
+      const prevRoundComplete = prevMatches?.every(
+        (m) =>
+          m.home_score != null &&
+          m.away_score != null &&
+          !isTbdTeam(m.home_team_id) &&
+          !isTbdTeam(m.away_team_id)
+      );
+      if (prevRoundComplete && (prevMatches?.length ?? 0) > 0) {
+        visibleOrders.add(order);
+      } else {
+        break;
+      }
+    }
+  }
+  const rounds = [...byRound.entries()]
+    .filter(([order]) => visibleOrders.has(order))
+    .sort(([a], [b]) => b - a);
 
   return (
     <section className="tournament-bracket px-5">
@@ -200,11 +179,6 @@ export function TournamentBracket({
                       key={m.id}
                       match={m}
                       label={roundMatches.length > 1 ? `Match ${i + 1}` : undefined}
-                      tournamentId={tournamentId}
-                      canManage={canManage}
-                      knockoutMode={knockoutMode}
-                      advancingTeams={advancingTeams}
-                      onAssignSuccess={onAssignSuccess}
                     />
                   ))}
               </div>

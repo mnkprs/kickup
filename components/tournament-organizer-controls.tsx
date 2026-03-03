@@ -207,6 +207,7 @@ export function TournamentOrganizerControls({
               <CreateKnockoutMatchForm
                 tournamentId={tournamentId}
                 advancingTeams={advancingTeams}
+                knockoutMatches={knockoutMatches}
                 onClose={() => setShowCreateMatch(false)}
                 onSuccess={() => {
                   setShowCreateMatch(false);

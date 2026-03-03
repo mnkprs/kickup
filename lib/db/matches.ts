@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Match, MatchTournament, Team } from "@/lib/types";
+import { isTbdMatch } from "@/lib/constants";
 
 // DB match statuses that map to "upcoming" in the UI
 const UPCOMING_STATUSES = ["pending_challenge", "scheduling", "pre_match"];
@@ -66,6 +67,8 @@ function mapMatch(
   };
 }
 
+const KNOCKOUT_STAGES = ["round_of_16", "quarter_final", "semi_final", "final"] as const;
+
 /** Fetch tournament info for matches that belong to a registered tournament */
 export async function getTournamentsForMatches(
   matchIds: string[]
@@ -74,18 +77,23 @@ export async function getTournamentsForMatches(
   const supabase = await createClient();
   const { data } = await supabase
     .from("tournament_matches")
-    .select("match_id, tournaments(id, name)")
+    .select("match_id, stage, tournaments(id, name)")
     .in("match_id", matchIds);
 
   const map = new Map<string, MatchTournament>();
   const rows = (data ?? []) as unknown as {
     match_id: string;
+    stage: string | null;
     tournaments: { id: string; name: string } | { id: string; name: string }[] | null;
   }[];
   for (const row of rows) {
     const t = Array.isArray(row.tournaments) ? row.tournaments[0] : row.tournaments;
     if (t?.id && t?.name) {
-      map.set(row.match_id, { id: t.id, name: t.name });
+      const stage =
+        row.stage && KNOCKOUT_STAGES.includes(row.stage as (typeof KNOCKOUT_STAGES)[number])
+          ? (row.stage as MatchTournament["stage"])
+          : null;
+      map.set(row.match_id, { id: t.id, name: t.name, stage: stage ?? undefined });
     }
   }
   return map;
@@ -122,7 +130,9 @@ export async function getMatchesForTeam(teamId: string): Promise<Match[]> {
   if (error || !data) return [];
   const rows = data as Record<string, unknown>[];
   const tournamentMap = await getTournamentsForMatches(rows.map((r) => r.id as string));
-  return rows.map((r) => mapMatch(r, tournamentMap.get(r.id as string) ?? null));
+  return rows
+    .map((r) => mapMatch(r, tournamentMap.get(r.id as string) ?? null))
+    .filter((m) => !isTbdMatch(m));
 }
 
 export async function getUpcomingMatches(teamId?: string | null): Promise<Match[]> {
@@ -141,7 +151,9 @@ export async function getUpcomingMatches(teamId?: string | null): Promise<Match[
   if (error || !data) return [];
   const rows = data as Record<string, unknown>[];
   const tournamentMap = await getTournamentsForMatches(rows.map((r) => r.id as string));
-  return rows.map((r) => mapMatch(r, tournamentMap.get(r.id as string) ?? null));
+  return rows
+    .map((r) => mapMatch(r, tournamentMap.get(r.id as string) ?? null))
+    .filter((m) => !isTbdMatch(m));
 }
 
 export async function getRecentResults(teamId?: string | null): Promise<Match[]> {
@@ -160,7 +172,9 @@ export async function getRecentResults(teamId?: string | null): Promise<Match[]>
   if (error || !data) return [];
   const rows = data as Record<string, unknown>[];
   const tournamentMap = await getTournamentsForMatches(rows.map((r) => r.id as string));
-  return rows.map((r) => mapMatch(r, tournamentMap.get(r.id as string) ?? null));
+  return rows
+    .map((r) => mapMatch(r, tournamentMap.get(r.id as string) ?? null))
+    .filter((m) => !isTbdMatch(m));
 }
 
 /** Action history for a match (captain/admin/organizer score submissions) */
