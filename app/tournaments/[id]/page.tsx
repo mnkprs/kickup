@@ -123,8 +123,9 @@ export default async function TournamentDetailPage({
           )}
         </div>
 
-        {/* Register button (upcoming only, user has a team) */}
-      {userTeamId && tournament.status === "upcoming" && (
+        {/* Register button: until knockout phase (registration + group_stage) */}
+      {userTeamId &&
+        (tournament.status === "upcoming" || tournament.raw_status === "group_stage") && (
         <div className="mt-4">
           <RegisterTournamentButton
             tournamentId={id}

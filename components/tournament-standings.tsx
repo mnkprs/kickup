@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, type HTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { X, GripVertical } from "lucide-react";
 import {
   DndContext,
@@ -11,6 +12,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -24,7 +26,7 @@ interface TournamentStandingsProps {
   title?: string;
   /** When set, show remove button for each team (registration phase only) */
   canRemoveTeam?: boolean;
-  /** When set, allow owner to drag teams between groups */
+  /** When set, allow owner to move teams between groups */
   canDragDrop?: boolean;
   tournamentId?: string;
 }
@@ -52,27 +54,37 @@ function StandingsRowContent({
   gridCols,
   canRemove,
   onRemove,
-  showDragHandle,
+  showHandle,
+  dragHandleProps,
 }: {
   row: StandingsRow;
   i: number;
   gridCols: string;
   canRemove?: boolean;
   onRemove?: (teamId: string, teamName: string) => void;
-  showDragHandle?: boolean;
+  showHandle?: boolean;
+  dragHandleProps?: HTMLAttributes<HTMLDivElement>;
 }) {
   const gd = row.goals_for - row.goals_against;
   return (
     <>
-      {showDragHandle && (
-        <div className="flex items-center justify-center text-muted-foreground cursor-grab active:cursor-grabbing">
+      {showHandle && (
+        <div
+          {...dragHandleProps}
+          className="flex items-center justify-center text-muted-foreground shrink-0 cursor-grab active:cursor-grabbing touch-none"
+        >
           <GripVertical size={14} strokeWidth={2} />
         </div>
       )}
       <span className={`text-xs font-medium ${i < 2 ? "text-accent" : "text-muted-foreground"}`}>
         {row.rank}
       </span>
-      <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+      <Link
+        href={`/teams/${row.team_id}`}
+        className="flex items-center gap-1.5 min-w-0 overflow-hidden hover:opacity-80 transition-opacity"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
         <TeamAvatar
           avatar_url={row.team.avatar_url}
           emoji={row.team.emoji ?? "⚽"}
@@ -82,7 +94,7 @@ function StandingsRowContent({
           size="2xs"
         />
         <span className="text-xs truncate text-foreground font-medium">{row.team.name}</span>
-      </div>
+      </Link>
       <span className="text-foreground text-xs text-center">{row.played}</span>
       <span className="text-foreground text-xs text-center">{row.won}</span>
       <span className="text-foreground text-xs text-center">{row.drawn}</span>
@@ -93,8 +105,11 @@ function StandingsRowContent({
       <span className="text-foreground text-xs font-bold text-center">{row.points}</span>
       {canRemove && onRemove && (
         <button
-          onClick={() => onRemove(row.team_id, row.team.name)}
-          className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-loss/15 hover:text-loss transition-colors pressable"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(row.team_id, row.team.name);
+          }}
+          className="h-7 w-7 rounded-lg flex items-center justify-center text-muted-foreground hover:bg-loss/15 hover:text-loss transition-colors pressable shrink-0"
           aria-label={`Remove ${row.team.name} from tournament`}
         >
           <X size={14} strokeWidth={2.5} />
@@ -121,17 +136,16 @@ function DraggableTeamRow({
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: row.team_id,
-    data: { teamId: row.team_id, teamName: row.team.name },
+    data: { teamId: row.team_id },
     disabled,
   });
 
   return (
     <div
       ref={setNodeRef}
-      {...(disabled ? {} : { ...attributes, ...listeners })}
-      className={`tournament-standings__row grid ${gridCols} gap-0.5 px-2 py-1.5 items-center min-h-[2rem] border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors ${
-        isDragging ? "opacity-50" : ""
-      } ${!disabled ? "cursor-grab active:cursor-grabbing" : ""}`}
+      className={`tournament-standings__row grid ${gridCols} gap-0.5 px-2 py-1.5 items-center min-h-[2rem] border-b border-border last:border-b-0 transition-colors ${
+        isDragging ? "opacity-40" : "hover:bg-muted/30"
+      }`}
     >
       <StandingsRowContent
         row={row}
@@ -139,7 +153,8 @@ function DraggableTeamRow({
         gridCols={gridCols}
         canRemove={canRemove}
         onRemove={onRemove}
-        showDragHandle={!disabled}
+        showHandle={!disabled}
+        dragHandleProps={disabled ? undefined : { ...attributes, ...listeners }}
       />
     </div>
   );
@@ -171,16 +186,26 @@ function DroppableGroup({
   return (
     <div
       ref={setNodeRef}
-      className={`${isOver ? "ring-2 ring-accent/50 ring-inset rounded" : ""}`}
+      className={isOver ? "ring-2 ring-accent/50 ring-inset rounded" : ""}
     >
-      <div className={`px-3 py-2 border-b border-border ${isNewGroup ? "bg-accent/10" : "bg-muted/30"}`}>
-        <span className="text-xs font-semibold text-foreground">
-          {isNewGroup ? "+ New group" : groupLabel}
-        </span>
+      <div
+        className={`px-3 py-2 border-b border-border ${isNewGroup ? "bg-accent/10" : "bg-muted/30"}`}
+      >
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs font-semibold text-foreground">
+            {isNewGroup ? "+ New group" : groupLabel}
+          </span>
+          {isNewGroup && (
+            <span className="text-[10px] text-muted-foreground">
+              Drag a team here to create a new group
+            </span>
+          )}
+        </div>
       </div>
       {rows.length > 0 && (
         <>
           <div className={`tournament-standings__header-row grid ${gridCols} gap-0.5 px-2 py-1.5 items-center min-h-[2rem] border-b border-border`}>
+            {!isNewGroup && <span className="w-5 shrink-0" />}
             <span className="text-muted-foreground text-[10px] font-medium">#</span>
             <span className="text-muted-foreground text-[10px] font-medium">Team</span>
             <span className="text-muted-foreground text-xs font-medium text-center">P</span>
@@ -189,7 +214,7 @@ function DroppableGroup({
             <span className="text-muted-foreground text-xs font-medium text-center">L</span>
             <span className="text-muted-foreground text-xs font-medium text-center">GD</span>
             <span className="text-muted-foreground text-xs font-medium text-center">PTS</span>
-            {(canRemove || isNewGroup) && <span className="w-8" />}
+            {(canRemove || isNewGroup) && <span className="w-8 shrink-0" />}
           </div>
           {rows.map((row, i) => (
             <DraggableTeamRow
@@ -213,49 +238,15 @@ function StandingsTable({
   canRemove,
   tournamentId,
   onRemove,
-  canDragDrop,
 }: {
   rows: StandingsRow[];
   canRemove?: boolean;
   tournamentId?: string;
   onRemove?: (teamId: string, teamName: string) => void;
-  canDragDrop?: boolean;
 }) {
   const gridCols = canRemove
     ? "grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem_2rem]"
     : "grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem]";
-  const gridColsWithDrag = canDragDrop
-    ? "grid-cols-[1.25rem_1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem_2rem]"
-    : gridCols;
-
-  if (canDragDrop) {
-    return (
-      <>
-        <div className={`tournament-standings__header-row grid ${gridColsWithDrag} gap-0.5 px-2 py-1.5 items-center min-h-[2rem] border-b border-border`}>
-          <span className="w-5" />
-          <span className="text-muted-foreground text-[10px] font-medium">#</span>
-          <span className="text-muted-foreground text-[10px] font-medium">Team</span>
-          <span className="text-muted-foreground text-xs font-medium text-center">P</span>
-          <span className="text-muted-foreground text-xs font-medium text-center">W</span>
-          <span className="text-muted-foreground text-xs font-medium text-center">D</span>
-          <span className="text-muted-foreground text-xs font-medium text-center">L</span>
-          <span className="text-muted-foreground text-xs font-medium text-center">GD</span>
-          <span className="text-muted-foreground text-xs font-medium text-center">PTS</span>
-          {canRemove && <span className="w-8" />}
-        </div>
-        {rows.map((row, i) => (
-          <DraggableTeamRow
-            key={row.team_id}
-            row={row}
-            i={i + 1}
-            gridCols={gridColsWithDrag}
-            canRemove={canRemove}
-            onRemove={onRemove}
-          />
-        ))}
-      </>
-    );
-  }
 
   return (
     <>
@@ -285,6 +276,9 @@ function StandingsTable({
   );
 }
 
+const gridColsWithHandle =
+  "grid-cols-[1.25rem_1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem_2rem]";
+
 export function TournamentStandings({
   standingsGroups,
   title = "Standings",
@@ -296,15 +290,28 @@ export function TournamentStandings({
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{ teamId: string; teamName: string } | null>(null);
   const [activeTeam, setActiveTeam] = useState<StandingsRow | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
   );
 
   const hasGroups = standingsGroups.some((g) => g.groupLabel && g.groupLabel.startsWith("Group "));
-  const canDrag = canDragDrop && hasGroups && tournamentId;
+  const canMove = canDragDrop && hasGroups && tournamentId;
+
+  // Prevent page scroll during drag
+  useEffect(() => {
+    if (!isDragging) return;
+    const prevOverflow = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.touchAction = prevTouchAction;
+    };
+  }, [isDragging]);
 
   async function handleRemove(teamId: string, teamName: string) {
     if (!tournamentId) return;
@@ -319,8 +326,9 @@ export function TournamentStandings({
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveTeam(null);
+    setIsDragging(false);
 
-    if (!over || !tournamentId || !canDrag) return;
+    if (!over || !tournamentId || !canMove) return;
 
     const teamId = active.id as string;
     const targetGroup = over.id as string;
@@ -331,6 +339,7 @@ export function TournamentStandings({
   }
 
   function handleDragStart(event: DragStartEvent) {
+    setIsDragging(true);
     const teamId = event.active.id as string;
     for (const g of standingsGroups) {
       const row = g.standings.find((s) => s.team_id === teamId);
@@ -353,8 +362,6 @@ export function TournamentStandings({
   }
 
   const hasAny = standingsGroups.some((g) => g.standings.length > 0);
-  const gridColsWithDrag =
-    "grid-cols-[1.25rem_1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem_2rem]";
 
   const content = (
     <>
@@ -369,22 +376,22 @@ export function TournamentStandings({
                 canRemove={canRemoveTeam}
                 tournamentId={tournamentId}
                 onRemove={canRemoveTeam ? (id, name) => setConfirmRemove({ teamId: id, teamName: name }) : undefined}
-                canDragDrop={false}
               />
             </div>
           );
         }
-        if (canDrag) {
+        if (canMove) {
           return (
             <DroppableGroup
               key={group.groupLabel}
               groupLabel={group.groupLabel}
               rawLabel={rawLabel}
               rows={group.standings as StandingsRow[]}
-              gridCols={gridColsWithDrag}
+              gridCols={gridColsWithHandle}
               canRemove={canRemoveTeam}
               tournamentId={tournamentId}
               onRemove={canRemoveTeam ? (id, name) => setConfirmRemove({ teamId: id, teamName: name }) : undefined}
+              isNewGroup={false}
             />
           );
         }
@@ -402,12 +409,12 @@ export function TournamentStandings({
           </div>
         );
       })}
-      {canDrag && hasGroups && (
+      {canMove && hasGroups && (
         <DroppableGroup
           groupLabel=""
           rawLabel=""
           rows={[]}
-          gridCols={gridColsWithDrag}
+          gridCols={gridColsWithHandle}
           isNewGroup
         />
       )}
@@ -418,7 +425,7 @@ export function TournamentStandings({
     <section className="tournament-standings px-5">
       <div className="tournament-standings__header flex items-center justify-between mb-3">
         <h2 className="tournament-standings__title text-foreground font-semibold text-base">{title}</h2>
-        {canDrag && (
+        {canMove && (
           <span className="text-xs text-muted-foreground">Drag teams between groups</span>
         )}
       </div>
@@ -427,23 +434,24 @@ export function TournamentStandings({
           <div className="px-3 py-6 text-center">
             <p className="text-muted-foreground text-sm">No teams enrolled yet</p>
           </div>
-        ) : canDrag ? (
+        ) : canMove ? (
           <DndContext
             sensors={sensors}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
             {content}
-            <DragOverlay>
+            <DragOverlay dropAnimation={null}>
               {activeTeam ? (
                 <div
-                  className={`tournament-standings__row grid ${gridColsWithDrag} gap-0.5 px-2 py-1.5 items-center min-h-[2rem] border border-accent/50 rounded-lg bg-card shadow-lg opacity-95`}
+                  className={`tournament-standings__row grid ${gridColsWithHandle} gap-0.5 px-2 py-1.5 items-center min-h-[2rem] border border-accent/50 rounded-lg bg-card shadow-lg`}
+                  style={{ touchAction: "none" }}
                 >
                   <StandingsRowContent
                     row={activeTeam}
                     i={activeTeam.rank}
-                    gridCols={gridColsWithDrag}
-                    showDragHandle
+                    gridCols={gridColsWithHandle}
+                    showHandle
                   />
                 </div>
               ) : null}

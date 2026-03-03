@@ -121,7 +121,7 @@ BEGIN
       uid,
       '00000000-0000-0000-0000-000000000000',
       'player' || lpad(i::text, 3, '0') || '@kickup.app',
-      crypt('kickup123', gen_salt('bf')),
+      extensions.crypt('kickup123', extensions.gen_salt('bf')),
       now(), now(), now(),
       '{"provider":"email","providers":["email"]}'::jsonb,
       json_build_object(

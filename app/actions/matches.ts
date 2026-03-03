@@ -125,6 +125,7 @@ export async function submitResultAction(data: {
   mvpId: string | null;
   notes: string;
   goals?: Record<string, number>;
+  guestPlayerIds?: string[];
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -138,6 +139,7 @@ export async function submitResultAction(data: {
     p_mvp_id: data.mvpId,
     p_notes: data.notes || null,
     p_goals: data.goals ?? {},
+    p_guest_player_ids: data.guestPlayerIds ?? [],
   });
 
   if (error) return { error: error.message };
@@ -162,6 +164,7 @@ export async function organizerSubmitResultAction(data: {
   mvpId: string | null;
   notes: string;
   goals?: { home?: Record<string, number>; away?: Record<string, number> };
+  guestPlayerIds?: { home?: string[]; away?: string[] };
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -174,6 +177,7 @@ export async function organizerSubmitResultAction(data: {
     p_mvp_id: data.mvpId,
     p_notes: data.notes || null,
     p_goals: data.goals ?? { home: {}, away: {} },
+    p_guest_player_ids: data.guestPlayerIds ?? { home: [], away: [] },
   });
 
   if (error) return { error: error.message };
@@ -234,6 +238,7 @@ export async function adminUpdateMatchResultAction(data: {
   mvpId: string | null;
   notes: string;
   goals?: { home?: Record<string, number>; away?: Record<string, number> };
+  guestPlayerIds?: { home?: string[]; away?: string[] };
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -246,6 +251,7 @@ export async function adminUpdateMatchResultAction(data: {
     p_mvp_id: data.mvpId,
     p_notes: data.notes || null,
     p_goals: data.goals ?? { home: {}, away: {} },
+    p_guest_player_ids: data.guestPlayerIds ?? { home: [], away: [] },
   });
 
   if (error) return { error: error.message };

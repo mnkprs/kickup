@@ -151,12 +151,25 @@ export default async function MatchDetailPage({
     (match.raw_status === "pre_match" || match.raw_status === "disputed") &&
     (userTeamId || isTournamentOrganizer || isAdmin)
   ) {
-    const [home, away] = await Promise.all([
-      getMatchRoster(id, match.home_team_id),
-      getMatchRoster(id, match.away_team_id),
-    ]);
-    homeRoster = home;
-    awayRoster = away;
+    if (match.raw_status === "disputed") {
+      const [home, away, goalsRes, goalsByTeamRes] = await Promise.all([
+        getMatchRoster(id, match.home_team_id),
+        getMatchRoster(id, match.away_team_id),
+        getMatchGoalsByPlayer(id),
+        getMatchGoalsByTeam(id, match.home_team_id, match.away_team_id),
+      ]);
+      homeRoster = home;
+      awayRoster = away;
+      goalsByPlayer = goalsRes;
+      goalsByTeam = goalsByTeamRes;
+    } else {
+      const [home, away] = await Promise.all([
+        getMatchRoster(id, match.home_team_id),
+        getMatchRoster(id, match.away_team_id),
+      ]);
+      homeRoster = home;
+      awayRoster = away;
+    }
   }
 
   // For admin editing: load rosters when admin views any match (for result edit form)
@@ -193,6 +206,17 @@ export default async function MatchDetailPage({
 
   const matchActionHistory = await getMatchActionHistory(id);
 
+  let homeTeamMemberIds: string[] = [];
+  let awayTeamMemberIds: string[] = [];
+  if (homeRoster.length > 0 || awayRoster.length > 0) {
+    const [homeMembers, awayMembers] = await Promise.all([
+      getTeamMembers(match.home_team_id),
+      getTeamMembers(match.away_team_id),
+    ]);
+    homeTeamMemberIds = homeMembers.map((m) => m.profile.id);
+    awayTeamMemberIds = awayMembers.map((m) => m.profile.id);
+  }
+
   return (
     <MatchDetailClient
       match={match}
@@ -202,6 +226,8 @@ export default async function MatchDetailPage({
       teamMembers={teamMembers}
       homeRoster={homeRoster}
       awayRoster={awayRoster}
+      homeTeamMemberIds={homeTeamMemberIds}
+      awayTeamMemberIds={awayTeamMemberIds}
       goalsByPlayer={Object.fromEntries(goalsByPlayer)}
       goalsByTeam={goalsByTeam}
       isTournamentOrganizer={isTournamentOrganizer}

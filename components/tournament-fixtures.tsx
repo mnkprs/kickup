@@ -62,26 +62,10 @@ function UpcomingFixture({
               </span>
             )}
           </div>
-          <div className="flex items-center justify-end gap-2 shrink-0">
-            {showAssignTeams && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowAssignForm((prev) => !prev);
-                }}
-                className="flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent/80 transition-colors"
-              >
-                <UserPlus size={12} />
-                Assign teams
-              </button>
-            )}
-            <ChevronRight
-              size={16}
-              className="text-muted-foreground group-hover:text-foreground transition-colors"
-            />
-          </div>
+          <ChevronRight
+            size={16}
+            className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0"
+          />
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -101,40 +85,55 @@ function UpcomingFixture({
           </div>
         )}
       </Link>
-      {canManageSchedule && tournamentId && (
-        <>
-          {showScheduleForm ? (
-            <div className="px-4 py-3 border-t border-border">
-              <ScheduleTournamentMatchForm
-                matchId={match.id}
-                tournamentId={tournamentId}
-                currentDate={match.date}
-                currentTime={match.time}
-                currentLocation={match.location}
-                onClose={() => setShowScheduleForm(false)}
-              />
-            </div>
-          ) : (
-            <div
-              className="px-4 pb-4"
-              onClick={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
+      {(canManageSchedule && tournamentId) || showAssignTeams ? (
+        <div
+          className="px-4 pb-4 pt-3 border-t border-border flex items-center justify-between gap-2"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          {canManageSchedule && tournamentId && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowAssignForm(false);
+                setShowScheduleForm(true);
+              }}
+              className="flex items-center gap-2 text-xs font-medium text-accent hover:text-accent/80 transition-colors"
             >
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowScheduleForm(true);
-                }}
-                className="flex items-center gap-2 text-xs font-medium text-accent hover:text-accent/80 transition-colors"
-              >
-                <CalendarPlus size={14} />
-                Set date & time
-              </button>
-            </div>
+              <CalendarPlus size={14} />
+              Set date & time
+            </button>
           )}
-        </>
+          {showAssignTeams && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowScheduleForm(false);
+                setShowAssignForm(true);
+              }}
+              className="flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent/80 transition-colors ml-auto"
+            >
+              <UserPlus size={12} />
+              Assign teams
+            </button>
+          )}
+        </div>
+      ) : null}
+      {showScheduleForm && canManageSchedule && tournamentId && (
+        <div className="px-4 py-3 border-t border-border" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+          <ScheduleTournamentMatchForm
+            matchId={match.id}
+            tournamentId={tournamentId}
+            currentDate={match.date}
+            currentTime={match.time}
+            currentLocation={match.location}
+            onClose={() => setShowScheduleForm(false)}
+          />
+        </div>
       )}
       {showAssignTeams && showAssignForm && (
         <div className="px-4 py-3 border-t border-border" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>

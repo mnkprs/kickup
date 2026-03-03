@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { searchProfiles } from "@/lib/db/profiles";
 
 const THEME_COOKIE = "kickup-theme";
 
@@ -186,6 +187,10 @@ export async function updateAvatarUrlAction(avatarUrl: string | null) {
   revalidatePath("/");
   revalidatePath("/profile");
   return { success: true };
+}
+
+export async function searchProfilesAction(query: string, limit = 20) {
+  return searchProfiles(query, limit);
 }
 
 export async function applyForFieldOwnerAction(message: string) {

@@ -102,6 +102,22 @@ export async function getTopScorers(limit = 5): Promise<TopScorer[]> {
   });
 }
 
+/** Search profiles by name (for guest player picker, etc.) */
+export async function searchProfiles(query: string, limit = 20): Promise<{ id: string; full_name: string; avatar_initials: string; avatar_color: string; avatar_url: string | null }[]> {
+  const supabase = await createClient();
+  const q = (query || "").trim();
+  if (!q || q.length < 2) return [];
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, full_name, avatar_initials, avatar_color, avatar_url")
+    .ilike("full_name", `%${q}%`)
+    .order("full_name", { ascending: true })
+    .limit(limit);
+
+  return (data ?? []) as { id: string; full_name: string; avatar_initials: string; avatar_color: string; avatar_url: string | null }[];
+}
+
 export async function getFreelancers(): Promise<Profile[]> {
   const supabase = await createClient();
   const now = new Date();

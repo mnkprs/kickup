@@ -99,15 +99,16 @@ BEGIN
   END IF;
 
   -- If target is __NEW__, create next group label (A, B, C, ...)
+  -- When no groups exist yet (flat list shown as Group A), create 'B'
   IF p_target_group_label = '__NEW__' THEN
     SELECT COALESCE(
       chr(ascii(MAX(group_label)) + 1),
-      'A'
+      'B'
     ) INTO p_target_group_label
     FROM tournament_groups
     WHERE tournament_id = p_tournament_id;
     IF p_target_group_label IS NULL THEN
-      p_target_group_label := 'A';
+      p_target_group_label := 'B';
     END IF;
   END IF;
 

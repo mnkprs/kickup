@@ -180,8 +180,10 @@ export async function getTournamentStandings(
 
   if (groups && groups.length > 0) {
     const labels = [...new Set((groups as { group_label: string }[]).map((g) => g.group_label))].sort();
+    const lastLabel = labels[labels.length - 1];
 
     const result: TournamentStandingsGroup[] = [];
+    const teamsInGroups = new Set<string>();
 
     for (const label of labels) {
       const { data, error } = await supabase.rpc("get_tournament_standings", {
@@ -189,9 +191,14 @@ export async function getTournamentStandings(
         p_group_label: label,
       });
 
-      if (error || !data || (data as unknown[]).length === 0) continue;
+      if (error || !data) continue;
 
-      const teamIds = (data as Record<string, unknown>[]).map((row) => row.team_id as string);
+      const rows = data as Record<string, unknown>[];
+      for (const row of rows) {
+        teamsInGroups.add(row.team_id as string);
+      }
+
+      const teamIds = rows.map((row) => row.team_id as string);
       const { data: teamsData } = await supabase
         .from("teams")
         .select("*")
@@ -204,13 +211,13 @@ export async function getTournamentStandings(
         ])
       );
 
-      const standings: TournamentStanding[] = (data as Record<string, unknown>[]).map((row) => ({
-        rank: row.rank as number,
+      const standings: TournamentStanding[] = rows.map((row, i) => ({
+        rank: (row.rank as number) ?? i + 1,
         team_id: row.team_id as string,
         team: teamsMap.get(row.team_id as string) ?? {
           id: row.team_id as string,
           name: row.name as string,
-          short_name: (row.name as string).substring(0, 3).toUpperCase(),
+          short_name: (row.name as string)?.substring(0, 3).toUpperCase() ?? "???",
           area: "",
           format: "",
           emoji: "⚽",
@@ -225,19 +232,65 @@ export async function getTournamentStandings(
           points: 0,
           created_at: "",
         },
-        played: row.played as number,
-        won: row.w as number,
-        drawn: row.d as number,
-        lost: row.l as number,
-        goals_for: row.gf as number,
-        goals_against: row.ga as number,
-        goal_diff: row.gd as number,
-        points: row.pts as number,
+        played: (row.played as number) ?? 0,
+        won: (row.w as number) ?? 0,
+        drawn: (row.d as number) ?? 0,
+        lost: (row.l as number) ?? 0,
+        goals_for: (row.gf as number) ?? 0,
+        goals_against: (row.ga as number) ?? 0,
+        goal_diff: (row.gd as number) ?? 0,
+        points: (row.pts as number) ?? 0,
       }));
 
       result.push({ groupLabel: `Group ${label}`, standings });
     }
 
+    // Merge approved teams not in tournament_groups into Group A (default for unassigned)
+    const { data: regs } = await supabase
+      .from("tournament_registrations")
+      .select("team_id")
+      .eq("tournament_id", tournamentId)
+      .eq("status", "approved")
+      .order("applied_at", { ascending: true });
+
+    const unassignedIds = (regs as { team_id: string }[] ?? [])
+      .map((r) => r.team_id)
+      .filter((id) => !teamsInGroups.has(id));
+
+    if (unassignedIds.length > 0) {
+      const { data: teamsData } = await supabase
+        .from("teams")
+        .select("*")
+        .in("id", unassignedIds);
+      const teams = ((teamsData as Record<string, unknown>[]) ?? []).map(mapTeam);
+      let targetGroup = result.find((r) => r.groupLabel === "Group A");
+      if (!targetGroup) {
+        targetGroup = { groupLabel: "Group A", standings: [] };
+        result.unshift(targetGroup);
+      }
+      const startRank = targetGroup.standings.length + 1;
+      for (let i = 0; i < teams.length; i++) {
+        targetGroup.standings.push({
+          rank: startRank + i,
+          team_id: teams[i].id,
+          team: teams[i],
+          played: 0,
+          won: 0,
+          drawn: 0,
+          lost: 0,
+          goals_for: 0,
+          goals_against: 0,
+          goal_diff: 0,
+          points: 0,
+        });
+      }
+    }
+
+    result.sort((a, b) => {
+      const aLetter = a.groupLabel.replace(/^Group /, "") || "A";
+      const bLetter = b.groupLabel.replace(/^Group /, "") || "A";
+      return aLetter.localeCompare(bLetter);
+    });
     return result;
   }
 
@@ -272,6 +325,18 @@ export async function getTournamentStandings(
     goal_diff: 0,
     points: 0,
   }));
+
+  // For group_stage/round_robin: show as "Group A" so tap-to-move works (even if tournament_groups empty)
+  const { data: tournament } = await supabase
+    .from("tournaments")
+    .select("bracket_format")
+    .eq("id", tournamentId)
+    .single();
+
+  const bracketFormat = (tournament as { bracket_format?: string } | null)?.bracket_format;
+  if (bracketFormat === "group_stage" || bracketFormat === "round_robin") {
+    return [{ groupLabel: "Group A", standings }];
+  }
 
   return [{ groupLabel: "", standings }];
 }

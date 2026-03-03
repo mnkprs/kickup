@@ -141,7 +141,7 @@ export function TournamentDetailClient({
               key={tab.id}
               type="button"
               onClick={() => setTab(tab.id)}
-              className={`tournament-detail__tab shrink-0 min-w-[4.5rem] sm:flex-1 sm:min-w-0 snap-start flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all min-h-[2.75rem] ${
+              className={`tournament-detail__tab flex-1 min-w-0 snap-start flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all min-h-[2.75rem] ${
                 activeTab === tab.id
                   ? "bg-accent text-accent-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -297,11 +297,7 @@ export function TournamentDetailClient({
                 (tournament.raw_status === "registration" || tournament.raw_status === "group_stage") &&
                 (tournament.format === "group_stage" || tournament.format === "round_robin")
               }
-              tournamentId={
-                canManageRegistrations && tournament.raw_status === "registration"
-                  ? tournamentId
-                  : undefined
-              }
+              tournamentId={tournamentId}
             />
             <div ref={scorersRef}>
               <TournamentScorers scorers={scorers} />

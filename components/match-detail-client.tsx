@@ -22,6 +22,7 @@ import { LiveDot } from "@/components/live-dot";
 import { Avatar } from "@/components/avatar";
 import { TeamAvatar } from "@/components/team-avatar";
 import { isTbdTeam, KNOCKOUT_STAGE_LABELS, UNKNOWN_PLAYER_ID } from "@/lib/constants";
+import { PlayerSearchSelect, type PlayerSearchResult } from "@/components/player-search-select";
 
 interface TeamMemberMin {
   id: string;
@@ -62,6 +63,8 @@ interface MatchDetailClientProps {
   teamMembers: TeamMemberMin[];
   homeRoster?: RosterPlayer[];
   awayRoster?: RosterPlayer[];
+  homeTeamMemberIds?: string[];
+  awayTeamMemberIds?: string[];
   goalsByPlayer?: Record<string, number>;
   goalsByTeam?: { home: Record<string, number>; away: Record<string, number> };
   isTournamentOrganizer?: boolean;
@@ -119,17 +122,28 @@ function TeamBlock({
 
 function GoalsRosterSection({
   roster,
+  guests = [],
   team,
   goals,
   onUpdate,
+  onAddGuest,
+  onRemoveGuest,
   showUnknown = false,
 }: {
   roster: RosterPlayer[];
+  guests?: RosterPlayer[];
   team: Match["home_team"];
   goals: Record<string, number>;
   onUpdate: (playerId: string, delta: number) => void;
+  onAddGuest?: (player: RosterPlayer) => void;
+  onRemoveGuest?: (playerId: string) => void;
   showUnknown?: boolean;
 }) {
+  const rosterAndGuestIds = new Set([
+    ...roster.map((p) => p.player_id),
+    ...guests.map((p) => p.player_id),
+  ]);
+
   return (
     <div className="goals-roster-section rounded-xl bg-card border border-border shadow-card overflow-hidden">
       <div className="goals-roster-section__header flex items-center gap-2 px-4 py-2 border-b border-border bg-muted/30">
@@ -185,6 +199,82 @@ function GoalsRosterSection({
             </div>
           );
         })}
+        {onAddGuest && onRemoveGuest && (
+          <>
+            <div className="px-4 py-2 bg-muted/20 border-t border-border">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Guest players
+              </span>
+              <div className="mt-2">
+                <PlayerSearchSelect
+                  onSelect={(p: PlayerSearchResult) =>
+                    onAddGuest({
+                      player_id: p.id,
+                      profile: {
+                        full_name: p.full_name,
+                        avatar_initials: p.avatar_initials,
+                        avatar_color: p.avatar_color,
+                        avatar_url: p.avatar_url,
+                      },
+                    })
+                  }
+                  excludeIds={rosterAndGuestIds}
+                  placeholder="Add guest player..."
+                />
+              </div>
+            </div>
+            {guests.map(({ player_id, profile }) => {
+              const count = goals[player_id] ?? 0;
+              const name = (profile.full_name as string) ?? "Unknown";
+              return (
+                <div
+                  key={player_id}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-muted/10"
+                >
+                  <button
+                    type="button"
+                    onClick={() => onUpdate(player_id, -1)}
+                    disabled={count <= 0}
+                    className="h-8 w-8 rounded-full flex items-center justify-center border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors pressable shrink-0"
+                    aria-label={`Remove goal from ${name}`}
+                  >
+                    <Minus size={14} strokeWidth={2.5} />
+                  </button>
+                  <Avatar
+                    avatar_url={profile.avatar_url as string | null}
+                    avatar_initials={(profile.avatar_initials as string) || name.split(" ").map((n) => n[0]).join("")}
+                    avatar_color={(profile.avatar_color as string) ?? "#2E7D32"}
+                    full_name={name}
+                    size="2xs"
+                  />
+                  <span className="text-sm font-medium text-foreground truncate flex-1 min-w-0">
+                    {name}
+                    <span className="text-muted-foreground text-xs ml-1">(guest)</span>
+                  </span>
+                  <span className="text-sm font-bold text-draw tabular-nums w-6 text-center shrink-0">
+                    {count}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onUpdate(player_id, 1)}
+                    className="h-8 w-8 rounded-full flex items-center justify-center border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-colors pressable shrink-0"
+                    aria-label={`Add goal for ${name}`}
+                  >
+                    <Plus size={14} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveGuest(player_id)}
+                    className="h-8 w-8 rounded-full flex items-center justify-center border border-border bg-card text-muted-foreground hover:bg-muted hover:text-destructive transition-colors pressable shrink-0"
+                    aria-label={`Remove guest ${name}`}
+                  >
+                    <X size={14} strokeWidth={2.5} />
+                  </button>
+                </div>
+              );
+            })}
+          </>
+        )}
         {showUnknown && (
           <div className="flex items-center gap-2 px-4 py-2.5">
             <button
@@ -310,9 +400,28 @@ function MatchRostersSection({
     );
   }
 
-  const homeGoals = goalsByTeam?.home ?? goalsByPlayer;
-  const awayGoals = goalsByTeam?.away ?? goalsByPlayer;
-
+  // When goalsByTeam is missing, partition goalsByPlayer by roster. Unknown cannot be split
+  // from the flat map, so we add it to home when present.
+  const hasGoalsByTeam = goalsByTeam && (Object.keys(goalsByTeam.home ?? {}).length > 0 || Object.keys(goalsByTeam.away ?? {}).length > 0);
+  const homeGoals = hasGoalsByTeam
+    ? (goalsByTeam!.home ?? {})
+    : (() => {
+        const rosterEntries = homeRoster
+          .filter((p) => (goalsByPlayer[p.player_id] ?? 0) > 0)
+          .map((p) => [p.player_id, goalsByPlayer[p.player_id] ?? 0] as const);
+        const unknownCount = goalsByPlayer[UNKNOWN_PLAYER_ID] ?? 0;
+        return Object.fromEntries(
+          unknownCount > 0 ? [...rosterEntries, [UNKNOWN_PLAYER_ID, unknownCount] as const] : rosterEntries
+        );
+      })();
+  const awayGoals = hasGoalsByTeam
+    ? (goalsByTeam!.away ?? {})
+    : (() => {
+        const rosterEntries = awayRoster
+          .filter((p) => (goalsByPlayer[p.player_id] ?? 0) > 0)
+          .map((p) => [p.player_id, goalsByPlayer[p.player_id] ?? 0] as const);
+        return Object.fromEntries(rosterEntries);
+      })();
   return (
     <section className="match-rosters-section px-5">
       <h2 className="match-rosters-section__title text-foreground font-semibold text-sm mb-3">Team Rosters</h2>
@@ -332,6 +441,8 @@ export function MatchDetailClient({
   teamMembers,
   homeRoster = [],
   awayRoster = [],
+  homeTeamMemberIds = [],
+  awayTeamMemberIds = [],
   goalsByPlayer = {},
   goalsByTeam,
   isTournamentOrganizer = false,
@@ -358,6 +469,8 @@ export function MatchDetailClient({
     home: Record<string, number>;
     away: Record<string, number>;
   }>({ home: {}, away: {} });
+  const [formGuestHome, setFormGuestHome] = useState<RosterPlayer[]>([]);
+  const [formGuestAway, setFormGuestAway] = useState<RosterPlayer[]>([]);
 
   // Admin edit state
   const [showAdminEdit, setShowAdminEdit] = useState(false);
@@ -368,6 +481,8 @@ export function MatchDetailClient({
   const [adminAwayScore, setAdminAwayScore] = useState(match.away_score?.toString() ?? "0");
   const [adminMvpId, setAdminMvpId] = useState<string | null>(match.mvp_id ?? null);
   const [adminNotes, setAdminNotes] = useState(match.notes ?? "");
+  const [adminGuestHome, setAdminGuestHome] = useState<RosterPlayer[]>([]);
+  const [adminGuestAway, setAdminGuestAway] = useState<RosterPlayer[]>([]);
   const [adminGoalsByPlayer, setAdminGoalsByPlayer] = useState<{
     home: Record<string, number>;
     away: Record<string, number>;
@@ -422,36 +537,42 @@ export function MatchDetailClient({
     if (syncBoth) {
       const h =
         homeRoster.reduce((s, p) => s + (formGoalsByTeam.home[p.player_id] ?? 0), 0) +
+        formGuestHome.reduce((s, p) => s + (formGoalsByTeam.home[p.player_id] ?? 0), 0) +
         (formGoalsByTeam.home[UNKNOWN_PLAYER_ID] ?? 0);
       const a =
         awayRoster.reduce((s, p) => s + (formGoalsByTeam.away[p.player_id] ?? 0), 0) +
+        formGuestAway.reduce((s, p) => s + (formGoalsByTeam.away[p.player_id] ?? 0), 0) +
         (formGoalsByTeam.away[UNKNOWN_PLAYER_ID] ?? 0);
       setHomeScore(h.toString());
       setAwayScore(a.toString());
-    } else if (syncHome && homeRoster.length > 0) {
+    } else if (syncHome) {
       const h =
         homeRoster.reduce((s, p) => s + (formGoalsByPlayer[p.player_id] ?? 0), 0) +
+        formGuestHome.reduce((s, p) => s + (formGoalsByPlayer[p.player_id] ?? 0), 0) +
         (formGoalsByPlayer[UNKNOWN_PLAYER_ID] ?? 0);
       setHomeScore(h.toString());
-    } else if (syncAway && awayRoster.length > 0) {
+    } else if (syncAway) {
       const a =
         awayRoster.reduce((s, p) => s + (formGoalsByPlayer[p.player_id] ?? 0), 0) +
+        formGuestAway.reduce((s, p) => s + (formGoalsByPlayer[p.player_id] ?? 0), 0) +
         (formGoalsByPlayer[UNKNOWN_PLAYER_ID] ?? 0);
       setAwayScore(a.toString());
     }
-  }, [formGoalsByPlayer, formGoalsByTeam, showResult, hasFormGoals, isOrganizerFull, resolvingDispute, userTeamId, match.home_team_id, match.away_team_id, homeRoster, awayRoster]);
+  }, [formGoalsByPlayer, formGoalsByTeam, showResult, hasFormGoals, isOrganizerFull, resolvingDispute, userTeamId, match.home_team_id, match.away_team_id, homeRoster, awayRoster, formGuestHome, formGuestAway]);
 
   useEffect(() => {
-    if (!showAdminEdit || (homeRoster.length === 0 && awayRoster.length === 0)) return;
+    if (!showAdminEdit) return;
     const h =
       homeRoster.reduce((s, p) => s + (adminGoalsByPlayer.home[p.player_id] ?? 0), 0) +
+      adminGuestHome.reduce((s, p) => s + (adminGoalsByPlayer.home[p.player_id] ?? 0), 0) +
       (adminGoalsByPlayer.home[UNKNOWN_PLAYER_ID] ?? 0);
     const a =
       awayRoster.reduce((s, p) => s + (adminGoalsByPlayer.away[p.player_id] ?? 0), 0) +
+      adminGuestAway.reduce((s, p) => s + (adminGoalsByPlayer.away[p.player_id] ?? 0), 0) +
       (adminGoalsByPlayer.away[UNKNOWN_PLAYER_ID] ?? 0);
     setAdminHomeScore(h.toString());
     setAdminAwayScore(a.toString());
-  }, [adminGoalsByPlayer, showAdminEdit, homeRoster, awayRoster]);
+  }, [adminGoalsByPlayer, showAdminEdit, homeRoster, awayRoster, adminGuestHome, adminGuestAway]);
   const myTeamHasSubmitted =
     (userTeamId === match.home_team_id && match.home_result_status === "confirmed") ||
     (userTeamId === match.away_team_id && match.away_result_status === "confirmed");
@@ -538,15 +659,21 @@ export function MatchDetailClient({
       home: Object.fromEntries(
         [
           ...homeRoster.map((p) => [p.player_id, formGoalsByTeam.home[p.player_id] ?? 0] as const),
+          ...formGuestHome.map((p) => [p.player_id, formGoalsByTeam.home[p.player_id] ?? 0] as const),
           [UNKNOWN_PLAYER_ID, formGoalsByTeam.home[UNKNOWN_PLAYER_ID] ?? 0] as const,
         ].filter(([, c]) => Number(c) > 0)
       ),
       away: Object.fromEntries(
         [
           ...awayRoster.map((p) => [p.player_id, formGoalsByTeam.away[p.player_id] ?? 0] as const),
+          ...formGuestAway.map((p) => [p.player_id, formGoalsByTeam.away[p.player_id] ?? 0] as const),
           [UNKNOWN_PLAYER_ID, formGoalsByTeam.away[UNKNOWN_PLAYER_ID] ?? 0] as const,
         ].filter(([, c]) => Number(c) > 0)
       ),
+    };
+    const guestPayload = {
+      home: formGuestHome.map((p) => p.player_id),
+      away: formGuestAway.map((p) => p.player_id),
     };
     const result =
       isAdmin
@@ -557,6 +684,7 @@ export function MatchDetailClient({
             mvpId,
             notes,
             goals: goalsPayload,
+            guestPlayerIds: guestPayload,
           })
         : await organizerSubmitResultAction({
             matchId: match.id,
@@ -565,6 +693,7 @@ export function MatchDetailClient({
             mvpId,
             notes,
             goals: goalsPayload,
+            guestPlayerIds: guestPayload,
           });
     setLoading(false);
     if (result.error) {
@@ -581,6 +710,11 @@ export function MatchDetailClient({
     const h = parseInt(homeScore) || 0;
     const a = parseInt(awayScore) || 0;
 
+    const guestPayload =
+      userTeamId === match.home_team_id
+        ? formGuestHome.map((p) => p.player_id)
+        : formGuestAway.map((p) => p.player_id);
+
     const result = isTournamentOrganizer && !isParticipant
       ? await organizerSubmitResultAction({
           matchId: match.id,
@@ -592,15 +726,21 @@ export function MatchDetailClient({
             home: Object.fromEntries(
               [
                 ...homeRoster.map((p) => [p.player_id, formGoalsByTeam.home[p.player_id] ?? 0] as const),
+                ...formGuestHome.map((p) => [p.player_id, formGoalsByTeam.home[p.player_id] ?? 0] as const),
                 [UNKNOWN_PLAYER_ID, formGoalsByTeam.home[UNKNOWN_PLAYER_ID] ?? 0] as const,
               ].filter(([, c]) => Number(c) > 0)
             ),
             away: Object.fromEntries(
               [
                 ...awayRoster.map((p) => [p.player_id, formGoalsByTeam.away[p.player_id] ?? 0] as const),
+                ...formGuestAway.map((p) => [p.player_id, formGoalsByTeam.away[p.player_id] ?? 0] as const),
                 [UNKNOWN_PLAYER_ID, formGoalsByTeam.away[UNKNOWN_PLAYER_ID] ?? 0] as const,
               ].filter(([, c]) => Number(c) > 0)
             ),
+          },
+          guestPlayerIds: {
+            home: formGuestHome.map((p) => p.player_id),
+            away: formGuestAway.map((p) => p.player_id),
           },
         })
       : await submitResultAction({
@@ -616,9 +756,14 @@ export function MatchDetailClient({
                 p.player_id,
                 formGoalsByPlayer[p.player_id] ?? 0,
               ] as const),
+              ...(userTeamId === match.home_team_id ? formGuestHome : formGuestAway).map((p) => [
+                p.player_id,
+                formGoalsByPlayer[p.player_id] ?? 0,
+              ] as const),
               [UNKNOWN_PLAYER_ID, formGoalsByPlayer[UNKNOWN_PLAYER_ID] ?? 0] as const,
             ].filter(([, c]) => Number(c) > 0)
           ),
+          guestPlayerIds: guestPayload,
         });
     setLoading(false);
     if (result.error) { setError(result.error); return; }
@@ -646,15 +791,36 @@ export function MatchDetailClient({
       home: Object.fromEntries(
         [
           ...homeRoster.map((p) => [p.player_id, adminGoalsByPlayer.home[p.player_id] ?? 0] as const),
+          ...adminGuestHome.map((p) => [p.player_id, adminGoalsByPlayer.home[p.player_id] ?? 0] as const),
           [UNKNOWN_PLAYER_ID, adminGoalsByPlayer.home[UNKNOWN_PLAYER_ID] ?? 0] as const,
         ].filter(([, c]) => Number(c) > 0)
       ),
       away: Object.fromEntries(
         [
           ...awayRoster.map((p) => [p.player_id, adminGoalsByPlayer.away[p.player_id] ?? 0] as const),
+          ...adminGuestAway.map((p) => [p.player_id, adminGoalsByPlayer.away[p.player_id] ?? 0] as const),
           [UNKNOWN_PLAYER_ID, adminGoalsByPlayer.away[UNKNOWN_PLAYER_ID] ?? 0] as const,
         ].filter(([, c]) => Number(c) > 0)
       ),
+    };
+    const homeSum = Object.values(goalsPayload.home).reduce((s, c) => s + Number(c), 0);
+    const awaySum = Object.values(goalsPayload.away).reduce((s, c) => s + Number(c), 0);
+    if (homeSum !== h || awaySum !== a) {
+      setError(`Goals must match the score. Home: ${homeSum} ≠ ${h}, Away: ${awaySum} ≠ ${a}`);
+      setAdminSaveLoading(false);
+      return;
+    }
+    const homeTeamMemberSet = new Set(homeTeamMemberIds);
+    const awayTeamMemberSet = new Set(awayTeamMemberIds);
+    const guestPayload = {
+      home: [
+        ...adminGuestHome.map((p) => p.player_id),
+        ...homeRoster.filter((p) => !homeTeamMemberSet.has(p.player_id)).map((p) => p.player_id),
+      ].filter((id, i, arr) => arr.indexOf(id) === i),
+      away: [
+        ...adminGuestAway.map((p) => p.player_id),
+        ...awayRoster.filter((p) => !awayTeamMemberSet.has(p.player_id)).map((p) => p.player_id),
+      ].filter((id, i, arr) => arr.indexOf(id) === i),
     };
     const res = await adminUpdateMatchResultAction({
       matchId: match.id,
@@ -663,6 +829,7 @@ export function MatchDetailClient({
       mvpId: adminMvpId,
       notes: adminNotes,
       goals: goalsPayload,
+      guestPlayerIds: guestPayload,
     });
     setAdminSaveLoading(false);
     if (res.error) {
@@ -1002,15 +1169,12 @@ export function MatchDetailClient({
             <div className="p-4 rounded-xl bg-card border border-border shadow-card">
               <p className="text-foreground font-semibold text-sm mb-1">Submit Result</p>
               <p className="text-muted-foreground text-xs">
-                {homeRoster.length > 0 || awayRoster.length > 0
-                  ? "Add goals per player — the score updates automatically."
-                  : "Enter the final score for this match."}
+                Add goals per player — unassigned goals go to Unknown. Add guest players below to assign goals to them.
               </p>
             </div>
 
-            {/* Goals per player — primary flow when rosters exist */}
-            {(homeRoster.length > 0 || awayRoster.length > 0) && (
-              <div>
+            {/* Goals per player — always show so user can add guests and assign goals */}
+            <div>
                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
                   Goals per player (optional)
                 </label>
@@ -1019,6 +1183,7 @@ export function MatchDetailClient({
                     <>
                       <GoalsRosterSection
                         roster={homeRoster}
+                        guests={formGuestHome}
                         team={match.home_team}
                         goals={formGoalsByTeam.home}
                         onUpdate={(playerId, delta) =>
@@ -1030,10 +1195,13 @@ export function MatchDetailClient({
                             },
                           }))
                         }
+                        onAddGuest={(p) => setFormGuestHome((prev) => (prev.some((g) => g.player_id === p.player_id) ? prev : [...prev, p]))}
+                        onRemoveGuest={(id) => setFormGuestHome((prev) => prev.filter((g) => g.player_id !== id))}
                         showUnknown
                       />
                       <GoalsRosterSection
                         roster={awayRoster}
+                        guests={formGuestAway}
                         team={match.away_team}
                         goals={formGoalsByTeam.away}
                         onUpdate={(playerId, delta) =>
@@ -1045,6 +1213,8 @@ export function MatchDetailClient({
                             },
                           }))
                         }
+                        onAddGuest={(p) => setFormGuestAway((prev) => (prev.some((g) => g.player_id === p.player_id) ? prev : [...prev, p]))}
+                        onRemoveGuest={(id) => setFormGuestAway((prev) => prev.filter((g) => g.player_id !== id))}
                         showUnknown
                       />
                     </>
@@ -1052,6 +1222,9 @@ export function MatchDetailClient({
                     <GoalsRosterSection
                       roster={
                         userTeamId === match.home_team_id ? homeRoster : awayRoster
+                      }
+                      guests={
+                        userTeamId === match.home_team_id ? formGuestHome : formGuestAway
                       }
                       team={
                         userTeamId === match.home_team_id
@@ -1065,12 +1238,21 @@ export function MatchDetailClient({
                           [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
                         }))
                       }
+                      onAddGuest={(p) =>
+                        userTeamId === match.home_team_id
+                          ? setFormGuestHome((prev) => (prev.some((g) => g.player_id === p.player_id) ? prev : [...prev, p]))
+                          : setFormGuestAway((prev) => (prev.some((g) => g.player_id === p.player_id) ? prev : [...prev, p]))
+                      }
+                      onRemoveGuest={(id) =>
+                        userTeamId === match.home_team_id
+                          ? setFormGuestHome((prev) => prev.filter((g) => g.player_id !== id))
+                          : setFormGuestAway((prev) => prev.filter((g) => g.player_id !== id))
+                      }
                       showUnknown
                     />
                   ) : null}
                 </div>
-              </div>
-            )}
+            </div>
 
             {/* Score — compact display when goals exist, full inputs otherwise */}
             <div className="grid grid-cols-3 gap-3 items-center">
@@ -1104,11 +1286,9 @@ export function MatchDetailClient({
                 />
               </div>
             </div>
-            {(homeRoster.length > 0 || awayRoster.length > 0) && (
-              <p className="text-xs text-muted-foreground text-center -mt-2">
-                Score updates automatically when you add goals above. You can also edit manually.
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground text-center -mt-2">
+              Score updates automatically when you add goals above. You can also edit manually.
+            </p>
 
             {/* MVP selection */}
             {teamMembers.length > 0 && (
@@ -1218,52 +1398,54 @@ export function MatchDetailClient({
             <div className="p-4 rounded-xl bg-card border border-border shadow-card">
               <p className="text-foreground font-semibold text-sm mb-1">{isAdmin ? "Enter Result" : "Resolve Dispute"}</p>
               <p className="text-muted-foreground text-xs">
-                {homeRoster.length > 0 || awayRoster.length > 0
-                  ? "Add goals per player — the score updates automatically."
-                  : isAdmin ? "Enter the final score to complete this match." : "Enter the final score to resolve this match."}
+                Add goals per player — unassigned goals go to Unknown. Add guest players below to assign goals to them.
               </p>
             </div>
 
-            {/* Goals per player — primary flow when rosters exist */}
-            {(homeRoster.length > 0 || awayRoster.length > 0) && (
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
-                  Goals per player
-                </label>
-                <div className="flex flex-col gap-3">
-                  <GoalsRosterSection
-                    roster={homeRoster}
-                    team={match.home_team}
-                    goals={formGoalsByTeam.home}
-                    onUpdate={(playerId, delta) =>
-                      setFormGoalsByTeam((prev) => ({
-                        ...prev,
-                        home: {
-                          ...prev.home,
-                          [playerId]: Math.max(0, (prev.home[playerId] ?? 0) + delta),
-                        },
-                      }))
-                    }
-                    showUnknown
-                  />
-                  <GoalsRosterSection
-                    roster={awayRoster}
-                    team={match.away_team}
-                    goals={formGoalsByTeam.away}
-                    onUpdate={(playerId, delta) =>
-                      setFormGoalsByTeam((prev) => ({
-                        ...prev,
-                        away: {
-                          ...prev.away,
-                          [playerId]: Math.max(0, (prev.away[playerId] ?? 0) + delta),
-                        },
-                      }))
-                    }
-                    showUnknown
-                  />
-                </div>
+            {/* Goals per player — always show so user can add guests and assign goals */}
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
+                Goals per player
+              </label>
+              <div className="flex flex-col gap-3">
+                <GoalsRosterSection
+                  roster={homeRoster}
+                  guests={formGuestHome}
+                  team={match.home_team}
+                  goals={formGoalsByTeam.home}
+                  onUpdate={(playerId, delta) =>
+                    setFormGoalsByTeam((prev) => ({
+                      ...prev,
+                      home: {
+                        ...prev.home,
+                        [playerId]: Math.max(0, (prev.home[playerId] ?? 0) + delta),
+                      },
+                    }))
+                  }
+                  onAddGuest={(p) => setFormGuestHome((prev) => (prev.some((g) => g.player_id === p.player_id) ? prev : [...prev, p]))}
+                  onRemoveGuest={(id) => setFormGuestHome((prev) => prev.filter((g) => g.player_id !== id))}
+                  showUnknown
+                />
+                <GoalsRosterSection
+                  roster={awayRoster}
+                  guests={formGuestAway}
+                  team={match.away_team}
+                  goals={formGoalsByTeam.away}
+                  onUpdate={(playerId, delta) =>
+                    setFormGoalsByTeam((prev) => ({
+                      ...prev,
+                      away: {
+                        ...prev.away,
+                        [playerId]: Math.max(0, (prev.away[playerId] ?? 0) + delta),
+                      },
+                    }))
+                  }
+                  onAddGuest={(p) => setFormGuestAway((prev) => (prev.some((g) => g.player_id === p.player_id) ? prev : [...prev, p]))}
+                  onRemoveGuest={(id) => setFormGuestAway((prev) => prev.filter((g) => g.player_id !== id))}
+                  showUnknown
+                />
               </div>
-            )}
+            </div>
 
             {/* Score */}
             <div className="grid grid-cols-3 gap-3 items-center">
@@ -1297,11 +1479,9 @@ export function MatchDetailClient({
                 />
               </div>
             </div>
-            {(homeRoster.length > 0 || awayRoster.length > 0) && (
-              <p className="text-xs text-muted-foreground text-center -mt-2">
-                Score updates automatically when you add goals above. You can also edit manually.
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground text-center -mt-2">
+              Score updates automatically when you add goals above. You can also edit manually.
+            </p>
 
             {/* MVP selection */}
             {teamMembers.length > 0 && (
@@ -1433,44 +1613,48 @@ export function MatchDetailClient({
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Result
                   </p>
-                  {homeRoster.length > 0 || awayRoster.length > 0 ? (
-                    <div className="space-y-2">
-                      <label className="text-xs text-muted-foreground">Goals per player</label>
-                      <div className="flex flex-col gap-3">
-                        <GoalsRosterSection
-                          roster={homeRoster}
-                          team={match.home_team}
-                          goals={adminGoalsByPlayer.home}
-                          onUpdate={(playerId, delta) =>
-                            setAdminGoalsByPlayer((prev) => ({
-                              ...prev,
-                              home: {
-                                ...prev.home,
-                                [playerId]: Math.max(0, (prev.home[playerId] ?? 0) + delta),
-                              },
-                            }))
-                          }
-                          showUnknown
-                        />
-                        <GoalsRosterSection
-                          roster={awayRoster}
-                          team={match.away_team}
-                          goals={adminGoalsByPlayer.away}
-                          onUpdate={(playerId, delta) =>
-                            setAdminGoalsByPlayer((prev) => ({
-                              ...prev,
-                              away: {
-                                ...prev.away,
-                                [playerId]: Math.max(0, (prev.away[playerId] ?? 0) + delta),
-                              },
-                            }))
-                          }
-                          showUnknown
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">Score updates automatically from goals above.</p>
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground">Goals per player (unassigned go to Unknown; add guests to assign)</label>
+                    <div className="flex flex-col gap-3">
+                      <GoalsRosterSection
+                        roster={homeRoster}
+                        guests={adminGuestHome}
+                        team={match.home_team}
+                        goals={adminGoalsByPlayer.home}
+                        onUpdate={(playerId, delta) =>
+                          setAdminGoalsByPlayer((prev) => ({
+                            ...prev,
+                            home: {
+                              ...prev.home,
+                              [playerId]: Math.max(0, (prev.home[playerId] ?? 0) + delta),
+                            },
+                          }))
+                        }
+                        onAddGuest={(p) => setAdminGuestHome((prev) => (prev.some((g) => g.player_id === p.player_id) ? prev : [...prev, p]))}
+                        onRemoveGuest={(id) => setAdminGuestHome((prev) => prev.filter((g) => g.player_id !== id))}
+                        showUnknown
+                      />
+                      <GoalsRosterSection
+                        roster={awayRoster}
+                        guests={adminGuestAway}
+                        team={match.away_team}
+                        goals={adminGoalsByPlayer.away}
+                        onUpdate={(playerId, delta) =>
+                          setAdminGoalsByPlayer((prev) => ({
+                            ...prev,
+                            away: {
+                              ...prev.away,
+                              [playerId]: Math.max(0, (prev.away[playerId] ?? 0) + delta),
+                            },
+                          }))
+                        }
+                        onAddGuest={(p) => setAdminGuestAway((prev) => (prev.some((g) => g.player_id === p.player_id) ? prev : [...prev, p]))}
+                        onRemoveGuest={(id) => setAdminGuestAway((prev) => prev.filter((g) => g.player_id !== id))}
+                        showUnknown
+                      />
                     </div>
-                  ) : null}
+                    <p className="text-xs text-muted-foreground">Score updates automatically from goals above.</p>
+                  </div>
 
                   <div className="grid grid-cols-3 gap-3 items-center">
                     <div className="flex flex-col items-center gap-1">
