@@ -9,6 +9,7 @@ import {
   UserPlus,
   MapPin,
   Crosshair,
+  Shield,
   Ruler,
   Cake,
   Footprints,
@@ -268,7 +269,7 @@ export function FindPlayersClient({
               key={player.id}
               className="find-players__player-card rounded-xl bg-card border border-border shadow-card p-4"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Link
                   href={`/profile/${player.id}`}
                   className="flex items-center gap-3 flex-1 min-w-0"
@@ -336,12 +337,21 @@ export function FindPlayersClient({
               </div>
 
               <div className="flex items-center justify-between gap-4 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
-                <div className="flex items-center gap-4 shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
                   <span title="Matches">{player.matches_played} matches</span>
-                  <span title="Goals">
-                    <Crosshair size={11} className="inline mr-0.5 text-draw" />
-                    {player.goals}G
-                  </span>
+                  {player.position === "GK" ? (
+                    <span title="Avg goals against per match">
+                      <Shield size={11} className="inline mr-0.5 text-muted-foreground" />
+                      {player.matches_played > 0
+                        ? `${(player.goals_against / player.matches_played).toFixed(1)} GA`
+                        : "—"}
+                    </span>
+                  ) : (
+                    <span title="Goals">
+                      <Crosshair size={11} className="inline mr-0.5 text-draw" />
+                      {player.goals}G
+                    </span>
+                  )}
                   <span title="Win rate">
                     {player.matches_played > 0
                       ? `${Math.round((player.wins / player.matches_played) * 100)}% win`
