@@ -228,17 +228,31 @@ export function EditTournamentSheet({
                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
                   Knockout Mode
                 </label>
+                {(tournament.raw_status === "knockout_stage" ||
+                  tournament.raw_status === "completed") && (
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Cannot change after knockout stage has started.
+                  </p>
+                )}
                 <div className="flex flex-col gap-2">
                   {KNOCKOUT_MODE_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => setKnockoutMode(opt.value)}
+                      onClick={() =>
+                        tournament.raw_status !== "knockout_stage" &&
+                        tournament.raw_status !== "completed" &&
+                        setKnockoutMode(opt.value)
+                      }
+                      disabled={
+                        tournament.raw_status === "knockout_stage" ||
+                        tournament.raw_status === "completed"
+                      }
                       className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition-all border text-left ${
                         knockoutMode === opt.value
                           ? "bg-accent text-accent-foreground border-accent"
                           : "bg-card text-muted-foreground border-border hover:text-foreground"
-                      }`}
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {opt.label}
                     </button>

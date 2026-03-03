@@ -3,6 +3,23 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+export async function moveTeamToGroupAction(
+  tournamentId: string,
+  teamId: string,
+  targetGroupLabel: string
+) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("move_team_to_group", {
+    p_tournament_id: tournamentId,
+    p_team_id: teamId,
+    p_target_group_label: targetGroupLabel,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/tournaments/${tournamentId}`);
+  revalidatePath("/tournaments");
+  return { success: true };
+}
+
 export async function removeTeamFromTournamentAction(tournamentId: string, teamId: string) {
   const supabase = await createClient();
   const { error } = await supabase.rpc("remove_team_from_tournament", {
@@ -263,6 +280,17 @@ export async function updateTournamentAction(
   }
 ) {
   const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("tournaments")
+    .select("status")
+    .eq("id", tournamentId)
+    .single();
+
+  const isKnockoutOrCompleted =
+    (existing as { status?: string } | null)?.status === "knockout_stage" ||
+    (existing as { status?: string } | null)?.status === "completed";
+
   const update: Record<string, unknown> = {
     name: data.name.trim(),
     description: data.description.trim(),
@@ -276,13 +304,18 @@ export async function updateTournamentAction(
   };
   if (data.bracket_format != null) update.bracket_format = data.bracket_format;
   if (data.teams_per_group != null) update.teams_per_group = data.teams_per_group;
-  if (data.knockout_mode != null) update.knockout_mode = data.knockout_mode;
-  const { error } = await supabase
+  if (data.knockout_mode != null && !isKnockoutOrCompleted) {
+    update.knockout_mode = data.knockout_mode;
+  }
+
+  const { data: updated, error } = await supabase
     .from("tournaments")
     .update(update)
-    .eq("id", tournamentId);
+    .eq("id", tournamentId)
+    .select("id");
 
   if (error) return { error: error.message };
+  if (!updated?.length) return { error: "Update failed. You may not have permission to edit this tournament." };
 
   revalidatePath(`/tournaments/${tournamentId}`);
   revalidatePath("/tournaments");

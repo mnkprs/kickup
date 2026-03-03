@@ -278,6 +278,11 @@ export function TournamentDetailClient({
               standingsGroups={standings}
               title={tournament.status === "upcoming" ? "Enrolled Teams" : "Standings"}
               canRemoveTeam={canManageRegistrations && tournament.raw_status === "registration"}
+              canDragDrop={
+                canManageRegistrations &&
+                (tournament.raw_status === "registration" || tournament.raw_status === "group_stage") &&
+                (tournament.format === "group_stage" || tournament.format === "round_robin")
+              }
               tournamentId={
                 canManageRegistrations && tournament.raw_status === "registration"
                   ? tournamentId
