@@ -69,20 +69,12 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
           <div className="relative">
             {showSettings ? (
               <AvatarUpload profile={profile} size="lg" editable className="ring-4 ring-accent/20">
-                <span
-                  aria-label="Online"
-                  className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full bg-win border-2 border-card"
-                />
                 <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                   {winRate}%
                 </span>
               </AvatarUpload>
             ) : (
               <AvatarUpload profile={profile} size="lg" editable={false} className="ring-4 ring-accent/20">
-                <span
-                  aria-label="Online"
-                  className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full bg-win border-2 border-card"
-                />
                 <span className="absolute -top-1 -right-2 bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
                   {winRate}%
                 </span>

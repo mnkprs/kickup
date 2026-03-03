@@ -1,6 +1,6 @@
 "use client";
 
-import { Crosshair, Shield, Star, Lock, Trophy } from "lucide-react";
+import { Crosshair, Shield, Lock, Trophy } from "lucide-react";
 import type { Profile } from "@/lib/types";
 
 interface Achievement {
@@ -14,7 +14,6 @@ interface Achievement {
 const ICON_MAP = {
   crosshair: Crosshair,
   shield: Shield,
-  star: Star,
   lock: Lock,
   trophy: Trophy,
 };
@@ -34,13 +33,6 @@ function buildAchievements(profile: Profile): Achievement[] {
       description: "40+ matches played",
       icon: "shield",
       unlocked: profile.matches_played >= 40,
-    },
-    {
-      id: "ach_4",
-      name: "MOTM Hero",
-      description: "Win 5+ Man of the Match",
-      icon: "star",
-      unlocked: profile.man_of_match >= 5,
     },
     {
       id: "ach_5",

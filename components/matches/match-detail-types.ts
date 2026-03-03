@@ -39,6 +39,8 @@ export interface MatchDetailClientProps {
   teamMembers: TeamMemberMin[];
   homeRoster?: RosterPlayer[];
   awayRoster?: RosterPlayer[];
+  initialGuestHome?: RosterPlayer[];
+  initialGuestAway?: RosterPlayer[];
   homeTeamMemberIds?: string[];
   awayTeamMemberIds?: string[];
   goalsByPlayer?: Record<string, number>;

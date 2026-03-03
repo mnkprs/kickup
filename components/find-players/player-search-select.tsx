@@ -18,6 +18,10 @@ interface PlayerSearchSelectProps {
   excludeIds?: Set<string>;
   placeholder?: string;
   disabled?: boolean;
+  /** When "top", the dropdown opens above the input instead of below */
+  popoverPlacement?: "top" | "bottom";
+  /** When true, removes the border from the input */
+  borderless?: boolean;
 }
 
 export function PlayerSearchSelect({
@@ -25,6 +29,8 @@ export function PlayerSearchSelect({
   excludeIds = new Set(),
   placeholder = "Search player by name...",
   disabled = false,
+  popoverPlacement = "bottom",
+  borderless = false,
 }: PlayerSearchSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -81,7 +87,7 @@ export function PlayerSearchSelect({
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        className={`flex items-center gap-2 w-full rounded-xl bg-card border border-border px-4 py-2.5 text-sm text-foreground focus-within:border-accent/50 transition-colors ${disabled ? "opacity-50 pointer-events-none" : ""}`}
+        className={`flex items-center gap-2 w-full rounded-xl bg-card px-4 py-2.5 text-sm text-foreground transition-colors ${!borderless ? "border border-border focus-within:border-accent/50" : ""} ${disabled ? "opacity-50 pointer-events-none" : ""}`}
       >
         <UserPlus size={16} className="text-muted-foreground shrink-0" />
         <input
@@ -107,7 +113,9 @@ export function PlayerSearchSelect({
       {isOpen && (
         <div
           role="listbox"
-          className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-xl bg-card border border-border shadow-lg py-1"
+          className={`absolute z-50 w-full max-h-60 overflow-auto rounded-xl bg-card border border-border shadow-lg py-1 ${
+            popoverPlacement === "top" ? "bottom-full mb-1" : "mt-1 top-full"
+          }`}
         >
           {search.trim().length < 2 ? (
             <div className="px-4 py-3 text-sm text-muted-foreground">

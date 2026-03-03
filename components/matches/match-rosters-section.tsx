@@ -11,9 +11,10 @@ interface RosterColumnProps {
   roster: RosterPlayer[];
   team: Match["home_team"];
   teamGoals: Record<string, number>;
+  guestIds?: Set<string>;
 }
 
-function RosterColumn({ roster, team, teamGoals }: RosterColumnProps) {
+function RosterColumn({ roster, team, teamGoals, guestIds }: RosterColumnProps) {
   return (
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2 mb-2">
@@ -34,6 +35,7 @@ function RosterColumn({ roster, team, teamGoals }: RosterColumnProps) {
         {roster.map(({ player_id, profile }) => {
           const goals = teamGoals[player_id] ?? 0;
           const name = (profile.full_name as string) ?? "Unknown";
+          const isGuest = guestIds?.has(player_id);
           return (
             <Link
               key={player_id}
@@ -41,6 +43,9 @@ function RosterColumn({ roster, team, teamGoals }: RosterColumnProps) {
               className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors pressable"
             >
               <div className="flex items-center gap-3 min-w-0">
+                {isGuest && (
+                  <span className="text-muted-foreground text-[10px] font-medium shrink-0">(Guest)</span>
+                )}
                 <Avatar
                   avatar_url={profile.avatar_url as string | null}
                   avatar_initials={(profile.avatar_initials as string) || name.split(" ").map((n) => n[0]).join("")}
@@ -83,6 +88,8 @@ interface MatchRostersSectionProps {
   awayTeam: Match["away_team"];
   goalsByPlayer: Record<string, number>;
   goalsByTeam?: { home: Record<string, number>; away: Record<string, number> };
+  homeGuestIds?: string[];
+  awayGuestIds?: string[];
 }
 
 export function MatchRostersSection({
@@ -92,6 +99,8 @@ export function MatchRostersSection({
   awayTeam,
   goalsByPlayer,
   goalsByTeam,
+  homeGuestIds = [],
+  awayGuestIds = [],
 }: MatchRostersSectionProps) {
   const hasGoalsByTeam = goalsByTeam && (Object.keys(goalsByTeam.home ?? {}).length > 0 || Object.keys(goalsByTeam.away ?? {}).length > 0);
   const homeGoals = hasGoalsByTeam
@@ -113,12 +122,15 @@ export function MatchRostersSection({
           .map((p) => [p.player_id, goalsByPlayer[p.player_id] ?? 0] as const);
         return Object.fromEntries(rosterEntries);
       })();
+  const homeGuestSet = new Set(homeGuestIds);
+  const awayGuestSet = new Set(awayGuestIds);
+
   return (
     <section className="match-rosters-section px-5">
       <h2 className="match-rosters-section__title text-foreground font-semibold text-sm mb-3">Team Rosters</h2>
       <div className="flex flex-col gap-4">
-        <RosterColumn roster={homeRoster} team={homeTeam} teamGoals={homeGoals} />
-        <RosterColumn roster={awayRoster} team={awayTeam} teamGoals={awayGoals} />
+        <RosterColumn roster={homeRoster} team={homeTeam} teamGoals={homeGoals} guestIds={homeGuestSet} />
+        <RosterColumn roster={awayRoster} team={awayTeam} teamGoals={awayGoals} guestIds={awayGuestSet} />
       </div>
     </section>
   );

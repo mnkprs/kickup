@@ -1,6 +1,6 @@
 import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
-import { getMatch, getMatchGoalsByPlayer, getMatchGoalsByTeam, getMatchRoster, getMatchActionHistory } from "@/lib/db/matches";
+import { getMatch, getMatchGoalsByPlayer, getMatchGoalsByTeam, getMatchRoster, getMatchPendingGuests, getMatchActionHistory } from "@/lib/db/matches";
 import { createClient } from "@/lib/supabase/server";
 import { isTbdMatch } from "@/lib/constants";
 import { getTeamMembers } from "@/lib/db/teams";
@@ -136,11 +136,23 @@ export default async function MatchDetailPage({
   // For pre_match when user can submit: fetch rosters for goal assignment
   let homeRoster: { player_id: string; profile: Record<string, unknown> }[] = [];
   let awayRoster: { player_id: string; profile: Record<string, unknown> }[] = [];
+  let initialGuestHome: { player_id: string; profile: Record<string, unknown> }[] = [];
+  let initialGuestAway: { player_id: string; profile: Record<string, unknown> }[] = [];
   let goalsByPlayer: Map<string, number> = new Map();
   let goalsByTeam: { home: Record<string, number>; away: Record<string, number> } = {
     home: {},
     away: {},
   };
+
+  // Fetch team member IDs early so we can split roster vs guests
+  const [homeMembers, awayMembers] = await Promise.all([
+    getTeamMembers(match.home_team_id),
+    getTeamMembers(match.away_team_id),
+  ]);
+  const homeTeamMemberIds = homeMembers.map((m) => m.profile.id);
+  const awayTeamMemberIds = awayMembers.map((m) => m.profile.id);
+  const homeTeamMemberSet = new Set(homeTeamMemberIds);
+  const awayTeamMemberSet = new Set(awayTeamMemberIds);
 
   if (match.raw_status === "completed") {
     const [home, away, goals, goalsByTeamRes] = await Promise.all([
@@ -149,8 +161,10 @@ export default async function MatchDetailPage({
       getMatchGoalsByPlayer(id),
       getMatchGoalsByTeam(id, match.home_team_id, match.away_team_id),
     ]);
-    homeRoster = home;
-    awayRoster = away;
+    homeRoster = home.filter((p) => homeTeamMemberSet.has(p.player_id));
+    awayRoster = away.filter((p) => awayTeamMemberSet.has(p.player_id));
+    initialGuestHome = home.filter((p) => !homeTeamMemberSet.has(p.player_id));
+    initialGuestAway = away.filter((p) => !awayTeamMemberSet.has(p.player_id));
     goalsByPlayer = goals;
     goalsByTeam = goalsByTeamRes;
   } else if (
@@ -158,23 +172,33 @@ export default async function MatchDetailPage({
     (userTeamId || isTournamentOrganizer || isAdmin)
   ) {
     if (match.raw_status === "disputed") {
-      const [home, away, goalsRes, goalsByTeamRes] = await Promise.all([
+      const [home, away, goalsRes, goalsByTeamRes, pendingGuests] = await Promise.all([
         getMatchRoster(id, match.home_team_id),
         getMatchRoster(id, match.away_team_id),
         getMatchGoalsByPlayer(id),
         getMatchGoalsByTeam(id, match.home_team_id, match.away_team_id),
+        getMatchPendingGuests(id, match.home_team_id, match.away_team_id, homeTeamMemberIds, awayTeamMemberIds),
       ]);
-      homeRoster = home;
-      awayRoster = away;
+      homeRoster = home.filter((p) => homeTeamMemberSet.has(p.player_id));
+      awayRoster = away.filter((p) => awayTeamMemberSet.has(p.player_id));
+      initialGuestHome = home.filter((p) => !homeTeamMemberSet.has(p.player_id));
+      initialGuestAway = away.filter((p) => !awayTeamMemberSet.has(p.player_id));
+      if (initialGuestHome.length === 0 && initialGuestAway.length === 0) {
+        initialGuestHome = pendingGuests.home;
+        initialGuestAway = pendingGuests.away;
+      }
       goalsByPlayer = goalsRes;
       goalsByTeam = goalsByTeamRes;
     } else {
-      const [home, away] = await Promise.all([
+      const [home, away, pendingGuests] = await Promise.all([
         getMatchRoster(id, match.home_team_id),
         getMatchRoster(id, match.away_team_id),
+        getMatchPendingGuests(id, match.home_team_id, match.away_team_id, homeTeamMemberIds, awayTeamMemberIds),
       ]);
       homeRoster = home;
       awayRoster = away;
+      initialGuestHome = pendingGuests.home;
+      initialGuestAway = pendingGuests.away;
     }
   }
 
@@ -186,8 +210,10 @@ export default async function MatchDetailPage({
       getMatchGoalsByPlayer(id),
       getMatchGoalsByTeam(id, match.home_team_id, match.away_team_id),
     ]);
-    homeRoster = home;
-    awayRoster = away;
+    homeRoster = home.filter((p) => homeTeamMemberSet.has(p.player_id));
+    awayRoster = away.filter((p) => awayTeamMemberSet.has(p.player_id));
+    initialGuestHome = home.filter((p) => !homeTeamMemberSet.has(p.player_id));
+    initialGuestAway = away.filter((p) => !awayTeamMemberSet.has(p.player_id));
     goalsByPlayer = goals;
     goalsByTeam = goalsByTeamRes;
   }
@@ -197,7 +223,7 @@ export default async function MatchDetailPage({
   if (isAdmin && (homeRoster.length > 0 || awayRoster.length > 0)) {
     teamMembers = [];
     const seen = new Set<string>();
-    for (const { player_id, profile } of [...homeRoster, ...awayRoster]) {
+    for (const { player_id, profile } of [...homeRoster, ...awayRoster, ...initialGuestHome, ...initialGuestAway]) {
       if (seen.has(player_id)) continue;
       seen.add(player_id);
       teamMembers.push({
@@ -212,17 +238,6 @@ export default async function MatchDetailPage({
 
   const matchActionHistory = await getMatchActionHistory(id);
 
-  let homeTeamMemberIds: string[] = [];
-  let awayTeamMemberIds: string[] = [];
-  if (homeRoster.length > 0 || awayRoster.length > 0) {
-    const [homeMembers, awayMembers] = await Promise.all([
-      getTeamMembers(match.home_team_id),
-      getTeamMembers(match.away_team_id),
-    ]);
-    homeTeamMemberIds = homeMembers.map((m) => m.profile.id);
-    awayTeamMemberIds = awayMembers.map((m) => m.profile.id);
-  }
-
   return (
     <MatchDetailClient
       match={match}
@@ -232,6 +247,8 @@ export default async function MatchDetailPage({
       teamMembers={teamMembers}
       homeRoster={homeRoster}
       awayRoster={awayRoster}
+      initialGuestHome={initialGuestHome}
+      initialGuestAway={initialGuestAway}
       homeTeamMemberIds={homeTeamMemberIds}
       awayTeamMemberIds={awayTeamMemberIds}
       goalsByPlayer={Object.fromEntries(goalsByPlayer)}

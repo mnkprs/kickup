@@ -249,6 +249,55 @@ export async function getMatchGoalsByTeam(
   return { home, away };
 }
 
+/** Pending guest player IDs and profiles for a match (from matches.pending_guest_* or derived from match_lineups) */
+export async function getMatchPendingGuests(
+  matchId: string,
+  homeTeamId: string,
+  awayTeamId: string,
+  homeTeamMemberIds: string[],
+  awayTeamMemberIds: string[]
+): Promise<{
+  home: { player_id: string; profile: Record<string, unknown> }[];
+  away: { player_id: string; profile: Record<string, unknown> }[];
+}> {
+  const supabase = await createClient();
+  const { data: matchRow } = await supabase
+    .from("matches")
+    .select("pending_guest_home_ids, pending_guest_away_ids")
+    .eq("id", matchId)
+    .single();
+
+  if (!matchRow) return { home: [], away: [] };
+
+  const rawHome = matchRow.pending_guest_home_ids;
+  const rawAway = matchRow.pending_guest_away_ids;
+  const homeIds = Array.isArray(rawHome) ? rawHome : typeof rawHome === "string" ? (JSON.parse(rawHome || "[]") as string[]) : [];
+  const awayIds = Array.isArray(rawAway) ? rawAway : typeof rawAway === "string" ? (JSON.parse(rawAway || "[]") as string[]) : [];
+
+  const allGuestIds = [...new Set([...homeIds, ...awayIds])].filter(Boolean);
+  if (allGuestIds.length === 0) return { home: [], away: [] };
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name, avatar_initials, avatar_color, avatar_url")
+    .in("id", allGuestIds);
+
+  const profileMap = new Map(
+    (profiles ?? []).map((p) => [
+      p.id,
+      {
+        player_id: p.id,
+        profile: p as Record<string, unknown>,
+      },
+    ])
+  );
+
+  return {
+    home: homeIds.map((id) => profileMap.get(id)).filter(Boolean) as { player_id: string; profile: Record<string, unknown> }[],
+    away: awayIds.map((id) => profileMap.get(id)).filter(Boolean) as { player_id: string; profile: Record<string, unknown> }[],
+  };
+}
+
 /** Roster for a team in a match: from match_lineups if available, else team_members */
 export async function getMatchRoster(
   matchId: string,

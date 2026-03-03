@@ -34,6 +34,8 @@ export function MatchDetailClient({
   teamMembers,
   homeRoster = [],
   awayRoster = [],
+  initialGuestHome = [],
+  initialGuestAway = [],
   homeTeamMemberIds = [],
   awayTeamMemberIds = [],
   goalsByPlayer = {},
@@ -62,8 +64,8 @@ export function MatchDetailClient({
     home: Record<string, number>;
     away: Record<string, number>;
   }>({ home: {}, away: {} });
-  const [formGuestHome, setFormGuestHome] = useState<RosterPlayer[]>([]);
-  const [formGuestAway, setFormGuestAway] = useState<RosterPlayer[]>([]);
+  const [formGuestHome, setFormGuestHome] = useState<RosterPlayer[]>(initialGuestHome);
+  const [formGuestAway, setFormGuestAway] = useState<RosterPlayer[]>(initialGuestAway);
 
   // Admin edit state
   const [showAdminEdit, setShowAdminEdit] = useState(false);
@@ -74,8 +76,8 @@ export function MatchDetailClient({
   const [adminAwayScore, setAdminAwayScore] = useState(match.away_score?.toString() ?? "0");
   const [adminMvpId, setAdminMvpId] = useState<string | null>(match.mvp_id ?? null);
   const [adminNotes, setAdminNotes] = useState(match.notes ?? "");
-  const [adminGuestHome, setAdminGuestHome] = useState<RosterPlayer[]>([]);
-  const [adminGuestAway, setAdminGuestAway] = useState<RosterPlayer[]>([]);
+  const [adminGuestHome, setAdminGuestHome] = useState<RosterPlayer[]>(initialGuestHome);
+  const [adminGuestAway, setAdminGuestAway] = useState<RosterPlayer[]>(initialGuestAway);
   const [adminGoalsByPlayer, setAdminGoalsByPlayer] = useState<{
     home: Record<string, number>;
     away: Record<string, number>;
@@ -491,15 +493,17 @@ export function MatchDetailClient({
           </div>
         </div>
 
-        {/* Match rosters (completed only) */}
-        {isCompleted && (homeRoster.length + awayRoster.length > 0 || (goalsByTeam?.home?.[UNKNOWN_PLAYER_ID] ?? 0) + (goalsByTeam?.away?.[UNKNOWN_PLAYER_ID] ?? 0) > 0) && (
+        {/* Match rosters (completed only) — include guests so they appear in the roster display */}
+        {isCompleted && (homeRoster.length + awayRoster.length + initialGuestHome.length + initialGuestAway.length > 0 || (goalsByTeam?.home?.[UNKNOWN_PLAYER_ID] ?? 0) + (goalsByTeam?.away?.[UNKNOWN_PLAYER_ID] ?? 0) > 0) && (
           <MatchRostersSection
-            homeRoster={homeRoster}
-            awayRoster={awayRoster}
+            homeRoster={[...homeRoster, ...initialGuestHome]}
+            awayRoster={[...awayRoster, ...initialGuestAway]}
             homeTeam={match.home_team}
             awayTeam={match.away_team}
             goalsByPlayer={goalsByPlayer}
             goalsByTeam={goalsByTeam}
+            homeGuestIds={initialGuestHome.map((p) => p.player_id)}
+            awayGuestIds={initialGuestAway.map((p) => p.player_id)}
           />
         )}
 
@@ -883,42 +887,6 @@ export function MatchDetailClient({
               Score updates automatically when you add goals above. You can also edit manually.
             </p>
 
-            {/* MVP selection */}
-            {teamMembers.length > 0 && (
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
-                  Man of the Match (optional)
-                </label>
-                <div className="flex flex-col gap-1 rounded-xl bg-card border border-border shadow-card overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setMvpId(null)}
-                    className={`flex items-center gap-3 px-4 py-2.5 text-left transition-colors pressable ${!mvpId ? "bg-accent/10" : "hover:bg-muted/50"}`}
-                  >
-                    <span className="text-sm text-muted-foreground">None</span>
-                  </button>
-                  {teamMembers.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setMvpId(m.id)}
-                      className={`flex items-center gap-3 px-4 py-2.5 text-left border-t border-border transition-colors pressable ${mvpId === m.id ? "bg-accent/10" : "hover:bg-muted/50"}`}
-                    >
-                      <Avatar
-                        avatar_url={m.avatar_url}
-                        avatar_initials={m.avatar_initials}
-                        avatar_color={m.avatar_color}
-                        full_name={m.full_name}
-                        size="xs"
-                      />
-                      <span className="text-sm text-foreground">{m.full_name}</span>
-                      {mvpId === m.id && <Check size={14} className="text-accent ml-auto" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Notes */}
             <div>
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
@@ -1075,42 +1043,6 @@ export function MatchDetailClient({
             <p className="text-xs text-muted-foreground text-center -mt-2">
               Score updates automatically when you add goals above. You can also edit manually.
             </p>
-
-            {/* MVP selection */}
-            {teamMembers.length > 0 && (
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 block">
-                  Man of the Match (optional)
-                </label>
-                <div className="flex flex-col gap-1 rounded-xl bg-card border border-border shadow-card overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setMvpId(null)}
-                    className={`flex items-center gap-3 px-4 py-2.5 text-left transition-colors pressable ${!mvpId ? "bg-accent/10" : "hover:bg-muted/50"}`}
-                  >
-                    <span className="text-sm text-muted-foreground">None</span>
-                  </button>
-                  {teamMembers.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      onClick={() => setMvpId(m.id)}
-                      className={`flex items-center gap-3 px-4 py-2.5 text-left border-t border-border transition-colors pressable ${mvpId === m.id ? "bg-accent/10" : "hover:bg-muted/50"}`}
-                    >
-                      <Avatar
-                        avatar_url={m.avatar_url}
-                        avatar_initials={m.avatar_initials}
-                        avatar_color={m.avatar_color}
-                        full_name={m.full_name}
-                        size="xs"
-                      />
-                      <span className="text-sm text-foreground">{m.full_name}</span>
-                      {mvpId === m.id && <Check size={14} className="text-accent ml-auto" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Notes */}
             <div>
@@ -1274,35 +1206,6 @@ export function MatchDetailClient({
                       />
                     </div>
                   </div>
-
-                  {teamMembers.length > 0 && (
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Man of the Match</label>
-                      <div className="flex flex-wrap gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setAdminMvpId(null)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                            !adminMvpId ? "bg-accent/20 text-accent" : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                          }`}
-                        >
-                          None
-                        </button>
-                        {teamMembers.map((m) => (
-                          <button
-                            key={m.id}
-                            type="button"
-                            onClick={() => setAdminMvpId(m.id)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                              adminMvpId === m.id ? "bg-accent/20 text-accent" : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                            }`}
-                          >
-                            {m.full_name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Notes</label>

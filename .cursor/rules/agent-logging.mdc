@@ -5,10 +5,9 @@ alwaysApply: true
 
 # Agent Logging Rule
 
-At the end of each task, log the different agents used for that task in two places:
+At the end of each task, log the different agents used for that task **in your response summary only** (do not print to the console):
 
-1. **In your response summary** – Include an "Agents used" line in the final summary so the user sees it in the conversation.
-2. **In the console** – Run `echo` (or equivalent) to output the same summary to the terminal.
+- Include an "Agents used" line in the final summary so the user sees it in the conversation.
 
 List:
 - Any MCP tools called (e.g. Codacy, Supabase, Figma)
@@ -16,5 +15,3 @@ List:
 - Other specialized tools or agents invoked during the task
 
 Example summary line: `**Agents used:** explore (2x), codacy_cli_analyze (5x)`
-
-Example terminal command: `echo "[Task complete] Agents used: explore (2x), codacy_cli_analyze (5x)"`

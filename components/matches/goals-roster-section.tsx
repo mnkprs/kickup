@@ -91,28 +91,6 @@ export function GoalsRosterSection({
         })}
         {onAddGuest && onRemoveGuest && (
           <>
-            <div className="px-4 py-2 bg-muted/20 border-t border-border">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Guest players
-              </span>
-              <div className="mt-2">
-                <PlayerSearchSelect
-                  onSelect={(p: PlayerSearchResult) =>
-                    onAddGuest({
-                      player_id: p.id,
-                      profile: {
-                        full_name: p.full_name,
-                        avatar_initials: p.avatar_initials,
-                        avatar_color: p.avatar_color,
-                        avatar_url: p.avatar_url,
-                      },
-                    })
-                  }
-                  excludeIds={rosterAndGuestIds}
-                  placeholder="Add guest player..."
-                />
-              </div>
-            </div>
             {guests.map(({ player_id, profile }) => {
               const count = goals[player_id] ?? 0;
               const name = (profile.full_name as string) ?? "Unknown";
@@ -163,6 +141,25 @@ export function GoalsRosterSection({
                 </div>
               );
             })}
+            <div className="px-4 py-2 bg-muted/20 border-t border-border">
+              <PlayerSearchSelect
+                onSelect={(p: PlayerSearchResult) =>
+                  onAddGuest({
+                    player_id: p.id,
+                    profile: {
+                      full_name: p.full_name,
+                      avatar_initials: p.avatar_initials,
+                      avatar_color: p.avatar_color,
+                      avatar_url: p.avatar_url,
+                    },
+                  })
+                }
+                excludeIds={rosterAndGuestIds}
+                placeholder="Add guest player..."
+                popoverPlacement="top"
+                borderless
+              />
+            </div>
           </>
         )}
         {showUnknown && (

@@ -1,5 +1,5 @@
 import type { Profile } from "@/lib/types";
-import { Crosshair, Swords, Trophy, ShieldAlert, Star } from "lucide-react";
+import { Crosshair, Swords, Trophy, ShieldAlert } from "lucide-react";
 
 interface ProfileStatsProps {
   profile: Profile;
@@ -11,7 +11,6 @@ export function ProfileStats({ profile }: ProfileStatsProps) {
     { label: "Matches", value: profile.matches_played, icon: Swords, iconClass: "text-muted-foreground", bgClass: "bg-muted" },
     { label: "Wins", value: profile.wins, icon: Trophy, iconClass: "text-win", bgClass: "bg-win/10" },
     { label: "Cards", value: profile.yellow_cards + profile.red_cards, icon: ShieldAlert, iconClass: "text-warning", bgClass: "bg-warning/10" },
-    { label: "MOTM", value: profile.man_of_match, icon: Star, iconClass: "text-draw", bgClass: "bg-draw/10" },
   ];
 
   return (
