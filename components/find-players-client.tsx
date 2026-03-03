@@ -57,8 +57,8 @@ export function FindPlayersClient({
 
   return (
     <>
-      <header className="px-5 pt-12 pb-2">
-        <div className="flex items-center justify-between mb-5">
+      <header className="find-players-header px-5 pt-12 pb-2">
+        <div className="find-players-header__top flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <Link
               href="/"
@@ -97,7 +97,7 @@ export function FindPlayersClient({
         )}
       </header>
 
-      <main className="px-5 flex flex-col gap-3 pb-24">
+      <main className="find-players__main px-5 flex flex-col gap-3 pb-24">
         {inviteError && (
           <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
             {inviteError}
@@ -110,7 +110,7 @@ export function FindPlayersClient({
           return (
             <div
               key={player.id}
-              className="rounded-xl bg-card border border-border shadow-card p-4"
+              className="find-players__player-card rounded-xl bg-card border border-border shadow-card p-4"
             >
               <div className="flex items-center gap-3">
                 <Link

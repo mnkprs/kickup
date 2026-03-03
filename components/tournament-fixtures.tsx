@@ -19,7 +19,7 @@ function UpcomingFixture({ match, tournamentId, canManageSchedule }: UpcomingFix
   const [showScheduleForm, setShowScheduleForm] = useState(false);
 
   return (
-    <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">
+    <div className="tournament-fixture tournament-fixture--upcoming rounded-xl bg-card border border-border shadow-card overflow-hidden">
       <Link
         href={`/matches/${match.id}`}
         className="block p-4 hover:border-accent/40 transition-colors group pressable"
@@ -59,7 +59,7 @@ function UpcomingFixture({ match, tournamentId, canManageSchedule }: UpcomingFix
       {canManageSchedule && tournamentId && (
         <>
           {showScheduleForm ? (
-            <div className="px-4 pb-4 pt-0 border-t border-border">
+            <div className="px-4 py-3 border-t border-border">
               <ScheduleTournamentMatchForm
                 matchId={match.id}
                 tournamentId={tournamentId}
@@ -98,7 +98,7 @@ function CompletedFixture({ match }: { match: Match }) {
   return (
     <Link
       href={`/matches/${match.id}`}
-      className="flex items-center gap-3 py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors block pressable"
+      className="tournament-fixture tournament-fixture--completed flex items-center gap-3 py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors block pressable"
     >
       <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
         <span className="text-xs font-bold text-muted-foreground">FT</span>
@@ -135,11 +135,11 @@ export function TournamentFixtures({
   const completed = matches.filter((m) => m.status === "completed");
 
   return (
-    <>
+    <div className="tournament-fixtures">
       {live.length > 0 && (
-        <section className="px-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-foreground font-semibold text-base">Live Now</h2>
+        <section className="tournament-fixtures__section tournament-fixtures__section--live px-5">
+          <div className="tournament-fixtures__header flex items-center justify-between mb-3">
+            <h2 className="tournament-fixtures__title text-foreground font-semibold text-base">Live Now</h2>
           </div>
           <div className="flex flex-col gap-3">
             {live.map((match) => (
@@ -153,9 +153,9 @@ export function TournamentFixtures({
           </div>
         </section>
       )}
-      <section className="px-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-foreground font-semibold text-base">Next Fixtures</h2>
+      <section className="tournament-fixtures__section tournament-fixtures__section--upcoming px-5">
+        <div className="tournament-fixtures__header flex items-center justify-between mb-3">
+          <h2 className="tournament-fixtures__title text-foreground font-semibold text-base">Next Fixtures</h2>
         </div>
         {upcoming.length > 0 ? (
           <div className="flex flex-col gap-3">
@@ -175,9 +175,9 @@ export function TournamentFixtures({
         )}
       </section>
 
-      <section className="px-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-foreground font-semibold text-base">Recent Results</h2>
+      <section className="tournament-fixtures__section tournament-fixtures__section--results px-5">
+        <div className="tournament-fixtures__header flex items-center justify-between mb-3">
+          <h2 className="tournament-fixtures__title text-foreground font-semibold text-base">Recent Results</h2>
         </div>
         {completed.length > 0 ? (
           <div className="rounded-xl bg-card border border-border shadow-card p-4">
@@ -191,6 +191,6 @@ export function TournamentFixtures({
           </div>
         )}
       </section>
-    </>
+    </div>
   );
 }

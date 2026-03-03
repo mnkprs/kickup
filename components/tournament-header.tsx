@@ -18,8 +18,8 @@ export function TournamentHeader({
   canCreate = false,
 }: TournamentHeaderProps) {
   return (
-    <header className="px-5 pt-12 pb-2">
-      <div className="flex items-center justify-between mb-5">
+    <header className="tournament-header px-5 pt-12 pb-2">
+      <div className="tournament-header__top flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
           <Link
             href="/"
@@ -43,14 +43,14 @@ export function TournamentHeader({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+      <div className="tournament-header__filters flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
         {filters.map((filter) => {
           const isActive = activeFilter === filter;
           return (
             <button
               key={filter}
               onClick={() => onFilterChange(filter)}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`tournament-header__filter shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${isActive ? "tournament-header__filter--active" : ""} ${
                 isActive
                   ? "bg-accent text-accent-foreground"
                   : "bg-card border border-border text-muted-foreground hover:text-foreground"

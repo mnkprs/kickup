@@ -29,9 +29,9 @@ export default async function PlayerProfilePage({
   const matches = team ? await getMatchesForTeam(team.id) : [];
 
   return (
-    <>
+    <div className="player-profile-page">
       <ProfileHeader profile={profile} team={team} showSettings={false} />
-      <main className="flex flex-col gap-5 pb-24 px-5">
+      <main className="player-profile-page__main flex flex-col gap-5 pb-24 px-5">
         <ProfileAbout profile={profile} />
         <ProfileStats profile={profile} />
         <ProfileTeamCard
@@ -42,6 +42,6 @@ export default async function PlayerProfilePage({
         <ProfileActivity matches={matches} teamId={team?.id ?? null} />
         <ProfileAchievements profile={profile} />
       </main>
-    </>
+    </div>
   );
 }

@@ -25,7 +25,7 @@ function CompletedMatchRow({ match, teamId }: { match: Match; teamId: string | n
   const style = result ? resultStyles[result] : null;
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors pressable">
+    <div className="recent-results__row flex items-center gap-3 py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors pressable">
       {style && result && (
         <div className={`h-8 w-8 rounded-lg ${style.bg} flex items-center justify-center shrink-0`}>
           <span className={`text-xs font-bold ${style.text}`}>{result}</span>
@@ -62,17 +62,17 @@ export function RecentResults({ matches, teamId }: RecentResultsProps) {
     .slice(0, 4);
 
   return (
-    <section className="px-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-base">Recent Results</h2>
+    <section className="recent-results px-5">
+      <div className="recent-results__header flex items-center justify-between mb-3">
+        <h2 className="recent-results__title text-foreground font-semibold text-base">Recent Results</h2>
         <Link
           href="/matches?tab=Results"
-          className="text-accent text-xs font-medium hover:underline"
+          className="recent-results__see-all text-accent text-xs font-medium hover:underline"
         >
           See all
         </Link>
       </div>
-      <div className="rounded-xl bg-card border border-border shadow-card p-4">
+      <div className="recent-results__list rounded-xl bg-card border border-border shadow-card p-4">
         {completedMatches.length === 0 ? (
           <p className="text-muted-foreground text-sm text-center py-4">No recent results</p>
         ) : (

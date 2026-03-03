@@ -33,17 +33,17 @@ export function DashboardHeader({ profile, notifications }: DashboardHeaderProps
 
   return (
     <>
-      <header className="flex items-center justify-between px-5 pt-12 pb-4">
-        <div className="flex items-center gap-3">
+      <header className="dashboard-header flex items-center justify-between px-5 pt-12 pb-4">
+        <div className="dashboard-header__user flex items-center gap-3">
           {profile ? (
-            <div className="relative shrink-0">
+            <div className="dashboard-header__avatar-wrapper relative shrink-0">
               <AvatarUpload profile={profile} size="sm" editable>
                 <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-win border-2 border-background" />
               </AvatarUpload>
             </div>
           ) : (
             <div
-              className="relative h-11 w-11 shrink-0 rounded-full flex items-center justify-center"
+              className="dashboard-header__avatar-placeholder relative h-11 w-11 shrink-0 rounded-full flex items-center justify-center"
               style={{ backgroundColor: "var(--color-accent)" }}
             >
               <span className="text-accent-foreground font-semibold text-sm">
@@ -52,18 +52,18 @@ export function DashboardHeader({ profile, notifications }: DashboardHeaderProps
               <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-win border-2 border-background" />
             </div>
           )}
-          <div>
-            <p className="text-muted-foreground text-xs">{greeting}</p>
-            <h1 className="text-foreground font-semibold text-base leading-tight">
+          <div className="dashboard-header__greeting">
+            <p className="dashboard-header__greeting-text text-muted-foreground text-xs">{greeting}</p>
+            <h1 className="dashboard-header__greeting-name text-foreground font-semibold text-base leading-tight">
               {firstName}
             </h1>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="dashboard-header__actions flex items-center gap-2">
           <ThemeToggle />
           <button
             onClick={() => setNotifOpen(true)}
-            className="relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
+            className="dashboard-header__notifications-btn relative h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
           >
             <Bell size={18} className="text-muted-foreground" />
             {unreadCount > 0 && (

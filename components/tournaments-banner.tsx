@@ -28,11 +28,11 @@ function TournamentCard({
   return (
     <Link
       href={`/tournaments/${tournament.id}`}
-      className={
+      className={`tournaments-banner__card ${accentStyle ? "tournaments-banner__card--accent" : ""} ${
         accentStyle
           ? "rounded-xl p-4 group transition-all shadow-card-accent hover:shadow-card-accent-hover block bg-gradient-accent"
           : "rounded-xl bg-card border border-border shadow-card p-4 group hover:border-accent/40 transition-colors block pressable"
-      }
+      }`}
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -115,15 +115,15 @@ export function TournamentsBanner({ tournaments, userTeamId }: TournamentsBanner
   const ordered = [...participatingList, ...upcomingList, ...liveList];
 
   return (
-    <section className="px-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-base">Leagues</h2>
+    <section className="tournaments-banner px-5">
+      <div className="tournaments-banner__header flex items-center justify-between mb-3">
+        <h2 className="tournaments-banner__title text-foreground font-semibold text-base">Leagues</h2>
         <Link href="/tournaments" className="text-accent text-xs font-medium hover:underline">
           Browse
         </Link>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="tournaments-banner__list flex flex-col gap-3">
         {ordered.map((tournament) => (
           <TournamentCard
             key={tournament.id}

@@ -32,7 +32,7 @@ function ResultMatchCard({ match, teamId }: { match: Match; teamId?: string | nu
   const style = result ? resultStyles[result] : null;
 
   return (
-    <div className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors group block pressable">
+    <div className="match-card match-card--result rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors group block pressable">
       <Link href={`/matches/${match.id}`} className="block -m-4 p-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-muted-foreground text-xs">
@@ -105,13 +105,13 @@ function ResultMatchCard({ match, teamId }: { match: Match; teamId?: string | nu
 
 export function MatchesResults({ matches, teamId }: MatchesResultsProps) {
   return (
-    <section className="px-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-base">
+    <section className="matches-results px-5">
+      <div className="matches-results__header flex items-center justify-between mb-3">
+        <h2 className="matches-results__title text-foreground font-semibold text-base">
           {matches.length} Results
         </h2>
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="matches-results__list flex flex-col gap-3">
         {matches.map((match) => (
           <ResultMatchCard key={match.id} match={match} teamId={teamId} />
         ))}

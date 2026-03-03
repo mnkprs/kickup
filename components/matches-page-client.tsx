@@ -123,10 +123,10 @@ export function MatchesPageClient({
         filteredCounts={{ upcoming: filteredUpcoming.length, results: filteredResults.length }}
       />
 
-      <main className="flex flex-col gap-6 pb-24 pt-4">
+      <main className="matches-page__main flex flex-col gap-6 pb-24 pt-4">
         {activeTab === "Upcoming" && (
           filters.myMatchesOnly && filteredUpcoming.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3 px-5 text-center">
+            <div className="matches-page__empty flex flex-col items-center justify-center py-12 gap-3 px-5 text-center">
               <p className="text-muted-foreground text-sm">No matches for your team yet</p>
               <div className="flex gap-2 items-center">
                 <Link
@@ -150,7 +150,7 @@ export function MatchesPageClient({
         )}
         {activeTab === "Results" && (
           filters.myMatchesOnly && filteredResults.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3 px-5 text-center">
+            <div className="matches-page__empty matches-page__empty--results flex flex-col items-center justify-center py-12 gap-3 px-5 text-center">
               <p className="text-muted-foreground text-sm">No results for your team yet</p>
               <button
                 onClick={() => setFilters((f) => ({ ...f, myMatchesOnly: false }))}

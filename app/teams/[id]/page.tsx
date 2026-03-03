@@ -40,8 +40,8 @@ function TeamStatsGrid({ team }: { team: Team }) {
   ];
 
   return (
-    <section className="px-5">
-      <h2 className="text-foreground font-semibold text-sm mb-3">Team Stats</h2>
+    <section className="team-stats-section px-5">
+      <h2 className="team-stats-section__title text-foreground font-semibold text-sm mb-3">Team Stats</h2>
       <div className="grid grid-cols-3 gap-2.5">
         {stats.map((stat) => (
           <div
@@ -68,8 +68,8 @@ function TeamMatchesSection({ matches, team, title }: { matches: Match[]; team: 
   if (matches.length === 0) return null;
 
   return (
-    <section className="px-5">
-      <div className="flex items-center justify-between mb-3">
+    <section className="team-matches-section px-5">
+      <div className="team-matches-section__header flex items-center justify-between mb-3">
         <h2 className="text-foreground font-semibold text-sm">{title}</h2>
         <span className="text-muted-foreground text-xs">{matches.length} scheduled</span>
       </div>
@@ -196,8 +196,8 @@ export default async function TeamDetailPage({
   return (
     <>
       {/* Header */}
-      <header className="px-5 pt-12 pb-2">
-        <div className="flex items-center justify-between mb-5">
+      <header className="team-detail-header px-5 pt-12 pb-2">
+        <div className="team-detail-header__top flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <Link
               href="/teams"
@@ -222,7 +222,7 @@ export default async function TeamDetailPage({
 
         {/* Team hero card */}
         <div
-          className={`rounded-xl p-5 ${
+          className={`team-detail-hero rounded-xl p-5 ${isMyTeam ? "team-detail-hero--my-team" : ""} ${
             isMyTeam
               ? "bg-gradient-accent"
               : "bg-gradient-to-br from-muted to-card border border-border"
@@ -321,7 +321,7 @@ export default async function TeamDetailPage({
 
       </header>
 
-      <main className="flex flex-col gap-6 pt-4 pb-24">
+      <main className="team-detail__main flex flex-col gap-6 pt-4 pb-24">
         <TeamStatsGrid team={team} />
         <RosterSection
           members={members}

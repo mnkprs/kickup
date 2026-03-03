@@ -19,18 +19,18 @@ export function ProfileTeamCard({ profile, team, showCaptainToggles = false }: P
   const totalMatches = team.wins + team.losses + team.draws;
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-sm">My Team</h2>
+    <section className="profile-team-card">
+      <div className="profile-team-card__header flex items-center justify-between mb-3">
+        <h2 className="profile-team-card__title text-foreground font-semibold text-sm">My Team</h2>
         <Link href="/teams" className="text-accent text-xs font-medium hover:underline">
           All teams
         </Link>
       </div>
-      <Link href={`/teams/${team.id}`}>
+      <Link href={`/teams/${team.id}`} className="profile-team-card__link">
         <div
-          className="rounded-xl p-4 cursor-pointer group transition-all hover:shadow-lg bg-gradient-accent pressable"
+          className="profile-team-card__card rounded-xl p-4 cursor-pointer group transition-all hover:shadow-lg bg-gradient-accent pressable"
         >
-          <div className="flex items-center justify-between mb-3">
+          <div className="profile-team-card__card-header flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <TeamAvatar
                 team={team}
@@ -55,7 +55,7 @@ export function ProfileTeamCard({ profile, team, showCaptainToggles = false }: P
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="profile-team-card__meta grid grid-cols-3 gap-3">
             <div className="flex items-center gap-1.5">
               <MapPin size={12} className="text-accent-foreground/60" />
               <span className="text-accent-foreground/70 text-xs">{team.area}</span>
@@ -72,7 +72,7 @@ export function ProfileTeamCard({ profile, team, showCaptainToggles = false }: P
             </div>
           </div>
 
-          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-accent-foreground/10">
+          <div className="profile-team-card__record flex items-center gap-3 mt-3 pt-3 border-t border-accent-foreground/10">
             <span className="text-accent-foreground/80 text-xs">
               <span className="font-bold text-accent-foreground">{team.wins}</span>W
             </span>
@@ -90,7 +90,7 @@ export function ProfileTeamCard({ profile, team, showCaptainToggles = false }: P
       </Link>
 
       {showCaptainToggles && isCaptain && (
-        <div className="flex items-center gap-2 mt-3">
+        <div className="profile-team-card__toggles flex items-center gap-2 mt-3">
           <SearchingToggle
             teamId={team.id}
             initial={team.searching_for_opponent ?? false}

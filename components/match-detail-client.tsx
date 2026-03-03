@@ -111,8 +111,8 @@ function GoalsRosterSection({
   onUpdate: (playerId: string, delta: number) => void;
 }) {
   return (
-    <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-muted/30">
+    <div className="goals-roster-section rounded-xl bg-card border border-border shadow-card overflow-hidden">
+      <div className="goals-roster-section__header flex items-center gap-2 px-4 py-2 border-b border-border bg-muted/30">
         <TeamAvatar
           avatar_url={team.avatar_url}
           emoji={team.emoji}
@@ -239,8 +239,8 @@ function MatchRostersSection({
   }
 
   return (
-    <section className="px-5">
-      <h2 className="text-foreground font-semibold text-sm mb-3">Team Rosters</h2>
+    <section className="match-rosters-section px-5">
+      <h2 className="match-rosters-section__title text-foreground font-semibold text-sm mb-3">Team Rosters</h2>
       <div className="flex flex-col gap-4">
         <RosterColumn roster={homeRoster} team={homeTeam} />
         <RosterColumn roster={awayRoster} team={awayTeam} />
@@ -480,7 +480,7 @@ export function MatchDetailClient({
 
   return (
     <>
-      <header className="px-5 pt-12 pb-4 flex items-center justify-between">
+      <header className="match-detail-header px-5 pt-12 pb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
             href="/matches"
@@ -504,9 +504,9 @@ export function MatchDetailClient({
         </div>
       </header>
 
-      <main className="flex flex-col gap-6 pb-24 pt-2">
+      <main className="match-detail__main flex flex-col gap-6 pb-24 pt-2">
         {/* Status */}
-        <div className="flex justify-center items-center gap-2">
+        <div className="match-detail__status flex justify-center items-center gap-2">
           {isLive && <LiveDot className="shrink-0" />}
           <span className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full ${statusClass}`}>
             {statusLabel}
@@ -514,8 +514,8 @@ export function MatchDetailClient({
         </div>
 
         {/* Scoreline */}
-        <div className="px-5">
-          <div className="rounded-xl bg-card border border-border shadow-card p-6">
+        <div className="match-detail__scoreline-wrapper px-5">
+          <div className="match-detail__scoreline rounded-xl bg-card border border-border shadow-card p-6">
             <div className="flex items-center gap-4">
               <TeamBlock
                 team={match.home_team}
@@ -553,8 +553,8 @@ export function MatchDetailClient({
         )}
 
         {/* Match info */}
-        <div className="px-5">
-          <div className="rounded-xl bg-card border border-border shadow-card divide-y divide-border">
+        <div className="match-detail__info-wrapper px-5">
+          <div className="match-detail__info rounded-xl bg-card border border-border shadow-card divide-y divide-border">
             {match.tournament && (
               <Link
                 href={`/tournaments/${match.tournament.id}`}

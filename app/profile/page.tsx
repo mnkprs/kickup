@@ -13,7 +13,7 @@ import Link from "next/link";
 
 function GuestProfile() {
   return (
-    <div className="flex flex-col items-center justify-center gap-6 py-24 px-5 text-center">
+    <div className="profile-guest flex flex-col items-center justify-center gap-6 py-24 px-5 text-center">
       <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
         <User size={28} className="text-muted-foreground" />
       </div>
@@ -62,7 +62,7 @@ export default async function ProfilePage() {
     <>
       <ProfileHeader profile={profile} team={team} />
 
-      <main className="flex flex-col gap-5 pb-24 px-5">
+      <main className="profile-page__main flex flex-col gap-5 pb-24 px-5">
         <ProfileAbout profile={profile} />
         <ProfileStats profile={profile} />
         <ProfileTeamCard profile={profile} team={team} showCaptainToggles />

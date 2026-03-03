@@ -39,7 +39,7 @@ export default async function RootLayout({
       <body className={`${inter.className} antialiased`}>
         <ThemeProvider defaultTheme={defaultTheme}>
           <NotificationsProvider notifications={notifications}>
-            <div className="min-h-dvh bg-background max-w-lg mx-auto relative">
+            <div className="app-layout min-h-dvh bg-background max-w-lg mx-auto relative">
               {children}
               <LayoutNav />
             </div>

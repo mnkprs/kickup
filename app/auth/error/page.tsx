@@ -10,9 +10,9 @@ function AuthErrorContent() {
   const error = searchParams.get("error");
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-background px-5">
-      <div className="w-full max-w-sm text-center">
-        <div className="flex flex-col items-center">
+    <div className="auth-error-page flex min-h-dvh items-center justify-center bg-background px-5">
+      <div className="auth-error-page__container w-full max-w-sm text-center">
+        <div className="auth-error-page__content flex flex-col items-center">
           <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center mb-5">
             <AlertTriangle size={28} className="text-destructive" />
           </div>

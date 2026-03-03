@@ -45,24 +45,24 @@ export function ConfirmModal({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+        className="confirm-modal__overlay fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
-        className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-card border border-border shadow-card p-5"
+        className="confirm-modal fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl bg-card border border-border shadow-card p-5"
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-modal-title"
         aria-describedby="confirm-modal-desc"
       >
-        <h3 id="confirm-modal-title" className="text-base font-semibold text-foreground mb-2">
+        <h3 id="confirm-modal-title" className="confirm-modal__title text-base font-semibold text-foreground mb-2">
           {title}
         </h3>
-        <p id="confirm-modal-desc" className="text-sm text-muted-foreground mb-5">
+        <p id="confirm-modal-desc" className="confirm-modal__message text-sm text-muted-foreground mb-5">
           {message}
         </p>
-        <div className="flex gap-3 justify-end">
+        <div className="confirm-modal__actions flex gap-3 justify-end">
           <button
             onClick={onClose}
             disabled={loading}

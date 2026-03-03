@@ -48,9 +48,9 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
   }
 
   return (
-    <>
-      <header className="px-5 pt-12 pb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div className="send-challenge-form">
+      <header className="send-challenge-form__header px-5 pt-12 pb-4 flex items-center justify-between">
+        <div className="send-challenge-form__header-left flex items-center gap-3">
           {step === 0 ? (
             <Link
               href="/matches"
@@ -75,21 +75,21 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
       </header>
 
       {/* Progress dots */}
-      <div className="px-5 flex gap-1.5 mb-6">
+      <div className="send-challenge-form__progress px-5 flex gap-1.5 mb-6">
         {STEPS.map((_, i) => (
           <div
             key={i}
-            className={`h-1 rounded-full flex-1 transition-colors ${i <= step ? "bg-accent" : "bg-muted"}`}
+            className={`send-challenge-form__progress-dot h-1 rounded-full flex-1 transition-colors ${i <= step ? "send-challenge-form__progress-dot--active bg-accent" : "bg-muted"}`}
           />
         ))}
       </div>
 
-      <main className="px-5 pb-24 flex flex-col gap-5">
+      <main className="send-challenge-form__main px-5 pb-24 flex flex-col gap-5">
 
         {/* Step 0: Pick opponent */}
         {step === 0 && (
-          <>
-            <div className="relative">
+          <div className="send-challenge-form__step send-challenge-form__step--opponent">
+            <div className="send-challenge-form__search relative">
               <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="search"
@@ -110,7 +110,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
                     setOpponent(team);
                     setStep(1);
                   }}
-                  className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border shadow-card hover:border-accent/40 hover:bg-muted/30 transition-all text-left pressable"
+                  className="send-challenge-form__opponent-btn flex items-center gap-4 p-4 rounded-xl bg-card border border-border shadow-card hover:border-accent/40 hover:bg-muted/30 transition-all text-left pressable"
                 >
                   <TeamAvatar team={team} size="lg" />
                   <div className="flex-1 min-w-0">
@@ -127,7 +127,7 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
                 </button>
               ))}
             </div>
-          </>
+          </div>
         )}
 
         {/* Step 1: Pick format */}
@@ -266,6 +266,6 @@ export function SendChallengeForm({ userTeam, opponents }: SendChallengeFormProp
           </>
         )}
       </main>
-    </>
+    </div>
   );
 }

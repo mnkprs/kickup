@@ -34,9 +34,9 @@ export function ProfileActivity({ matches, teamId }: ProfileActivityProps) {
     : [];
 
   return (
-    <section>
-      <h2 className="text-foreground font-semibold text-sm mb-3">Recent Activity</h2>
-      <div className="rounded-xl bg-card border border-border shadow-card p-4">
+    <section className="profile-activity">
+      <h2 className="profile-activity__title text-foreground font-semibold text-sm mb-3">Recent Activity</h2>
+      <div className="profile-activity__list rounded-xl bg-card border border-border shadow-card p-4">
         {completedMatches.length === 0 ? (
           <p className="text-muted-foreground text-sm text-center py-4">No recent activity yet</p>
         ) : (
@@ -53,12 +53,12 @@ export function ProfileActivity({ matches, teamId }: ProfileActivityProps) {
               <Link
                 key={match.id}
                 href={`/matches/${match.id}`}
-                className={`flex items-center gap-3 py-2.5 hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors pressable ${i < completedMatches.length - 1 ? "border-b border-border" : ""}`}
+                className={`profile-activity__item flex items-center gap-3 py-2.5 hover:bg-muted/30 -mx-1 px-1 rounded-lg transition-colors pressable ${i < completedMatches.length - 1 ? "border-b border-border" : ""}`}
               >
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${config.bgClass}`}>
+                <div className={`profile-activity__item-icon h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${config.bgClass}`}>
                   <Icon size={14} className={config.iconClass} />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="profile-activity__item-content flex-1 min-w-0">
                   <span className="text-foreground text-sm font-medium block truncate">
                     {config.label} · {score} vs {opponent}
                   </span>

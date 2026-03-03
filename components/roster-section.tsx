@@ -131,9 +131,9 @@ export function RosterSection({
         loading={assigning}
         onConfirm={handleConfirmMakeCaptain}
       />
-    <section className="px-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-sm">Roster</h2>
+    <section className="roster-section px-5">
+      <div className="roster-section__header flex items-center justify-between mb-3">
+        <h2 className="roster-section__title text-foreground font-semibold text-sm">Roster</h2>
         <span className="text-muted-foreground text-xs">{roster.length} players</span>
       </div>
       <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">

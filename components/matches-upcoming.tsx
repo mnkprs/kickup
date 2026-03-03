@@ -23,7 +23,7 @@ function UpcomingMatchCard({ match }: { match: Match }) {
       tabIndex={0}
       onClick={() => router.push(`/matches/${match.id}`)}
       onKeyDown={(e) => e.key === "Enter" && router.push(`/matches/${match.id}`)}
-      className="rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors cursor-pointer group block pressable"
+      className="match-card match-card--upcoming rounded-xl bg-card border border-border shadow-card p-4 hover:border-accent/40 transition-colors cursor-pointer group block pressable"
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
@@ -89,13 +89,13 @@ function UpcomingMatchCard({ match }: { match: Match }) {
 
 export function MatchesUpcoming({ matches }: { matches: Match[] }) {
   return (
-    <section className="px-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-base">
+    <section className="matches-upcoming px-5">
+      <div className="matches-upcoming__header flex items-center justify-between mb-3">
+        <h2 className="matches-upcoming__title text-foreground font-semibold text-base">
           {matches.length} Upcoming
         </h2>
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="matches-upcoming__list flex flex-col gap-3">
         {matches.map((match) => (
           <UpcomingMatchCard key={match.id} match={match} />
         ))}

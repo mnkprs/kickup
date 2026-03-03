@@ -61,14 +61,14 @@ export function CreateMatchFab() {
   }
 
   return (
-    <>
+    <div className="create-match-fab">
       {open && (
-        <div className="fixed inset-0 bg-black/40 z-30" onClick={() => setOpen(false)} />
+        <div className="create-match-fab__overlay fixed inset-0 bg-black/40 z-30" onClick={() => setOpen(false)} />
       )}
 
       {/* Single column container anchored above the nav */}
       <div
-        className={`fixed bottom-20 right-4 z-40 flex flex-col items-end gap-3 transition-transform duration-300 ${
+        className={`create-match-fab__container fixed bottom-20 right-4 z-40 flex flex-col items-end gap-3 transition-transform duration-300 ${visible ? "create-match-fab__container--visible" : ""} ${
           visible ? "translate-y-0" : "translate-y-40"
         }`}
       >
@@ -77,7 +77,7 @@ export function CreateMatchFab() {
           return (
             <div
               key={action.label}
-              className="flex items-center gap-2"
+              className="create-match-fab__action flex items-center gap-2"
               style={{ animation: `fabItemIn 0.15s ease both`, animationDelay: `${i * 40}ms` }}
             >
               <span className="fab-option-bg bg-card border border-border text-foreground text-xs font-medium px-3 py-1.5 rounded-full shadow-sm whitespace-nowrap">
@@ -97,7 +97,7 @@ export function CreateMatchFab() {
         <button
           onClick={() => setOpen((v) => !v)}
           aria-label="Quick actions"
-          className="h-14 w-14 rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/25 flex items-center justify-center hover:brightness-110 transition-all pressable"
+          className="create-match-fab__toggle h-14 w-14 rounded-full bg-accent text-accent-foreground shadow-lg shadow-accent/25 flex items-center justify-center hover:brightness-110 transition-all pressable"
         >
           {open ? <X size={22} strokeWidth={2.5} /> : <Plus size={24} strokeWidth={2.5} />}
         </button>
@@ -114,7 +114,7 @@ export function CreateMatchFab() {
           from { opacity: 0; transform: translateY(6px) scale(0.95); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
-      `}</style>
-    </>
+      `}      </style>
+    </div>
   );
 }

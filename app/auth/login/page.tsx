@@ -79,10 +79,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-background px-5">
-      <div className="w-full max-w-sm">
+    <div className="auth-login-page flex min-h-dvh items-center justify-center bg-background px-5">
+      <div className="auth-login-page__container w-full max-w-sm">
         {/* Logo / Branding */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="auth-login-page__branding flex flex-col items-center mb-8">
           <div className="h-16 w-16 rounded-2xl bg-accent flex items-center justify-center mb-4">
             <span className="text-accent-foreground font-bold text-2xl font-sans">
               K
@@ -97,7 +97,7 @@ export default function LoginPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <form onSubmit={handleLogin} className="auth-login-page__form flex flex-col gap-4">
           {/* Email */}
           <div>
             <label
@@ -202,7 +202,7 @@ export default function LoginPage() {
         </form>
 
         {/* Footer */}
-        <p className="text-center text-sm text-muted-foreground mt-6">
+        <p className="auth-login-page__footer text-center text-sm text-muted-foreground mt-6">
           {"Don't have an account? "}
           <Link
             href="/auth/sign-up"

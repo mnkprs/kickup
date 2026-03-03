@@ -64,8 +64,8 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
   return (
     <>
       {/* Header */}
-      <header className="px-5 pt-12 pb-2">
-        <div className="flex items-center justify-between mb-5">
+      <header className="teams-list-header px-5 pt-12 pb-2">
+        <div className="teams-list-header__top flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
             <Link
               href="/"
@@ -95,7 +95,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
         </div>
 
         {showSearch && (
-          <div className="mb-4">
+          <div className="teams-list-header__search-wrapper mb-4">
             <input
               type="text"
               placeholder="Search teams..."
@@ -108,14 +108,14 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
         )}
 
         {/* Filter pills */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+        <div className="teams-list-header__filters flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
           {filters.map((filter) => {
             const isActive = activeFilter === filter;
             return (
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                className={`teams-list-header__filter shrink-0 px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${isActive ? "teams-list-header__filter--active" : ""} ${
                   isActive
                     ? "bg-accent text-accent-foreground"
                     : "bg-card border border-border text-muted-foreground hover:text-foreground"
@@ -129,7 +129,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
       </header>
 
       {/* Team cards */}
-      <main className="px-5 flex flex-col gap-3 pb-24">
+      <main className="teams-list__main px-5 flex flex-col gap-3 pb-24">
         {filtered.map((team) => {
           const record = getTeamRecord(team);
           const isMyTeam = team.id === userTeamId;
@@ -137,13 +137,13 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
             record.total > 0 ? Math.round((team.wins / record.total) * 100) : 0;
 
           return (
-            <Link key={team.id} href={`/teams/${team.id}`}>
+            <Link key={team.id} href={`/teams/${team.id}`} className="team-card-link">
               <div
-                className={`rounded-xl bg-card border border-border shadow-card p-4 cursor-pointer group hover:border-accent/40 transition-colors pressable ${
+                className={`team-card rounded-xl bg-card border border-border shadow-card p-4 cursor-pointer group hover:border-accent/40 transition-colors pressable ${isMyTeam ? "team-card--my-team" : ""} ${
                   isMyTeam ? "border-accent/30" : "border-border"
                 }`}
               >
-                <div className="flex items-center gap-3 mb-3">
+                <div className="team-card__header flex items-center gap-3 mb-3">
                   <TeamAvatar
                     team={team}
                     size="lg"
@@ -221,7 +221,7 @@ export function TeamsListClient({ teams, userTeamId }: TeamsListClientProps) {
         })}
 
         {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <div className="teams-list__empty flex flex-col items-center justify-center py-12 gap-3">
             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
               <Users size={20} className="text-muted-foreground" />
             </div>

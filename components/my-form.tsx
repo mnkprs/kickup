@@ -38,15 +38,15 @@ export function MyForm({ matches, team }: MyFormProps) {
     .slice(0, 5);
 
   return (
-    <section className="px-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-foreground">Recent Form</h2>
+    <section className="my-form px-5">
+      <div className="my-form__header flex items-center justify-between mb-3">
+        <h2 className="my-form__title text-sm font-semibold text-foreground">Recent Form</h2>
         <Link href="/matches?tab=Results" className="text-xs text-accent font-medium">
           All results
         </Link>
       </div>
 
-      <div className="rounded-xl bg-card border border-border shadow-card p-4">
+      <div className="my-form__card rounded-xl bg-card border border-border shadow-card p-4">
         {myCompleted.length === 0 ? (
           <p className="text-muted-foreground text-sm text-center py-2">No recent matches</p>
         ) : (

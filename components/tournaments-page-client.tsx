@@ -21,7 +21,7 @@ export function TournamentsPageClient({
     <>
       <TournamentHeader onFilterChange={setFilter} activeFilter={filter} canCreate={canCreate} />
 
-      <main className="flex flex-col gap-6 pb-24 pt-4">
+      <main className="tournaments-page__main flex flex-col gap-6 pb-24 pt-4">
         <TournamentOverviewStats tournaments={tournaments} />
         <TournamentList tournaments={tournaments} filter={filter} />
       </main>

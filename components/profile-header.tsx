@@ -34,8 +34,8 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
   const isCaptain = team?.captain_id === profile.id;
 
   return (
-    <header className="px-5 pt-12 pb-2">
-      <div className="flex items-center justify-between mb-6">
+    <header className="profile-header px-5 pt-12 pb-2">
+      <div className="profile-header__top flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           {!showSettings && (
             <BackButton />
@@ -77,7 +77,7 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
         </div>
       </div>
 
-      <div className="rounded-xl bg-card border border-border shadow-card p-6 mb-2">
+      <div className="profile-header__card profile-header__card--hero rounded-xl bg-card border border-border shadow-card p-6 mb-2">
         <div className="flex flex-col items-center gap-3">
           <div className="relative">
             {showSettings ? (
@@ -135,7 +135,7 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
         </div>
       </div>
 
-      <div className="rounded-xl bg-card border border-border shadow-card p-4">
+      <div className="profile-header__card profile-header__card--stats rounded-xl bg-card border border-border shadow-card p-4">
         <div className="flex items-center justify-between mb-2.5">
           <span className="text-muted-foreground text-xs font-medium">Win Rate</span>
           <span className="text-foreground font-bold text-sm">{winRate}%</span>

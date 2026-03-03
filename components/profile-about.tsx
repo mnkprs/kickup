@@ -109,8 +109,8 @@ export function ProfileAbout({ profile }: ProfileAboutProps) {
   if (items.length === 0) return null;
 
   return (
-    <section>
-      <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">
+    <section className="profile-about">
+      <div className="profile-about__card rounded-xl bg-card border border-border shadow-card overflow-hidden">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}

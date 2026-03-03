@@ -10,11 +10,11 @@ interface TournamentScorersProps {
 
 export function TournamentScorers({ scorers, title = "Top Scorers" }: TournamentScorersProps) {
   return (
-    <section className="px-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-base">{title}</h2>
+    <section className="tournament-scorers px-5">
+      <div className="tournament-scorers__header flex items-center justify-between mb-3">
+        <h2 className="tournament-scorers__title text-foreground font-semibold text-base">{title}</h2>
       </div>
-      <div className="rounded-xl bg-card border border-border shadow-card p-4">
+      <div className="tournament-scorers__list rounded-xl bg-card border border-border shadow-card p-4">
         {scorers.length === 0 ? (
           <p className="text-muted-foreground text-sm text-center py-6">No scorers yet</p>
         ) : (
@@ -24,7 +24,7 @@ export function TournamentScorers({ scorers, title = "Top Scorers" }: Tournament
             <Link
               key={entry.player.id}
               href={`/profile/${entry.player.id}`}
-              className="flex items-center gap-3 py-2.5 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors -mx-2 px-2 rounded-lg cursor-pointer"
+              className="tournament-scorers__row flex items-center gap-3 py-2.5 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors -mx-2 px-2 rounded-lg cursor-pointer"
             >
               <span className={`w-5 text-xs font-bold shrink-0 ${isTop ? "text-draw" : "text-muted-foreground"}`}>
                 {i + 1}

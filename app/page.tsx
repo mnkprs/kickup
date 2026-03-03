@@ -36,7 +36,7 @@ export default async function DashboardPage() {
     <>
       <DashboardHeader profile={profile} upcomingMatches={upcomingMatches} recentResults={recentResults} notifications={notifications} />
 
-      <main className="flex flex-col gap-6 pb-24">
+      <main className="dashboard-page__main flex flex-col gap-6 pb-24">
         {profile && <QuickStats profile={profile} />}
         <FindPlayersBanner freelancerCount={freelancers.length} />
         <UpcomingMatches matches={upcomingMatches} />

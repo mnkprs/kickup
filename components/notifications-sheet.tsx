@@ -61,11 +61,11 @@ export function NotificationsSheet({ open, onClose, notifications, onMarkedRead 
   ];
 
   return (
-    <>
-      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+    <div className="notifications-sheet">
+      <div className="notifications-sheet__overlay fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-background border-l border-border shadow-2xl flex flex-col" style={{ backgroundColor: 'var(--color-background)' }}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+      <div className="notifications-sheet__panel fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-background border-l border-border shadow-2xl flex flex-col" style={{ backgroundColor: 'var(--color-background)' }}>
+        <div className="notifications-sheet__header flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 className="text-base font-semibold text-foreground">Notifications</h2>
           <button
             onClick={onClose}
@@ -75,7 +75,7 @@ export function NotificationsSheet({ open, onClose, notifications, onMarkedRead 
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
+        <div className="notifications-sheet__content flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
           {notifications.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <Bell size={32} className="mb-3 opacity-30" />
@@ -140,6 +140,6 @@ export function NotificationsSheet({ open, onClose, notifications, onMarkedRead 
           ))}
         </div>
       </div>
-    </>
+    </div>
   );
 }

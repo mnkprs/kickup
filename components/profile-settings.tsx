@@ -70,21 +70,21 @@ function SectionHeader({
   canSave?: boolean;
 }) {
   return (
-    <header className="px-5 pt-12 pb-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
+    <header className="profile-settings__section-header px-5 pt-12 pb-4 flex items-center justify-between">
+      <div className="profile-settings__section-header-left flex items-center gap-3">
         <button
           onClick={onBack}
-          className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
+          className="profile-settings__back-btn h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
         >
           <ArrowLeft size={18} className="text-muted-foreground" />
         </button>
-        <h1 className="text-foreground font-semibold text-lg">{title}</h1>
+        <h1 className="profile-settings__section-title text-foreground font-semibold text-lg">{title}</h1>
       </div>
       {onSave && (
         <button
           onClick={onSave}
           disabled={!canSave || saving}
-          className="px-4 py-2 rounded-xl bg-accent text-accent-foreground text-xs font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center gap-1.5 pressable"
+          className="profile-settings__save-btn px-4 py-2 rounded-xl bg-accent text-accent-foreground text-xs font-semibold disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center gap-1.5 pressable"
         >
           {saving ? (
             <span className="h-3.5 w-3.5 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
@@ -226,23 +226,23 @@ export function ProfileSettings({
       .join("");
 
     return (
-      <>
-        <header className="px-5 pt-12 pb-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <div className="profile-settings">
+        <header className="profile-settings__header px-5 pt-12 pb-4 flex items-center justify-between">
+          <div className="profile-settings__header-left flex items-center gap-3">
             <Link
               href="/profile"
-              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
+              className="profile-settings__back-link h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
             >
               <ArrowLeft size={18} className="text-muted-foreground" />
             </Link>
-            <h1 className="text-foreground font-semibold text-lg">Settings</h1>
+            <h1 className="profile-settings__title text-foreground font-semibold text-lg">Settings</h1>
           </div>
           <NotificationsButton />
         </header>
 
-        <main className="px-5 pb-24 flex flex-col gap-4">
+        <main className="profile-settings__main px-5 pb-24 flex flex-col gap-4">
           {/* Avatar preview */}
-          <div className="flex items-center gap-4 py-4 px-4 rounded-xl bg-card border border-border shadow-card">
+          <div className="profile-settings__avatar-preview flex items-center gap-4 py-4 px-4 rounded-xl bg-card border border-border shadow-card">
             <div
               className="h-14 w-14 rounded-full flex items-center justify-center shrink-0 ring-2 ring-accent/20"
               style={{ backgroundColor: avatarColor }}
@@ -256,7 +256,7 @@ export function ProfileSettings({
           </div>
 
           {/* Menu */}
-          <div className="rounded-xl bg-card border border-border shadow-card overflow-hidden">
+          <div className="profile-settings__menu rounded-xl bg-card border border-border shadow-card overflow-hidden">
             {[
               { key: "player", icon: User, label: "Player Info", desc: "Name, position, area, bio" },
               { key: "appearance", icon: Sun, label: "Appearance", desc: preferredTheme === "dark" ? "Dark mode" : "Light mode" },
@@ -267,7 +267,7 @@ export function ProfileSettings({
               <button
                 key={key}
                 onClick={() => setSection(key as Section)}
-                className={`w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/50 transition-colors text-left ${i < arr.length - 1 ? "border-b border-border" : ""}`}
+                className={`profile-settings__menu-item w-full flex items-center gap-4 px-4 py-4 hover:bg-muted/50 transition-colors text-left ${i < arr.length - 1 ? "border-b border-border" : ""}`}
               >
                 <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
                   <Icon size={17} className="text-muted-foreground" />
@@ -284,7 +284,7 @@ export function ProfileSettings({
           {/* Sign out */}
           <button
             onClick={() => signOutAction()}
-            className="w-full flex items-center gap-4 px-4 py-4 rounded-xl bg-card border border-border shadow-card hover:bg-muted/50 transition-colors text-left pressable"
+            className="profile-settings__signout-btn w-full flex items-center gap-4 px-4 py-4 rounded-xl bg-card border border-border shadow-card hover:bg-muted/50 transition-colors text-left pressable"
           >
             <div className="h-9 w-9 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0">
               <LogOut size={17} className="text-destructive" />
@@ -294,7 +294,7 @@ export function ProfileSettings({
             </div>
           </button>
         </main>
-      </>
+      </div>
     );
   }
 
@@ -306,14 +306,14 @@ export function ProfileSettings({
       router.refresh();
     }
     return (
-      <>
+      <div className="profile-settings profile-settings--appearance">
         <SectionHeader
           title="Appearance"
           onBack={() => setSection(null)}
         />
-        <main className="px-5 pb-24 flex flex-col gap-5">
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 block">
+        <main className="profile-settings__main profile-settings__main--appearance px-5 pb-24 flex flex-col gap-5">
+          <div className="profile-settings__theme-section">
+            <label className="profile-settings__label text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 block">
               Theme
             </label>
             <div className="flex gap-2">
@@ -344,14 +344,14 @@ export function ProfileSettings({
             </div>
           </div>
         </main>
-      </>
+      </div>
     );
   }
 
   // ─── Player Info ─────────────────────────────────────────────────────────────
   if (section === "player") {
     return (
-      <>
+      <div className="profile-settings profile-settings--player">
         <SectionHeader
           title="Player Info"
           onBack={() => setSection(null)}
@@ -359,9 +359,9 @@ export function ProfileSettings({
           saving={playerSaving}
           canSave={fullName.trim().length > 0}
         />
-        <main className="px-5 pb-24 flex flex-col gap-5">
+        <main className="profile-settings__main profile-settings__main--player px-5 pb-24 flex flex-col gap-5">
           {/* Avatar color */}
-          <div>
+          <div className="profile-settings__field">
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 block">
               Avatar Color
             </label>
@@ -506,17 +506,17 @@ export function ProfileSettings({
             </p>
           )}
         </main>
-      </>
+      </div>
     );
   }
 
   // ─── Freelancer ─────────────────────────────────────────────────────────────
   if (section === "freelancer") {
     return (
-      <>
+      <div className="profile-settings profile-settings--freelancer">
         <SectionHeader title="Find a Team" onBack={() => setSection(null)} />
-        <main className="px-5 pb-24 flex flex-col gap-5">
-          <div className="flex items-center justify-between p-4 rounded-xl bg-card border border-border shadow-card">
+        <main className="profile-settings__main profile-settings__main--freelancer px-5 pb-24 flex flex-col gap-5">
+          <div className="profile-settings__freelancer-toggle flex items-center justify-between p-4 rounded-xl bg-card border border-border shadow-card">
             <div>
               <p className="text-foreground font-semibold text-sm mb-1">Available for Teams</p>
               <p className="text-muted-foreground text-xs leading-relaxed">
@@ -551,18 +551,18 @@ export function ProfileSettings({
             </p>
           )}
         </main>
-      </>
+      </div>
     );
   }
 
   // ─── Security ────────────────────────────────────────────────────────────────
   if (section === "security") {
     return (
-      <>
+      <div className="profile-settings profile-settings--security">
         <SectionHeader title="Security" onBack={() => { setSecurityMsg(""); setSecurityError(""); setSection(null); }} />
-        <main className="px-5 pb-24 flex flex-col gap-6">
+        <main className="profile-settings__main profile-settings__main--security px-5 pb-24 flex flex-col gap-6">
           {/* Email */}
-          <div className="rounded-xl bg-card border border-border shadow-card p-4 flex flex-col gap-4">
+          <div className="profile-settings__security-section rounded-xl bg-card border border-border shadow-card p-4 flex flex-col gap-4">
             <p className="text-foreground font-semibold text-sm">Email Address</p>
             <input
               type="email"
@@ -582,7 +582,7 @@ export function ProfileSettings({
           </div>
 
           {/* Password */}
-          <div className="rounded-xl bg-card border border-border shadow-card p-4 flex flex-col gap-4">
+          <div className="profile-settings__security-section profile-settings__password-section rounded-xl bg-card border border-border shadow-card p-4 flex flex-col gap-4">
             <p className="text-foreground font-semibold text-sm">Change Password</p>
             <div className="relative">
               <input
@@ -625,16 +625,16 @@ export function ProfileSettings({
             <p className="text-sm text-destructive bg-destructive/10 rounded-xl px-4 py-3 text-center">{securityError}</p>
           )}
         </main>
-      </>
+      </div>
     );
   }
 
   // ─── Field Owner ─────────────────────────────────────────────────────────────
   if (section === "field-owner") {
     return (
-      <>
+      <div className="profile-settings profile-settings--field-owner">
         <SectionHeader title="Field Owner" onBack={() => setSection(null)} />
-        <main className="px-5 pb-24 flex flex-col gap-5">
+        <main className="profile-settings__main profile-settings__main--field-owner px-5 pb-24 flex flex-col gap-5">
           {profile.is_field_owner ? (
             <div className="flex items-center gap-3 p-4 rounded-xl bg-win/10 border border-win/20">
               <CheckCircle2 size={20} className="text-win shrink-0" />
@@ -694,7 +694,7 @@ export function ProfileSettings({
             </>
           )}
         </main>
-      </>
+      </div>
     );
   }
 

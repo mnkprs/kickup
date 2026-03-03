@@ -52,10 +52,10 @@ export function MatchesHeader({
 
   return (
     <>
-      <header className="px-5 pt-12 pb-2">
-        <div className="flex items-center justify-between mb-5">
-          <h1 className="text-foreground font-semibold text-base">Matches</h1>
-          <div className="flex items-center gap-2">
+      <header className="matches-header px-5 pt-12 pb-2">
+        <div className="matches-header__top flex items-center justify-between mb-5">
+          <h1 className="matches-header__title text-foreground font-semibold text-base">Matches</h1>
+          <div className="matches-header__actions flex items-center gap-2">
             <NotificationsButton />
             <button
               onClick={onToggleFilters}
@@ -71,12 +71,12 @@ export function MatchesHeader({
           </div>
         </div>
 
-        <div className="flex gap-1 p-1 rounded-xl bg-card border border-border shadow-card">
+        <div className="matches-header__tabs flex gap-1 p-1 rounded-xl bg-card border border-border shadow-card">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => onTabChange(tab)}
-              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+              className={`matches-header__tab flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === tab ? "matches-header__tab--active" : ""} ${
                 activeTab === tab
                   ? "bg-accent text-accent-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -90,9 +90,9 @@ export function MatchesHeader({
 
       {showFilters && (
         <>
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={onToggleFilters} />
-          <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-50 bg-card rounded-t-2xl border-t border-border p-5 pb-8" style={{ backgroundColor: 'var(--color-card)' }}>
-            <div className="flex items-center justify-between mb-4">
+          <div className="matches-header__filter-overlay fixed inset-0 bg-black/50 z-40" onClick={onToggleFilters} />
+          <div className="matches-header__filter-sheet fixed bottom-0 left-0 right-0 max-w-lg mx-auto z-50 bg-card rounded-t-2xl border-t border-border p-5 pb-8" style={{ backgroundColor: 'var(--color-card)' }}>
+            <div className="matches-header__filter-header flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-foreground font-semibold text-base">Filters</h2>
                 <p className="text-muted-foreground text-xs mt-0.5">

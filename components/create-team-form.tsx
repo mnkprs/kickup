@@ -61,9 +61,9 @@ export function CreateTeamForm({ areaGroups, emojis, colors }: CreateTeamFormPro
   }
 
   return (
-    <>
-      <header className="px-5 pt-12 pb-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div className="create-team-form">
+      <header className="create-team-form__header px-5 pt-12 pb-4 flex items-center justify-between">
+        <div className="create-team-form__header-left flex items-center gap-3">
           <Link
             href="/teams"
             className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
@@ -75,9 +75,9 @@ export function CreateTeamForm({ areaGroups, emojis, colors }: CreateTeamFormPro
         <NotificationsButton />
       </header>
 
-      <main className="px-5 pb-24 flex flex-col gap-6">
+      <main className="create-team-form__main px-5 pb-24 flex flex-col gap-6">
         {/* Live preview badge */}
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border shadow-card">
+        <div className="create-team-form__preview flex items-center gap-4 p-4 rounded-xl bg-card border border-border shadow-card">
           <div
             className="h-14 w-14 rounded-full flex items-center justify-center text-2xl shrink-0"
             style={{ backgroundColor: color + "33" }}
@@ -222,6 +222,6 @@ export function CreateTeamForm({ areaGroups, emojis, colors }: CreateTeamFormPro
           )}
         </button>
       </main>
-    </>
+    </div>
   );
 }

@@ -17,8 +17,8 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-t border-border">
-      <div className="flex items-center justify-around max-w-lg mx-auto px-2 pb-[env(safe-area-inset-bottom)]">
+    <nav className="bottom-nav fixed bottom-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-t border-border">
+      <div className="bottom-nav__container flex items-center justify-around max-w-lg mx-auto px-2 pb-[env(safe-area-inset-bottom)]">
         {tabs.map((tab) => {
           const isActive =
             tab.match === "/"
@@ -28,7 +28,7 @@ export function BottomNav() {
             <Link
               key={tab.label}
               href={tab.href}
-              className="flex flex-col items-center gap-0.5 py-2 px-3 transition-colors pressable"
+              className={`bottom-nav__tab flex flex-col items-center gap-0.5 py-2 px-3 transition-colors pressable ${isActive ? "bottom-nav__tab--active" : ""}`}
             >
               <tab.icon
                 size={20}
@@ -38,14 +38,14 @@ export function BottomNav() {
                 strokeWidth={isActive ? 2.5 : 2}
               />
               <span
-                className={`text-[10px] font-medium ${
+                className={`bottom-nav__tab-label text-[10px] font-medium ${
                   isActive ? "text-accent" : "text-muted-foreground"
                 }`}
               >
                 {tab.label}
               </span>
               {isActive && (
-                <div className="h-0.5 w-4 rounded-full bg-accent mt-0.5" />
+                <div className="bottom-nav__tab-indicator h-0.5 w-4 rounded-full bg-accent mt-0.5" />
               )}
             </Link>
           );

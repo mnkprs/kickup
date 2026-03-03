@@ -101,9 +101,9 @@ export default async function TournamentDetailPage({
   const canManageRegistrations = isOrganizer || isAdmin;
 
   return (
-    <>
-      <header className="px-5 pt-12 pb-4">
-        <div className="flex items-center gap-3 mb-5">
+    <div className="tournament-detail-page">
+      <header className="tournament-detail-header px-5 pt-12 pb-4">
+        <div className="tournament-detail-header__top flex items-center gap-3 mb-5">
           <Link
             href="/tournaments"
             className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors shrink-0"
@@ -144,7 +144,7 @@ export default async function TournamentDetailPage({
       )}
       </header>
 
-      <main className="flex flex-col gap-6 pb-24 pt-2">
+      <main className="tournament-detail__main flex flex-col gap-6 pb-24 pt-2">
         <TournamentDetailsAccordion
           details={{
             organizerId: tournament.organizer_id,
@@ -189,7 +189,7 @@ export default async function TournamentDetailPage({
         <TournamentScorers scorers={scorers} />
 
         {standings.every((g) => g.standings.length === 0) && matches.length === 0 && scorers.length === 0 && (
-          <section className="px-5 py-8 flex flex-col items-center gap-3 text-center">
+          <section className="tournament-detail__empty px-5 py-8 flex flex-col items-center gap-3 text-center">
             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
               <Trophy size={20} className="text-muted-foreground" />
             </div>
@@ -201,6 +201,6 @@ export default async function TournamentDetailPage({
           </section>
         )}
       </main>
-    </>
+    </div>
   );
 }

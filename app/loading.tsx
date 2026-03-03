@@ -1,14 +1,14 @@
 export default function Loading() {
   return (
-    <div className="animate-pulse">
+    <div className="loading-skeleton animate-pulse">
       {/* Header */}
-      <div className="px-5 pt-12 pb-4 flex items-center justify-between">
+      <div className="loading-skeleton__header px-5 pt-12 pb-4 flex items-center justify-between">
         <div className="h-8 w-32 rounded-lg bg-muted" />
         <div className="h-10 w-10 rounded-full bg-muted" />
       </div>
 
       {/* Quick stats */}
-      <div className="px-5 mb-6">
+      <div className="loading-skeleton__stats px-5 mb-6">
         <div className="grid grid-cols-4 gap-2.5">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="rounded-xl bg-card border border-border shadow-card px-2 py-3 flex flex-col items-center gap-2">
@@ -21,7 +21,7 @@ export default function Loading() {
       </div>
 
       {/* Match cards */}
-      <div className="px-5 mb-6">
+      <div className="loading-skeleton__matches px-5 mb-6">
         <div className="h-5 w-28 rounded bg-muted mb-3" />
         <div className="flex flex-col gap-3">
           {Array.from({ length: 2 }).map((_, i) => (
@@ -31,7 +31,7 @@ export default function Loading() {
       </div>
 
       {/* Standings */}
-      <div className="px-5">
+      <div className="loading-skeleton__standings px-5">
         <div className="h-5 w-24 rounded bg-muted mb-3" />
         <div className="rounded-xl bg-card border border-border shadow-card h-48" />
       </div>

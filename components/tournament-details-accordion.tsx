@@ -55,7 +55,7 @@ function DetailRow({
   href?: string;
 }) {
   return (
-    <div className="flex items-start gap-3 py-2.5">
+    <div className="tournament-details-accordion__row flex items-start gap-3 py-2.5">
       <div className="h-8 w-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
         <Icon size={14} className="text-muted-foreground" />
       </div>
@@ -106,12 +106,12 @@ export function TournamentDetailsAccordion({ details }: TournamentDetailsAccordi
   const preview = previewParts.join(" · ");
 
   return (
-    <section className="px-5">
-      <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">
+    <section className="tournament-details-accordion px-5">
+      <div className="tournament-details-accordion__card rounded-xl border border-border bg-card shadow-card overflow-hidden">
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="w-full flex items-center justify-between gap-3 py-4 px-4 hover:bg-muted/20 active:bg-muted/30 transition-colors text-left pressable"
+          className="tournament-details-accordion__trigger w-full flex items-center justify-between gap-3 py-4 px-4 hover:bg-muted/20 active:bg-muted/30 transition-colors text-left pressable"
         >
           <div className="min-w-0 flex-1">
             <span className="text-foreground font-semibold text-sm block">

@@ -24,7 +24,7 @@ function StandingsTable({
 }) {
   return (
     <>
-      <div className="grid grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem] gap-0.5 px-2 py-1.5 border-b border-border">
+      <div className="tournament-standings__header-row grid grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem] gap-0.5 px-2 py-1.5 border-b border-border">
         <span className="text-muted-foreground text-[10px] font-medium">#</span>
         <span className="text-muted-foreground text-[10px] font-medium">Team</span>
         <span className="text-muted-foreground text-[10px] font-medium text-center">P</span>
@@ -39,7 +39,7 @@ function StandingsTable({
         return (
           <div
             key={row.team_id}
-            className="grid grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem] gap-0.5 px-2 py-1.5 items-center border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
+            className="tournament-standings__row grid grid-cols-[1.5rem_minmax(0,1fr)_1.25rem_1.25rem_1.25rem_1.25rem_1.75rem_1.75rem] gap-0.5 px-2 py-1.5 items-center border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
           >
             <span className={`text-xs font-medium ${i < 2 ? "text-accent" : "text-muted-foreground"}`}>
               {row.rank}
@@ -74,9 +74,9 @@ export function TournamentStandings({ standingsGroups, title = "Standings" }: To
   const hasAny = standingsGroups.some((g) => g.standings.length > 0);
 
   return (
-    <section className="px-5">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-foreground font-semibold text-base">{title}</h2>
+    <section className="tournament-standings px-5">
+      <div className="tournament-standings__header flex items-center justify-between mb-3">
+        <h2 className="tournament-standings__title text-foreground font-semibold text-base">{title}</h2>
       </div>
       <div className="rounded-lg bg-card border border-border shadow-card overflow-hidden">
         {!hasAny ? (

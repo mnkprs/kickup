@@ -6,7 +6,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ label, active }: StatusBadgeProps) {
   return (
     <span
-      className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium ${
+      className={`status-badge flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium ${active ? "status-badge--active" : ""} ${
         active ? "bg-accent-foreground/15 text-accent-foreground" : "bg-muted-foreground/15 border-muted-foreground/40 text-muted-foreground"
       }`}
     >

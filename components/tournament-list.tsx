@@ -55,7 +55,7 @@ function ActiveTournamentCard({
   return (
     <Link
       href={`/tournaments/${tournament.id}`}
-      className="rounded-xl p-4 cursor-pointer group transition-all shadow-card-accent hover:shadow-card-accent-hover bg-gradient-accent block"
+      className="tournament-card tournament-card--active rounded-xl p-4 cursor-pointer group transition-all shadow-card-accent hover:shadow-card-accent-hover bg-gradient-accent block"
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -115,7 +115,7 @@ function TournamentCard({
   const spotsLeft = tournament.max_teams - tournament.teams_count;
 
   return (
-    <Link href={`/tournaments/${tournament.id}`} className="rounded-xl bg-card border border-border shadow-card p-4 cursor-pointer group hover:border-accent/40 transition-colors block pressable">
+    <Link href={`/tournaments/${tournament.id}`} className="tournament-card rounded-xl bg-card border border-border shadow-card p-4 cursor-pointer group hover:border-accent/40 transition-colors block pressable">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {tournament.status === "in_progress" && <LiveDot className="shrink-0" />}
@@ -210,10 +210,10 @@ export function TournamentList({ tournaments, filter }: TournamentListProps) {
   const rest = filtered.filter((t) => t.status !== "in_progress");
 
   return (
-    <section className="px-5">
+    <section className="tournament-list px-5">
       {active.length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="tournament-list__active-section mb-4">
+          <div className="tournament-list__section-header flex items-center gap-2 mb-3">
             <Zap size={14} className="text-win" />
             <h2 className="text-foreground font-semibold text-sm">
               Active Now
@@ -250,7 +250,7 @@ export function TournamentList({ tournaments, filter }: TournamentListProps) {
       )}
 
       {filtered.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-12 gap-3">
+        <div className="tournament-list__empty flex flex-col items-center justify-center py-12 gap-3">
           <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
             <Trophy size={20} className="text-muted-foreground" />
           </div>

@@ -3,9 +3,9 @@ import Link from "next/link";
 
 export default function SignUpSuccessPage() {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-background px-5">
-      <div className="w-full max-w-sm text-center">
-        <div className="flex flex-col items-center">
+    <div className="auth-signup-success-page flex min-h-dvh items-center justify-center bg-background px-5">
+      <div className="auth-signup-success-page__container w-full max-w-sm text-center">
+        <div className="auth-signup-success-page__content flex flex-col items-center">
           <div className="h-16 w-16 rounded-full bg-accent/10 flex items-center justify-center mb-5">
             <MailCheck size={28} className="text-accent" />
           </div>

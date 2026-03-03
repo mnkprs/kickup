@@ -19,12 +19,12 @@ export function QuickStats({ profile }: QuickStatsProps) {
   ];
 
   return (
-    <section className="px-5">
-      <div className="grid grid-cols-4 gap-2.5">
+    <section className="quick-stats px-5">
+      <div className="quick-stats__grid grid grid-cols-4 gap-2.5">
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border shadow-card px-2 py-3"
+            className="quick-stats__item flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border shadow-card px-2 py-3"
           >
             <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${stat.bgClass}`}>
               <stat.icon size={16} className={stat.iconClass} />

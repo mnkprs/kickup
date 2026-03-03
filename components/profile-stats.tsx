@@ -15,13 +15,13 @@ export function ProfileStats({ profile }: ProfileStatsProps) {
   ];
 
   return (
-    <section>
-      <h2 className="text-foreground font-semibold text-base mb-3">Season Stats</h2>
-      <div className="grid grid-cols-3 gap-2.5">
+    <section className="profile-stats">
+      <h2 className="profile-stats__title text-foreground font-semibold text-base mb-3">Season Stats</h2>
+      <div className="profile-stats__grid grid grid-cols-3 gap-2.5">
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border shadow-card px-2 py-3"
+            className="profile-stats__item flex flex-col items-center gap-1.5 rounded-xl bg-card border border-border shadow-card px-2 py-3"
           >
             <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${stat.bgClass}`}>
               <stat.icon size={16} className={stat.iconClass} />

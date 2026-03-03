@@ -101,8 +101,8 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-background px-5">
-      <div className="w-full max-w-sm">
+    <div className="auth-signup-page flex min-h-dvh items-center justify-center bg-background px-5">
+      <div className="auth-signup-page__container w-full max-w-sm">
         {/* Logo / Branding */}
         <div className="flex flex-col items-center mb-8">
           <div className="h-16 w-16 rounded-2xl bg-accent flex items-center justify-center mb-4">
