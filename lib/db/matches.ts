@@ -228,6 +228,27 @@ export async function getMatchGoalsByPlayer(matchId: string): Promise<Map<string
   return map;
 }
 
+/** Goals per player per team (for displaying Unknown scorer in correct column) */
+export async function getMatchGoalsByTeam(
+  matchId: string,
+  homeTeamId: string,
+  awayTeamId: string
+): Promise<{ home: Record<string, number>; away: Record<string, number> }> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("match_events")
+    .select("team_id, scorer_id")
+    .eq("match_id", matchId);
+
+  const home: Record<string, number> = {};
+  const away: Record<string, number> = {};
+  for (const row of (data ?? []) as { team_id: string; scorer_id: string }[]) {
+    const map = row.team_id === homeTeamId ? home : away;
+    map[row.scorer_id] = (map[row.scorer_id] ?? 0) + 1;
+  }
+  return { home, away };
+}
+
 /** Roster for a team in a match: from match_lineups if available, else team_members */
 export async function getMatchRoster(
   matchId: string,

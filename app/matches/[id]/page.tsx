@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getMatch, getMatchGoalsByPlayer, getMatchRoster, getMatchActionHistory } from "@/lib/db/matches";
+import { getMatch, getMatchGoalsByPlayer, getMatchGoalsByTeam, getMatchRoster, getMatchActionHistory } from "@/lib/db/matches";
 import { createClient } from "@/lib/supabase/server";
 import { isTbdMatch } from "@/lib/constants";
 import { getTeamMembers } from "@/lib/db/teams";
@@ -131,16 +131,22 @@ export default async function MatchDetailPage({
   let homeRoster: { player_id: string; profile: Record<string, unknown> }[] = [];
   let awayRoster: { player_id: string; profile: Record<string, unknown> }[] = [];
   let goalsByPlayer: Map<string, number> = new Map();
+  let goalsByTeam: { home: Record<string, number>; away: Record<string, number> } = {
+    home: {},
+    away: {},
+  };
 
   if (match.raw_status === "completed") {
-    const [home, away, goals] = await Promise.all([
+    const [home, away, goals, goalsByTeamRes] = await Promise.all([
       getMatchRoster(id, match.home_team_id),
       getMatchRoster(id, match.away_team_id),
       getMatchGoalsByPlayer(id),
+      getMatchGoalsByTeam(id, match.home_team_id, match.away_team_id),
     ]);
     homeRoster = home;
     awayRoster = away;
     goalsByPlayer = goals;
+    goalsByTeam = goalsByTeamRes;
   } else if (
     (match.raw_status === "pre_match" || match.raw_status === "disputed") &&
     (userTeamId || isTournamentOrganizer || isAdmin)
@@ -155,14 +161,16 @@ export default async function MatchDetailPage({
 
   // For admin editing: load rosters when admin views any match (for result edit form)
   if (isAdmin && homeRoster.length === 0 && awayRoster.length === 0) {
-    const [home, away, goals] = await Promise.all([
+    const [home, away, goals, goalsByTeamRes] = await Promise.all([
       getMatchRoster(id, match.home_team_id),
       getMatchRoster(id, match.away_team_id),
       getMatchGoalsByPlayer(id),
+      getMatchGoalsByTeam(id, match.home_team_id, match.away_team_id),
     ]);
     homeRoster = home;
     awayRoster = away;
     goalsByPlayer = goals;
+    goalsByTeam = goalsByTeamRes;
   }
 
   // For admin editing completed matches: prefer roster (match_lineups) over team_members for MVP
@@ -195,6 +203,7 @@ export default async function MatchDetailPage({
       homeRoster={homeRoster}
       awayRoster={awayRoster}
       goalsByPlayer={Object.fromEntries(goalsByPlayer)}
+      goalsByTeam={goalsByTeam}
       isTournamentOrganizer={isTournamentOrganizer}
       isAdmin={isAdmin}
       matchActionHistory={matchActionHistory}

@@ -21,7 +21,8 @@ DELETE FROM teams;
 DELETE FROM owner_applications;
 DELETE FROM auth.users
 WHERE aud = 'authenticated'
-  AND id != 'ac4167a1-be96-4852-9655-d520227e2d70'::uuid;
+  AND id != 'ac4167a1-be96-4852-9655-d520227e2d70'::uuid
+  AND id != 'b0000000-0000-0000-0000-000000000001'::uuid;  -- Unknown placeholder player
 
 -- ─── 2. AUTH USERS (DO block — 100 players) ───────────────────────
 DO $$
@@ -326,7 +327,7 @@ UPDATE teams SET captain_id='00000000-0000-0000-0000-000000000096', home_ground=
 
 -- ─── 7. TOURNAMENT ─────────────────────────────────────────────────
 -- organizer = p01 (admin)
-INSERT INTO tournaments (id, name, description, organizer_id, venue, area, match_format, max_teams, teams_per_group, prize, entry_fee, bracket_format, start_date, end_date, status)
+INSERT INTO tournaments (id, name, description, organizer_id, venue, area, match_format, max_teams, teams_per_group, prize, entry_fee, bracket_format, knockout_mode, start_date, end_date, status)
 VALUES (
   '00000000-0000-0000-0003-000000000001',
   'Athens 7v7 Summer Cup 2026',
@@ -338,6 +339,7 @@ VALUES (
   '€500 + Trophy',
   '€50',
   'group_stage',
+  'custom',
   '2026-03-15',
   '2026-04-12',
   'group_stage'

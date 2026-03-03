@@ -21,7 +21,7 @@ import {
 import { LiveDot } from "@/components/live-dot";
 import { Avatar } from "@/components/avatar";
 import { TeamAvatar } from "@/components/team-avatar";
-import { isTbdTeam, KNOCKOUT_STAGE_LABELS } from "@/lib/constants";
+import { isTbdTeam, KNOCKOUT_STAGE_LABELS, UNKNOWN_PLAYER_ID } from "@/lib/constants";
 
 interface TeamMemberMin {
   id: string;
@@ -63,6 +63,7 @@ interface MatchDetailClientProps {
   homeRoster?: RosterPlayer[];
   awayRoster?: RosterPlayer[];
   goalsByPlayer?: Record<string, number>;
+  goalsByTeam?: { home: Record<string, number>; away: Record<string, number> };
   isTournamentOrganizer?: boolean;
   isAdmin?: boolean;
   matchActionHistory?: MatchActionHistoryItem[];
@@ -121,11 +122,13 @@ function GoalsRosterSection({
   team,
   goals,
   onUpdate,
+  showUnknown = false,
 }: {
   roster: RosterPlayer[];
   team: Match["home_team"];
   goals: Record<string, number>;
   onUpdate: (playerId: string, delta: number) => void;
+  showUnknown?: boolean;
 }) {
   return (
     <div className="goals-roster-section rounded-xl bg-card border border-border shadow-card overflow-hidden">
@@ -182,6 +185,40 @@ function GoalsRosterSection({
             </div>
           );
         })}
+        {showUnknown && (
+          <div className="flex items-center gap-2 px-4 py-2.5">
+            <button
+              type="button"
+              onClick={() => onUpdate(UNKNOWN_PLAYER_ID, -1)}
+              disabled={(goals[UNKNOWN_PLAYER_ID] ?? 0) <= 0}
+              className="h-8 w-8 rounded-full flex items-center justify-center border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors pressable shrink-0"
+              aria-label="Remove goal from Unknown"
+            >
+              <Minus size={14} strokeWidth={2.5} />
+            </button>
+            <Avatar
+              avatar_url={null}
+              avatar_initials="?"
+              avatar_color="#9E9E9E"
+              full_name="Unknown"
+              size="2xs"
+            />
+            <span className="text-sm font-medium text-muted-foreground truncate flex-1 min-w-0">
+              Unknown (non-registered)
+            </span>
+            <span className="text-sm font-bold text-draw tabular-nums w-6 text-center shrink-0">
+              {goals[UNKNOWN_PLAYER_ID] ?? 0}
+            </span>
+            <button
+              type="button"
+              onClick={() => onUpdate(UNKNOWN_PLAYER_ID, 1)}
+              className="h-8 w-8 rounded-full flex items-center justify-center border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground transition-colors pressable shrink-0"
+              aria-label="Add goal for Unknown"
+            >
+              <Plus size={14} strokeWidth={2.5} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -193,19 +230,23 @@ function MatchRostersSection({
   homeTeam,
   awayTeam,
   goalsByPlayer,
+  goalsByTeam,
 }: {
   homeRoster: RosterPlayer[];
   awayRoster: RosterPlayer[];
   homeTeam: Match["home_team"];
   awayTeam: Match["away_team"];
   goalsByPlayer: Record<string, number>;
+  goalsByTeam?: { home: Record<string, number>; away: Record<string, number> };
 }) {
   function RosterColumn({
     roster,
     team,
+    teamGoals,
   }: {
     roster: RosterPlayer[];
     team: Match["home_team"];
+    teamGoals: Record<string, number>;
   }) {
     return (
       <div className="flex-1 min-w-0">
@@ -221,46 +262,63 @@ function MatchRostersSection({
           <span className="text-sm font-semibold text-foreground truncate">{team.name}</span>
         </div>
         <div className="rounded-xl bg-card border border-border shadow-card divide-y divide-border overflow-hidden">
-          {roster.length === 0 ? (
+          {roster.length === 0 && (teamGoals[UNKNOWN_PLAYER_ID] ?? 0) === 0 ? (
             <div className="px-4 py-3 text-muted-foreground text-xs">No roster data</div>
-          ) : (
-            roster.map(({ player_id, profile }) => {
-              const goals = goalsByPlayer[player_id] ?? 0;
-              const name = (profile.full_name as string) ?? "Unknown";
-              return (
-                <Link
-                  key={player_id}
-                  href={`/profile/${player_id}`}
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors pressable"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar
-                      avatar_url={profile.avatar_url as string | null}
-                      avatar_initials={(profile.avatar_initials as string) || name.split(" ").map((n) => n[0]).join("")}
-                      avatar_color={(profile.avatar_color as string) ?? "#2E7D32"}
-                      full_name={name}
-                      size="2xs"
-                    />
-                    <span className="text-sm font-medium text-foreground truncate">{name}</span>
-                  </div>
-                  {goals > 0 && (
-                    <span className="text-draw font-bold text-sm shrink-0">{goals} ⚽</span>
-                  )}
-                </Link>
-              );
-            })
+          ) : null}
+          {roster.map(({ player_id, profile }) => {
+            const goals = teamGoals[player_id] ?? 0;
+            const name = (profile.full_name as string) ?? "Unknown";
+            return (
+              <Link
+                key={player_id}
+                href={`/profile/${player_id}`}
+                className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors pressable"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <Avatar
+                    avatar_url={profile.avatar_url as string | null}
+                    avatar_initials={(profile.avatar_initials as string) || name.split(" ").map((n) => n[0]).join("")}
+                    avatar_color={(profile.avatar_color as string) ?? "#2E7D32"}
+                    full_name={name}
+                    size="2xs"
+                  />
+                  <span className="text-sm font-medium text-foreground truncate">{name}</span>
+                </div>
+                {goals > 0 && (
+                  <span className="text-draw font-bold text-sm shrink-0">{goals} ⚽</span>
+                )}
+              </Link>
+            );
+          })}
+          {(teamGoals[UNKNOWN_PLAYER_ID] ?? 0) > 0 && (
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar
+                  avatar_url={null}
+                  avatar_initials="?"
+                  avatar_color="#9E9E9E"
+                  full_name="Unknown"
+                  size="2xs"
+                />
+                <span className="text-sm font-medium text-muted-foreground truncate">Unknown</span>
+              </div>
+              <span className="text-draw font-bold text-sm shrink-0">{teamGoals[UNKNOWN_PLAYER_ID]} ⚽</span>
+            </div>
           )}
         </div>
       </div>
     );
   }
 
+  const homeGoals = goalsByTeam?.home ?? goalsByPlayer;
+  const awayGoals = goalsByTeam?.away ?? goalsByPlayer;
+
   return (
     <section className="match-rosters-section px-5">
       <h2 className="match-rosters-section__title text-foreground font-semibold text-sm mb-3">Team Rosters</h2>
       <div className="flex flex-col gap-4">
-        <RosterColumn roster={homeRoster} team={homeTeam} />
-        <RosterColumn roster={awayRoster} team={awayTeam} />
+        <RosterColumn roster={homeRoster} team={homeTeam} teamGoals={homeGoals} />
+        <RosterColumn roster={awayRoster} team={awayTeam} teamGoals={awayGoals} />
       </div>
     </section>
   );
@@ -275,6 +333,7 @@ export function MatchDetailClient({
   homeRoster = [],
   awayRoster = [],
   goalsByPlayer = {},
+  goalsByTeam,
   isTournamentOrganizer = false,
   isAdmin = false,
   matchActionHistory = [],
@@ -295,6 +354,10 @@ export function MatchDetailClient({
   const [notes, setNotes] = useState("");
   const [showResult, setShowResult] = useState(false);
   const [formGoalsByPlayer, setFormGoalsByPlayer] = useState<Record<string, number>>({});
+  const [formGoalsByTeam, setFormGoalsByTeam] = useState<{
+    home: Record<string, number>;
+    away: Record<string, number>;
+  }>({ home: {}, away: {} });
 
   // Admin edit state
   const [showAdminEdit, setShowAdminEdit] = useState(false);
@@ -305,10 +368,30 @@ export function MatchDetailClient({
   const [adminAwayScore, setAdminAwayScore] = useState(match.away_score?.toString() ?? "0");
   const [adminMvpId, setAdminMvpId] = useState<string | null>(match.mvp_id ?? null);
   const [adminNotes, setAdminNotes] = useState(match.notes ?? "");
-  const [adminGoalsByPlayer, setAdminGoalsByPlayer] = useState<Record<string, number>>(() => {
-    const g: Record<string, number> = {};
-    for (const [pid, count] of Object.entries(goalsByPlayer)) g[pid] = count;
-    return g;
+  const [adminGoalsByPlayer, setAdminGoalsByPlayer] = useState<{
+    home: Record<string, number>;
+    away: Record<string, number>;
+  }>(() => {
+    const home: Record<string, number> = {};
+    const away: Record<string, number> = {};
+    const homeIds = new Set(homeRoster.map((p) => p.player_id));
+    if (goalsByTeam) {
+      for (const [pid, count] of Object.entries(goalsByTeam.home)) {
+        if (count > 0) home[pid] = count;
+      }
+      for (const [pid, count] of Object.entries(goalsByTeam.away)) {
+        if (count > 0) away[pid] = count;
+      }
+    } else {
+      for (const [pid, count] of Object.entries(goalsByPlayer)) {
+        if (count > 0) {
+          if (pid === UNKNOWN_PLAYER_ID) home[pid] = count;
+          else if (homeIds.has(pid)) home[pid] = count;
+          else away[pid] = count;
+        }
+      }
+    }
+    return { home, away };
   });
   const [adminSaveLoading, setAdminSaveLoading] = useState(false);
 
@@ -326,27 +409,46 @@ export function MatchDetailClient({
 
   // Auto-sync score from goals per player (only when user has added goals)
   const isOrganizerFull = isTournamentOrganizer && !isParticipant;
-  const hasFormGoals = Object.values(formGoalsByPlayer).some((c) => c > 0);
+  const hasFormGoals =
+    Object.values(formGoalsByPlayer).some((c) => c > 0) ||
+    Object.values(formGoalsByTeam.home).some((c) => c > 0) ||
+    Object.values(formGoalsByTeam.away).some((c) => c > 0);
   const resolvingDispute = rawStatus === "disputed" && (isTournamentOrganizer || isAdmin);
   useEffect(() => {
     if (!showResult || !hasFormGoals) return;
     const syncBoth = isOrganizerFull || resolvingDispute;
     const syncHome = syncBoth || userTeamId === match.home_team_id;
     const syncAway = syncBoth || userTeamId === match.away_team_id;
-    if (syncHome && homeRoster.length > 0) {
-      const h = homeRoster.reduce((s, p) => s + (formGoalsByPlayer[p.player_id] ?? 0), 0);
+    if (syncBoth) {
+      const h =
+        homeRoster.reduce((s, p) => s + (formGoalsByTeam.home[p.player_id] ?? 0), 0) +
+        (formGoalsByTeam.home[UNKNOWN_PLAYER_ID] ?? 0);
+      const a =
+        awayRoster.reduce((s, p) => s + (formGoalsByTeam.away[p.player_id] ?? 0), 0) +
+        (formGoalsByTeam.away[UNKNOWN_PLAYER_ID] ?? 0);
       setHomeScore(h.toString());
-    }
-    if (syncAway && awayRoster.length > 0) {
-      const a = awayRoster.reduce((s, p) => s + (formGoalsByPlayer[p.player_id] ?? 0), 0);
+      setAwayScore(a.toString());
+    } else if (syncHome && homeRoster.length > 0) {
+      const h =
+        homeRoster.reduce((s, p) => s + (formGoalsByPlayer[p.player_id] ?? 0), 0) +
+        (formGoalsByPlayer[UNKNOWN_PLAYER_ID] ?? 0);
+      setHomeScore(h.toString());
+    } else if (syncAway && awayRoster.length > 0) {
+      const a =
+        awayRoster.reduce((s, p) => s + (formGoalsByPlayer[p.player_id] ?? 0), 0) +
+        (formGoalsByPlayer[UNKNOWN_PLAYER_ID] ?? 0);
       setAwayScore(a.toString());
     }
-  }, [formGoalsByPlayer, showResult, hasFormGoals, isOrganizerFull, resolvingDispute, userTeamId, match.home_team_id, match.away_team_id, homeRoster, awayRoster]);
+  }, [formGoalsByPlayer, formGoalsByTeam, showResult, hasFormGoals, isOrganizerFull, resolvingDispute, userTeamId, match.home_team_id, match.away_team_id, homeRoster, awayRoster]);
 
   useEffect(() => {
     if (!showAdminEdit || (homeRoster.length === 0 && awayRoster.length === 0)) return;
-    const h = homeRoster.reduce((s, p) => s + (adminGoalsByPlayer[p.player_id] ?? 0), 0);
-    const a = awayRoster.reduce((s, p) => s + (adminGoalsByPlayer[p.player_id] ?? 0), 0);
+    const h =
+      homeRoster.reduce((s, p) => s + (adminGoalsByPlayer.home[p.player_id] ?? 0), 0) +
+      (adminGoalsByPlayer.home[UNKNOWN_PLAYER_ID] ?? 0);
+    const a =
+      awayRoster.reduce((s, p) => s + (adminGoalsByPlayer.away[p.player_id] ?? 0), 0) +
+      (adminGoalsByPlayer.away[UNKNOWN_PLAYER_ID] ?? 0);
     setAdminHomeScore(h.toString());
     setAdminAwayScore(a.toString());
   }, [adminGoalsByPlayer, showAdminEdit, homeRoster, awayRoster]);
@@ -434,14 +536,16 @@ export function MatchDetailClient({
     const a = parseInt(awayScore) || 0;
     const goalsPayload = {
       home: Object.fromEntries(
-        homeRoster
-          .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
-          .filter(([, c]) => Number(c) > 0)
+        [
+          ...homeRoster.map((p) => [p.player_id, formGoalsByTeam.home[p.player_id] ?? 0] as const),
+          [UNKNOWN_PLAYER_ID, formGoalsByTeam.home[UNKNOWN_PLAYER_ID] ?? 0] as const,
+        ].filter(([, c]) => Number(c) > 0)
       ),
       away: Object.fromEntries(
-        awayRoster
-          .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
-          .filter(([, c]) => Number(c) > 0)
+        [
+          ...awayRoster.map((p) => [p.player_id, formGoalsByTeam.away[p.player_id] ?? 0] as const),
+          [UNKNOWN_PLAYER_ID, formGoalsByTeam.away[UNKNOWN_PLAYER_ID] ?? 0] as const,
+        ].filter(([, c]) => Number(c) > 0)
       ),
     };
     const result =
@@ -477,31 +581,6 @@ export function MatchDetailClient({
     const h = parseInt(homeScore) || 0;
     const a = parseInt(awayScore) || 0;
 
-    const goalsPayload = isTournamentOrganizer && !isParticipant
-      ? {
-          home: Object.fromEntries(
-            homeRoster
-              .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
-              .filter(([, c]) => Number(c) > 0)
-          ),
-          away: Object.fromEntries(
-            awayRoster
-              .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
-              .filter(([, c]) => Number(c) > 0)
-          ),
-        }
-      : userTeamId === match.home_team_id
-        ? Object.fromEntries(
-            homeRoster
-              .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
-              .filter(([, c]) => Number(c) > 0)
-          )
-        : Object.fromEntries(
-            awayRoster
-              .map((p) => [p.player_id, formGoalsByPlayer[p.player_id] ?? 0])
-              .filter(([, c]) => Number(c) > 0)
-          );
-
     const result = isTournamentOrganizer && !isParticipant
       ? await organizerSubmitResultAction({
           matchId: match.id,
@@ -509,7 +588,20 @@ export function MatchDetailClient({
           awayScore: a,
           mvpId,
           notes,
-          goals: goalsPayload,
+          goals: {
+            home: Object.fromEntries(
+              [
+                ...homeRoster.map((p) => [p.player_id, formGoalsByTeam.home[p.player_id] ?? 0] as const),
+                [UNKNOWN_PLAYER_ID, formGoalsByTeam.home[UNKNOWN_PLAYER_ID] ?? 0] as const,
+              ].filter(([, c]) => Number(c) > 0)
+            ),
+            away: Object.fromEntries(
+              [
+                ...awayRoster.map((p) => [p.player_id, formGoalsByTeam.away[p.player_id] ?? 0] as const),
+                [UNKNOWN_PLAYER_ID, formGoalsByTeam.away[UNKNOWN_PLAYER_ID] ?? 0] as const,
+              ].filter(([, c]) => Number(c) > 0)
+            ),
+          },
         })
       : await submitResultAction({
           matchId: match.id,
@@ -518,7 +610,15 @@ export function MatchDetailClient({
           awayScore: a,
           mvpId,
           notes,
-          goals: goalsPayload,
+          goals: Object.fromEntries(
+            [
+              ...(userTeamId === match.home_team_id ? homeRoster : awayRoster).map((p) => [
+                p.player_id,
+                formGoalsByPlayer[p.player_id] ?? 0,
+              ] as const),
+              [UNKNOWN_PLAYER_ID, formGoalsByPlayer[UNKNOWN_PLAYER_ID] ?? 0] as const,
+            ].filter(([, c]) => Number(c) > 0)
+          ),
         });
     setLoading(false);
     if (result.error) { setError(result.error); return; }
@@ -544,14 +644,16 @@ export function MatchDetailClient({
     const a = parseInt(adminAwayScore) || 0;
     const goalsPayload = {
       home: Object.fromEntries(
-        homeRoster
-          .map((p) => [p.player_id, adminGoalsByPlayer[p.player_id] ?? 0])
-          .filter(([, c]) => Number(c) > 0)
+        [
+          ...homeRoster.map((p) => [p.player_id, adminGoalsByPlayer.home[p.player_id] ?? 0] as const),
+          [UNKNOWN_PLAYER_ID, adminGoalsByPlayer.home[UNKNOWN_PLAYER_ID] ?? 0] as const,
+        ].filter(([, c]) => Number(c) > 0)
       ),
       away: Object.fromEntries(
-        awayRoster
-          .map((p) => [p.player_id, adminGoalsByPlayer[p.player_id] ?? 0])
-          .filter(([, c]) => Number(c) > 0)
+        [
+          ...awayRoster.map((p) => [p.player_id, adminGoalsByPlayer.away[p.player_id] ?? 0] as const),
+          [UNKNOWN_PLAYER_ID, adminGoalsByPlayer.away[UNKNOWN_PLAYER_ID] ?? 0] as const,
+        ].filter(([, c]) => Number(c) > 0)
       ),
     };
     const res = await adminUpdateMatchResultAction({
@@ -630,13 +732,14 @@ export function MatchDetailClient({
         </div>
 
         {/* Match rosters (completed only) */}
-        {isCompleted && homeRoster.length + awayRoster.length > 0 && (
+        {isCompleted && (homeRoster.length + awayRoster.length > 0 || (goalsByTeam?.home?.[UNKNOWN_PLAYER_ID] ?? 0) + (goalsByTeam?.away?.[UNKNOWN_PLAYER_ID] ?? 0) > 0) && (
           <MatchRostersSection
             homeRoster={homeRoster}
             awayRoster={awayRoster}
             homeTeam={match.home_team}
             awayTeam={match.away_team}
             goalsByPlayer={goalsByPlayer}
+            goalsByTeam={goalsByTeam}
           />
         )}
 
@@ -917,24 +1020,32 @@ export function MatchDetailClient({
                       <GoalsRosterSection
                         roster={homeRoster}
                         team={match.home_team}
-                        goals={formGoalsByPlayer}
+                        goals={formGoalsByTeam.home}
                         onUpdate={(playerId, delta) =>
-                          setFormGoalsByPlayer((prev) => ({
+                          setFormGoalsByTeam((prev) => ({
                             ...prev,
-                            [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                            home: {
+                              ...prev.home,
+                              [playerId]: Math.max(0, (prev.home[playerId] ?? 0) + delta),
+                            },
                           }))
                         }
+                        showUnknown
                       />
                       <GoalsRosterSection
                         roster={awayRoster}
                         team={match.away_team}
-                        goals={formGoalsByPlayer}
+                        goals={formGoalsByTeam.away}
                         onUpdate={(playerId, delta) =>
-                          setFormGoalsByPlayer((prev) => ({
+                          setFormGoalsByTeam((prev) => ({
                             ...prev,
-                            [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                            away: {
+                              ...prev.away,
+                              [playerId]: Math.max(0, (prev.away[playerId] ?? 0) + delta),
+                            },
                           }))
                         }
+                        showUnknown
                       />
                     </>
                   ) : userTeamId ? (
@@ -954,6 +1065,7 @@ export function MatchDetailClient({
                           [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
                         }))
                       }
+                      showUnknown
                     />
                   ) : null}
                 </div>
@@ -1122,24 +1234,32 @@ export function MatchDetailClient({
                   <GoalsRosterSection
                     roster={homeRoster}
                     team={match.home_team}
-                    goals={formGoalsByPlayer}
+                    goals={formGoalsByTeam.home}
                     onUpdate={(playerId, delta) =>
-                      setFormGoalsByPlayer((prev) => ({
+                      setFormGoalsByTeam((prev) => ({
                         ...prev,
-                        [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                        home: {
+                          ...prev.home,
+                          [playerId]: Math.max(0, (prev.home[playerId] ?? 0) + delta),
+                        },
                       }))
                     }
+                    showUnknown
                   />
                   <GoalsRosterSection
                     roster={awayRoster}
                     team={match.away_team}
-                    goals={formGoalsByPlayer}
+                    goals={formGoalsByTeam.away}
                     onUpdate={(playerId, delta) =>
-                      setFormGoalsByPlayer((prev) => ({
+                      setFormGoalsByTeam((prev) => ({
                         ...prev,
-                        [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                        away: {
+                          ...prev.away,
+                          [playerId]: Math.max(0, (prev.away[playerId] ?? 0) + delta),
+                        },
                       }))
                     }
+                    showUnknown
                   />
                 </div>
               </div>
@@ -1320,24 +1440,32 @@ export function MatchDetailClient({
                         <GoalsRosterSection
                           roster={homeRoster}
                           team={match.home_team}
-                          goals={adminGoalsByPlayer}
+                          goals={adminGoalsByPlayer.home}
                           onUpdate={(playerId, delta) =>
                             setAdminGoalsByPlayer((prev) => ({
                               ...prev,
-                              [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                              home: {
+                                ...prev.home,
+                                [playerId]: Math.max(0, (prev.home[playerId] ?? 0) + delta),
+                              },
                             }))
                           }
+                          showUnknown
                         />
                         <GoalsRosterSection
                           roster={awayRoster}
                           team={match.away_team}
-                          goals={adminGoalsByPlayer}
+                          goals={adminGoalsByPlayer.away}
                           onUpdate={(playerId, delta) =>
                             setAdminGoalsByPlayer((prev) => ({
                               ...prev,
-                              [playerId]: Math.max(0, (prev[playerId] ?? 0) + delta),
+                              away: {
+                                ...prev.away,
+                                [playerId]: Math.max(0, (prev.away[playerId] ?? 0) + delta),
+                              },
                             }))
                           }
+                          showUnknown
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">Score updates automatically from goals above.</p>

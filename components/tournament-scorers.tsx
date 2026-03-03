@@ -2,6 +2,7 @@ import type { TopScorer } from "@/lib/types";
 import { Crown } from "lucide-react";
 import Link from "next/link";
 import { Avatar } from "@/components/avatar";
+import { isUnknownPlayer } from "@/lib/constants";
 
 interface TournamentScorersProps {
   scorers: TopScorer[];
@@ -32,12 +33,9 @@ export function TournamentScorers({ scorers, title = "Top Scorers" }: Tournament
             {scorers.map((entry, i) => {
               const rankStyle = getRankStyle(i);
               const isPodium = i < 3;
-              return (
-                <li key={entry.player.id}>
-                  <Link
-                    href={`/profile/${entry.player.id}`}
-                    className="tournament-scorers__row flex items-center gap-4 px-4 py-3 hover:bg-muted/40 active:bg-muted/60 transition-colors"
-                  >
+              const isUnknown = isUnknownPlayer(entry.player.id);
+              const rowContent = (
+                <>
                     <span
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums ${rankStyle.color} ${rankStyle.bg}`}
                     >
@@ -75,7 +73,22 @@ export function TournamentScorers({ scorers, title = "Top Scorers" }: Tournament
                       </span>
                       <span className="sr-only">goals</span>
                     </div>
-                  </Link>
+                </>
+              );
+              return (
+                <li key={entry.player.id}>
+                  {isUnknown ? (
+                    <div className="tournament-scorers__row flex items-center gap-4 px-4 py-3">
+                      {rowContent}
+                    </div>
+                  ) : (
+                    <Link
+                      href={`/profile/${entry.player.id}`}
+                      className="tournament-scorers__row flex items-center gap-4 px-4 py-3 hover:bg-muted/40 active:bg-muted/60 transition-colors"
+                    >
+                      {rowContent}
+                    </Link>
+                  )}
                 </li>
               );
             })}

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/db/profiles";
+import { isUnknownPlayer } from "@/lib/constants";
 import { getUserTeam } from "@/lib/db/teams";
 import { getMatchesForTeam } from "@/lib/db/matches";
 import { ProfileHeader } from "@/components/profile-header";
@@ -16,6 +17,8 @@ export default async function PlayerProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (isUnknownPlayer(id)) notFound();
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
