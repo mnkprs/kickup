@@ -40,6 +40,7 @@ supabase/.temp
 
 #Ignore cursor AI rules
 .cursor/rules/codacy.mdc
+.cursor/debug-*.log
 
 # MCP config (contains API tokens)
 .cursor/mcp.json

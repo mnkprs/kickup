@@ -1,0 +1,15 @@
+---
+description: Log agents used at the end of each task
+alwaysApply: true
+---
+
+# Agent Logging Rule
+
+At the end of each task, log the different agents used for that task to the console by running a terminal command.
+
+Run `echo` (or equivalent) to output an "Agents used" summary to the terminal, listing:
+- Any MCP tools called (e.g. Codacy, Supabase, Figma)
+- Any subagents launched via mcp_task (e.g. explore, shell, code-reviewer)
+- Other specialized tools or agents invoked during the task
+
+Example: `echo "[Task complete] Agents used: codacy_cli_analyze"`
