@@ -89,7 +89,7 @@ export function AssignTeamsToMatchForm({
               value={t.id}
               disabled={t.id === newAwayId || teamsAlreadyInOtherMatches.has(t.id)}
             >
-              {t.short_name || t.name}
+              {t.name}
               {teamsAlreadyInOtherMatches.has(t.id) ? " (in match)" : ""}
             </option>
           ))}
@@ -110,7 +110,7 @@ export function AssignTeamsToMatchForm({
               value={t.id}
               disabled={t.id === newHomeId || teamsAlreadyInOtherMatches.has(t.id)}
             >
-              {t.short_name || t.name}
+              {t.name}
               {teamsAlreadyInOtherMatches.has(t.id) ? " (in match)" : ""}
             </option>
           ))}

@@ -6,7 +6,6 @@ import {
   Search,
   UserPlus,
   MapPin,
-  ChevronRight,
   Crosshair,
 } from "lucide-react";
 import Link from "next/link";
@@ -168,10 +167,6 @@ export function FindPlayersClient({
                       )}
                     </div>
                   </div>
-                  <ChevronRight
-                    size={16}
-                    className="text-muted-foreground shrink-0"
-                  />
                 </Link>
 
                 {canInvite && !isSelf && (

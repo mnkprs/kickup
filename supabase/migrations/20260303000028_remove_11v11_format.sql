@@ -149,6 +149,10 @@ BEGIN
 END;
 $$;
 
+-- Drop old functions that depend on match_format (CREATE OR REPLACE creates overloads, not replacements)
+DROP FUNCTION IF EXISTS send_challenge(uuid, uuid, match_format, text);
+DROP FUNCTION IF EXISTS get_leaderboard(match_format, text);
+
 -- Drop old enum and rename new one
 DROP TYPE match_format;
 ALTER TYPE match_format_new RENAME TO match_format;

@@ -190,7 +190,7 @@ export function CreateKnockoutMatchForm({
               value={t.id}
               disabled={t.id === awayTeamId || teamsAlreadyInStage.has(t.id)}
             >
-              {t.short_name || t.name}
+              {t.name}
               {teamsAlreadyInStage.has(t.id) ? " (in match)" : ""}
             </option>
           ))}
@@ -211,7 +211,7 @@ export function CreateKnockoutMatchForm({
               value={t.id}
               disabled={t.id === homeTeamId || teamsAlreadyInStage.has(t.id)}
             >
-              {t.short_name || t.name}
+              {t.name}
               {teamsAlreadyInStage.has(t.id) ? " (in match)" : ""}
             </option>
           ))}

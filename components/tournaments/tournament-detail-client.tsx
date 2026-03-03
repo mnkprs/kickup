@@ -131,9 +131,9 @@ export function TournamentDetailClient({
 
   return (
     <div className="tournament-detail-client px-5">
-      <div className="tournament-detail__tabs sticky top-0 z-30 bg-background py-3 -mx-5">
+      <div className="tournament-detail__tabs sticky top-0 z-30 bg-background -mx-5">
         <div
-          className="flex flex-nowrap gap-1 p-1 rounded-xl bg-card border border-border shadow-card overflow-x-auto scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex flex-nowrap gap-1 p-1 bg-card border border-border shadow-card overflow-x-auto scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
         >
           {tabs.map((tab) => (
@@ -200,7 +200,7 @@ export function TournamentDetailClient({
                   knockoutMode={tournament.knockout_mode}
                   knockoutMatches={knockoutMatches}
                   advancingTeams={standings.flatMap((g) =>
-                    g.standings.slice(0, 2).map((s) => ({
+                    g.standings.map((s) => ({
                       id: s.team_id,
                       name: s.team.name,
                       short_name: s.team.short_name,
@@ -318,7 +318,7 @@ export function TournamentDetailClient({
               canManageKnockout={canManageRegistrations && tournament.raw_status === "knockout_stage"}
               knockoutMatches={knockoutMatches}
               advancingTeams={standings.flatMap((g) =>
-                g.standings.slice(0, 2).map((s) => ({
+                g.standings.map((s) => ({
                   id: s.team_id,
                   name: s.team.name,
                   short_name: s.team.short_name,
@@ -342,7 +342,7 @@ export function TournamentDetailClient({
               canManage={canManageRegistrations}
               knockoutMode={tournament.knockout_mode}
               advancingTeams={standings.flatMap((g) =>
-                g.standings.slice(0, 2).map((s) => ({
+                g.standings.map((s) => ({
                   id: s.team_id,
                   name: s.team.name,
                   short_name: s.team.short_name,
