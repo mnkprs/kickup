@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Profile, Team } from "@/lib/types";
 import { Settings, Share2, Crown } from "lucide-react";
 import Link from "next/link";
@@ -26,6 +27,34 @@ function isLookingForTeam(p: { is_freelancer: boolean; freelancer_until?: string
 }
 
 export function ProfileHeader({ profile, team, showSettings = true }: ProfileHeaderProps) {
+  const [shareFeedback, setShareFeedback] = useState<"shared" | "copied" | null>(null);
+
+  const handleShare = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    if (!url) return;
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({
+          title: `${profile.full_name} - Kickup Profile`,
+          text: `Check out ${profile.full_name}'s football stats on Kickup`,
+          url,
+        });
+        setShareFeedback("shared");
+      } else {
+        await navigator.clipboard?.writeText(url);
+        setShareFeedback("copied");
+      }
+    } catch {
+      try {
+        await navigator.clipboard?.writeText(url);
+        setShareFeedback("copied");
+      } catch {
+        setShareFeedback(null);
+      }
+    }
+    setTimeout(() => setShareFeedback(null), 2000);
+  };
+
   const winRate =
     profile.matches_played > 0
       ? Math.round((profile.wins / profile.matches_played) * 100)
@@ -44,27 +73,23 @@ export function ProfileHeader({ profile, team, showSettings = true }: ProfileHea
         </div>
         <div className="flex items-center gap-2">
           <NotificationsButton />
-          <button
-            aria-label="Share profile"
-            onClick={async () => {
-              if (typeof navigator !== "undefined" && navigator.share) {
-                try {
-                  await navigator.share({
-                    title: `${profile.full_name} - Kickup Profile`,
-                    text: `Check out ${profile.full_name}'s football stats on Kickup`,
-                    url: window.location.href,
-                  });
-                } catch {
-                  await navigator.clipboard?.writeText(window.location.href);
-                }
-              } else {
-                await navigator.clipboard?.writeText(window.location.href);
-              }
-            }}
-            className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
-          >
-            <Share2 size={18} className="text-muted-foreground" />
-          </button>
+          <div className="relative flex items-center gap-2">
+            {shareFeedback && (
+              <span
+                className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 rounded-md bg-accent text-accent-foreground text-xs font-medium whitespace-nowrap shadow-lg"
+                role="status"
+              >
+                {shareFeedback === "shared" ? "Shared!" : "Link copied!"}
+              </span>
+            )}
+            <button
+              aria-label="Share profile"
+              onClick={handleShare}
+              className="h-10 w-10 rounded-full bg-card flex items-center justify-center border border-border hover:bg-muted transition-colors pressable"
+            >
+              <Share2 size={18} className="text-muted-foreground" />
+            </button>
+          </div>
           {showSettings && (
             <Link
               href="/profile/settings"

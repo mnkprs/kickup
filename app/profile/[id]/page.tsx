@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/db/profiles";
@@ -10,6 +11,37 @@ import { ProfileStats } from "@/components/profile/profile-stats";
 import { ProfileTeamCard } from "@/components/profile/profile-team-card";
 import { ProfileActivity } from "@/components/profile/profile-activity";
 import { ProfileAchievements } from "@/components/profile/profile-achievements";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  if (isUnknownPlayer(id)) notFound();
+  const profile = await getProfile(id);
+  if (!profile) {
+    return { title: "Player - Kickup" };
+  }
+  const title = `${profile.full_name} - Kickup Profile`;
+  const description = profile.bio
+    ? `${profile.bio.slice(0, 155)}${profile.bio.length > 155 ? "…" : ""}`
+    : `View ${profile.full_name}'s football stats and achievements on Kickup`;
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "profile",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+  };
+}
 
 export default async function PlayerProfilePage({
   params,

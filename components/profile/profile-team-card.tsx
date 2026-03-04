@@ -1,5 +1,5 @@
 import type { Profile, Team } from "@/lib/types";
-import { ChevronRight, Users, MapPin, Trophy, Crown } from "lucide-react";
+import { ChevronRight, Users, MapPin, Trophy, Crown, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { SearchingToggle } from "@/components/find-players/searching-toggle";
 import { TeamAvatar } from "@/components/ui/team-avatar";
@@ -13,7 +13,25 @@ interface ProfileTeamCardProps {
 }
 
 export function ProfileTeamCard({ profile, team, showCaptainToggles = false }: ProfileTeamCardProps) {
-  if (!team) return null;
+  if (!team) {
+    return (
+      <section className="profile-team-card">
+        <h2 className="profile-team-card__title text-foreground font-semibold text-sm mb-3">My Team</h2>
+        <div className="rounded-xl bg-card border border-border shadow-card p-6 text-center">
+          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+            <UserPlus size={20} className="text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground text-sm mb-4">No team yet</p>
+          <Link
+            href="/teams"
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-accent text-accent-foreground text-sm font-medium hover:bg-accent-light transition-colors pressable"
+          >
+            Find or create a team
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   const isCaptain = team.captain_id === profile.id;
   const totalMatches = team.wins + team.losses + team.draws;

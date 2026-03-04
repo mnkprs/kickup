@@ -36,6 +36,9 @@ function mapProfile(row: Record<string, unknown>): Profile {
   };
 }
 
+/** PGRST116 = no rows returned from .single() - profile not yet created */
+const NO_ROWS_CODE = "PGRST116";
+
 export async function getProfile(userId: string): Promise<Profile | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -44,7 +47,11 @@ export async function getProfile(userId: string): Promise<Profile | null> {
     .eq("id", userId)
     .single();
 
-  if (error || !data) return null;
+  if (error) {
+    if (error.code === NO_ROWS_CODE) return null;
+    throw new Error(error.message ?? "Failed to load profile");
+  }
+  if (!data) return null;
 
   const profile = mapProfile(data as Record<string, unknown>);
 
